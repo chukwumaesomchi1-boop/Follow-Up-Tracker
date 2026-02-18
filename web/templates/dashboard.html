@@ -1,0 +1,461 @@
+{# templates/dashboard.html #}
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  /* Status pills */
+  .pill { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:900; }
+  .pill-pending { background:#eef2ff; color:#3730a3; }
+  .pill-sent { background:#dcfce7; color:#166534; }
+  .pill-failed { background:#ffe4e6; color:#9f1239; }
+  .pill-done { background:#f3f4f6; color:#374151; }
+  .pill-scheduled { background:#dbeafe; color:#1d4ed8; }
+  .pill-replied { background:#ecfdf5; color:#047857; }
+  .pill-running { background:#fef9c3; color:#854d0e; }
+  .pill-passed { background:#e5e7eb; color:#111827; }
+
+  /* Cards / UI */
+  .box { border:1px solid #e5e7eb; border-radius:14px; padding:14px; margin:14px 0; background:#fff; }
+  .box-danger { border-color:#fecdd3; background:#fff1f2; }
+  .box-title { font-weight:950; margin-bottom:6px; }
+  .muted { font-size:12px; opacity:.8; }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+
+  .btn {
+    border:1px solid #d1d5db;
+    background:#fff;
+    padding:8px 12px;
+    border-radius:12px;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    gap:8px;
+    align-items:center;
+    font-weight:900;
+  }
+  .btn-primary { border-color:#111827; background:#111827; color:#fff; }
+  .btn-danger { border-color:#9f1239; background:#9f1239; color:#fff; }
+  .btn-soft { background:#f9fafb; }
+
+  /* Table */
+  table { border-collapse:collapse; width:100%; }
+  th, td { border:1px solid #e5e7eb; padding:12px; vertical-align:top; }
+  th { background:#f9fafb; text-align:left; font-size:13px; }
+
+  .row-failed { background:#fff0f3; }
+  .cell-stack { display:grid; gap:6px; }
+
+  /* Add card */
+  .grid-top { display:grid; grid-template-columns: 1.2fr .8fr; gap:14px; }
+  @media (max-width: 900px) { .grid-top { grid-template-columns: 1fr; } }
+
+  .add-card {
+    border:1px solid #e5e7eb;
+    border-radius:16px;
+    background: linear-gradient(180deg, #fff, #f8fafc);
+    padding:16px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+  }
+  .add-card h3 { margin:0 0 6px; font-size:16px; font-weight:950; }
+  .add-card p { margin:0; color:#475569; font-size:13px; line-height:1.45; }
+
+  /* Hover details tooltip */
+  .row-tip {
+    position: fixed;
+    z-index: 9999;
+    width: min(380px, 92vw);
+    background: #0b1220;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 14px;
+    padding: 12px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.22);
+    display: none;
+    pointer-events: none;
+  }
+  .row-tip .t { font-weight: 950; margin-bottom: 6px; }
+  .row-tip .m { font-size: 12px; opacity: .9; line-height: 1.45; white-space: pre-wrap; }
+  .row-tip .k { opacity: .7; font-weight: 900; }
+  .row-tip hr { border:0; border-top:1px solid rgba(255,255,255,0.12); margin:10px 0; }
+
+  .help { display:block; font-size:12px; color:#64748b; margin-top:6px; font-weight:800; }
+
+  .chip {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:4px 10px; border-radius:999px;
+    background:#f1f5f9; border:1px solid #e2e8f0;
+    font-weight:900; font-size:12px;
+  }
+</style>
+
+{# ========= TOP AREA ========= #}
+<div class="grid-top">
+
+  <div class="add-card">
+    <h3>➕ Add a follow-up</h3>
+    <p>Create a follow-up, set details, then schedule it. Fast and clean.</p>
+
+    <div class="actions" style="margin-top:12px;">
+      <a class="btn btn-primary" href="{{ url_for('add') }}" title="Create a new follow-up (recommended)">
+        ➕ Add Follow-up
+      </a>
+
+      <a class="btn btn-soft" href="{{ url_for('schedule') }}" title="Schedule sends + recurring rules">
+        🗓 Scheduling
+      </a>
+
+      <a class="btn" href="{{ url_for('import_csv') }}" title="Upload a CSV to create many follow-ups at once">
+        📥 Import CSV
+      </a>
+    </div>
+
+    <span class="help">Tip: hover any row below to see full details.</span>
+  </div>
+
+  <div class="box">
+    <div class="box-title">Quick guide</div>
+    <div class="muted">
+      • <b>Pending</b> = waiting to be sent<br>
+      • <b>Scheduled</b> = has a next send time<br>
+      • <b>Failed</b> = didn’t send, check error + retry<br>
+      • Use bulk actions when doing many at once
+    </div>
+  </div>
+
+</div>
+
+{# ========= FAILED SECTION ========= #}
+{% set failed_items = (due_soon or []) | selectattr("status", "equalto", "failed") | list %}
+{% if failed_items %}
+  <div class="box box-danger">
+    <div class="box-title">🚨 Failed Follow-ups ({{ failed_items|length }})</div>
+    <div class="muted">Fix the issue, then hit Retry. Hover a row to see the full error + description.</div>
+
+    <div style="overflow:auto; margin-top:10px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Type</th>
+            <th>Due</th>
+            <th>Reason</th>
+            <th style="width:520px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in failed_items %}
+          <tr class="row-failed js-row"
+              data-tip-title="{{ (f.client_name or 'Unknown')|e }} — {{ (f.followup_type or '')|e }}"
+              data-tip-body="Status: {{ (f.status or '')|e }}
+Due: {{ (f.due_date or '—')|e }}
+Email: {{ (f.email or '—')|e }}
+Phone: {{ (f.phone or '—')|e }}
+
+Description:
+{{ (f.description or '—')|e }}
+
+Last error:
+{{ (f.last_error or 'Unknown error')|e }}
+
+Next send:
+{{ (f.next_send_at or 'Not scheduled')|e }}">
+            <td>
+              <div class="cell-stack">
+                <div>
+                  <b>{{ f.client_name or 'Unknown' }}</b>
+                  <div class="muted">
+                    {% if f.phone %}📱 {{ f.phone }}{% endif %}
+                    {% if f.email %}{% if f.phone %} · {% endif %}✉️ {{ f.email }}{% endif %}
+                  </div>
+                </div>
+
+                {% if f.schedule_enabled and f.next_send_at %}
+                  <div>
+                    <span class="pill pill-scheduled">📅 Scheduled</span>
+                    <span class="muted">{{ f.next_send_at }}</span>
+                  </div>
+                {% endif %}
+
+                <div><span class="pill pill-failed">FAILED</span></div>
+              </div>
+            </td>
+
+            <td>{{ f.followup_type }}</td>
+            <td>{{ f.due_date }}</td>
+
+            <td style="color:#9f1239; font-size:13px;">
+              {{ f.last_error or "Unknown error (no reason stored)." }}
+            </td>
+
+            <td>
+              <div class="actions">
+                <a class="btn btn-danger" href="{{ url_for('preview', fid=f.id) }}" title="Fix email/recipient/template then retry">
+                  🛠 Fix
+                </a>
+
+                <form method="post" action="{{ url_for('send_followup', fid=f.id) }}" style="display:inline;">
+                  <button class="btn btn-primary" type="submit"
+                          title="Retry sending this follow-up right now"
+                          onclick="return confirm('Retry sending now?')">
+                    🔁 Retry
+                  </button>
+                </form>
+
+                <a class="btn" href="{{ url_for('preview', fid=f.id) }}" title="Preview the exact email content before sending">
+                  👁️ Review
+                </a>
+
+                <form method="post" action="{{ url_for('delete_followup', fid=f.id) }}" style="display:inline;">
+                  <button class="btn btn-danger" type="submit"
+                          title="Delete this follow-up permanently"
+                          onclick="return confirm('Delete this follow-up?')">
+                    🗑 Delete
+                  </button>
+                </form>
+              </div>
+
+              <div class="muted" style="margin-top:8px;">
+                Tip: Fix first → Retry. Don’t spam retries.
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}
+
+{# ========= MAIN LIST ========= #}
+<h2>Follow-ups</h2>
+
+{% if due_soon %}
+  <form method="post" action="{{ url_for('bulk_action') }}" id="bulkForm">
+
+    <div class="actions" style="margin:10px 0;">
+      <div>
+        <button class="btn" type="submit" name="action" value="done"
+                title="Mark selected follow-ups as done"
+                onclick="return confirm('Mark selected as done?')">
+          ✅ Mark Done Selected
+        </button>
+        <span class="help">Closes them out (stops you seeing them as pending).</span>
+      </div>
+
+      <div>
+        <button class="btn btn-primary" type="submit" name="action" value="send"
+                title="Send selected follow-ups right now"
+                onclick="return confirm('Send selected follow-ups now?')">
+          📤 Send Selected
+        </button>
+        <span class="help">Use this when you’re done, this will send immediately.</span>
+      </div>
+
+      <div>
+        <button class="btn btn-danger" type="submit" name="action" value="delete"
+                title="Delete selected follow-ups permanently"
+                onclick="return confirm('Delete selected follow-ups?')">
+          🗑 Delete Selected
+        </button>
+        <span class="help">This is permanent. No undo.</span>
+      </div>
+
+      <span class="chip" id="sel_count">0 selected</span>
+    </div>
+
+    <label style="display:block; margin:10px 0;">
+      <input type="checkbox" id="select_all"> Select all
+      <span class="muted">Bulk applies to everything selected.</span>
+    </label>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:40px;"></th>
+          <th>Client</th>
+          <th>Type</th>
+          <th>Due</th>
+          <th>Status</th>
+          <th style="width:640px;">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for f in due_soon %}
+        <tr class="js-row {% if f.status=='failed' %}row-failed{% endif %}"
+            data-tip-title="{{ (f.client_name or 'Unknown')|e }} — {{ (f.followup_type or '')|e }}"
+            data-tip-body="Status: {{ (f.status or '')|e }}
+Due: {{ (f.due_date or '—')|e }}
+Email: {{ (f.email or '—')|e }}
+Phone: {{ (f.phone or '—')|e }}
+
+Description:
+{{ (f.description or '—')|e }}
+
+Last error:
+{{ (f.last_error or '—')|e }}
+
+Next send:
+{{ (f.next_send_at or 'Not scheduled')|e }}">
+          <td>
+            <input type="checkbox" name="followup_ids" value="{{ f.id }}" class="cb">
+          </td>
+
+          <td>
+            <div class="cell-stack">
+              <div>
+                <b>{{ f.client_name or 'Unknown' }}</b>
+                <div class="muted">
+                  {% if f.phone %}📱 {{ f.phone }}{% endif %}
+                  {% if f.email %}{% if f.phone %} · {% endif %}✉️ {{ f.email }}{% endif %}
+                </div>
+                <div class="muted" style="margin-top:4px;">ID: {{ f.id }}</div>
+              </div>
+
+              {% if f.schedule_enabled and f.next_send_at %}
+                <div>
+                  <span class="pill pill-scheduled">📅 Scheduled</span>
+                  <span class="muted">{{ f.next_send_at }}</span>
+                </div>
+              {% endif %}
+            </div>
+          </td>
+
+          <td>{{ f.followup_type }}</td>
+          <td>{{ f.due_date }}</td>
+
+          <td>
+            {% if f.status == 'failed' %}
+              <span class="pill pill-failed">FAILED</span>
+            {% elif f.status == 'sent' %}
+              <span class="pill pill-sent">SENT</span>
+            {% elif f.status == 'replied' %}
+              <span class="pill pill-replied">REPLIED</span>
+            {% elif f.status == 'running' %}
+              <span class="pill pill-running">RUNNING</span>
+            {% elif f.status == 'passed' %}
+              <span class="pill pill-passed">PASSED</span>
+            {% elif f.status == 'done' %}
+              <span class="pill pill-done">DONE</span>
+            {% else %}
+              <span class="pill pill-pending">PENDING</span>
+            {% endif %}
+          </td>
+
+          <td>
+            <div class="actions">
+              <a class="btn" href="{{ url_for('preview', fid=f.id) }}"
+                 title="Preview the email content (safe)">
+                👁️ Review
+              </a>
+
+            <div class="muted" style="margin-top:8px;">
+              Sending is done via <b>Bulk Send</b> above.
+            </div>
+
+            <div class="muted" style="margin-top:8px;">
+              Hover this row to see description + errors + next send.
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  </form>
+{% else %}
+  <div class="box">
+    <div class="box-title">No follow-ups 👌</div>
+    <div class="muted">Start by adding one, or import from CSV.</div>
+    <div class="actions" style="margin-top:12px;">
+      <a class="btn btn-primary" href="{{ url_for('add') }}" title="Create a new follow-up">
+        ➕ Add Follow-up
+      </a>
+      <a class="btn" href="{{ url_for('import_csv') }}" title="Import many follow-ups from a CSV">
+        📥 Import CSV
+      </a>
+      <a class="btn btn-soft" href="{{ url_for('schedule') }}" title="Schedule sends + recurring rules">
+        🗓 Scheduling
+      </a>
+    </div>
+  </div>
+{% endif %}
+
+<hr>
+<h2>Done: {{ done }}</h2>
+
+<div class="row-tip" id="rowTip">
+  <div class="t" id="rowTipTitle">Details</div>
+  <div class="m" id="rowTipBody"></div>
+</div>
+
+<script>
+  // Bulk selection count
+  const selectAll = document.getElementById("select_all");
+  const selCount = document.getElementById("sel_count");
+
+  function updateCount(){
+    const n = document.querySelectorAll('input[name="followup_ids"]:checked').length;
+    if (selCount) selCount.textContent = n + " selected";
+  }
+
+  if (selectAll) {
+    selectAll.addEventListener("change", () => {
+      document.querySelectorAll('input[name="followup_ids"]').forEach(cb => cb.checked = selectAll.checked);
+      updateCount();
+    });
+  }
+
+  document.querySelectorAll('input[name="followup_ids"]').forEach(cb => {
+    cb.addEventListener("change", updateCount);
+  });
+  updateCount();
+
+  // Hover details tooltip
+  const tip = document.getElementById("rowTip");
+  const tipTitle = document.getElementById("rowTipTitle");
+  const tipBody = document.getElementById("rowTipBody");
+
+  function showTip(e, title, body){
+    if (!tip) return;
+    tipTitle.textContent = title || "Details";
+    tipBody.textContent = body || "";
+    tip.style.display = "block";
+    moveTip(e);
+  }
+
+  function moveTip(e){
+    if (!tip) return;
+    const pad = 14;
+    const w = tip.offsetWidth || 360;
+    const h = tip.offsetHeight || 180;
+
+    let x = e.clientX + pad;
+    let y = e.clientY + pad;
+
+    if (x + w + pad > window.innerWidth) x = e.clientX - w - pad;
+    if (y + h + pad > window.innerHeight) y = e.clientY - h - pad;
+
+    tip.style.left = x + "px";
+    tip.style.top = y + "px";
+  }
+
+  function hideTip(){
+    if (!tip) return;
+    tip.style.display = "none";
+  }
+
+  document.querySelectorAll(".js-row").forEach(row => {
+    const title = row.getAttribute("data-tip-title") || "Details";
+    const body = row.getAttribute("data-tip-body") || "";
+
+    row.addEventListener("mouseenter", (e) => showTip(e, title, body));
+    row.addEventListener("mousemove", (e) => moveTip(e));
+    row.addEventListener("mouseleave", hideTip);
+  });
+
+  // Don't trap tooltip when user scrolls
+  window.addEventListener("scroll", hideTip, { passive: true });
+</script>
+
+{% endblock %}

@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .page-title { font-size:20px; font-weight:950; margin:0 0 6px; }
+  .page-sub { color:#64748b; font-size:13px; margin:0 0 14px; line-height:1.45; }
+
+  .grid { display:grid; grid-template-columns: 1fr 1fr; gap:18px; align-items:start; }
+  @media (max-width: 980px){ .grid { grid-template-columns: 1fr; } }
+
+  .box {
+    border:1px solid #e5e7eb; border-radius:16px; padding:16px; background:#fff;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.04);
+  }
+
+  .warn {
+    border:1px solid #fca5a5;
+    background:#fef2f2;
+    border-radius:14px;
+    padding:12px;
+    color:#7f1d1d;
+  }
+  .warn b { color:#7f1d1d; }
+
+  .good {
+    border:1px solid #86efac;
+    background:#f0fdf4;
+    border-radius:14px;
+    padding:12px;
+    color:#14532d;
+  }
+
+  .muted { color:#64748b; font-size:12px; line-height:1.45; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12.5px; }
+
+  textarea {
+    width:100%;
+    min-height:500px;
+    padding:12px;
+    border:1px solid #d1d5db;
+    border-radius:14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size:12.5px;
+    line-height:1.45;
+  }
+
+  iframe {
+    width:100%;
+    height:500px;
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+    background:#fff;
+  }
+
+  .actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:12px; }
+
+  .btn {
+    border:1px solid #d1d5db;
+    background:#fff;
+    padding:10px 12px;
+    border-radius:14px;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    gap:8px;
+    align-items:center;
+    font-weight:900;
+  }
+  .btn-primary { border-color:#111827; background:#111827; color:#fff; }
+  .btn-danger { border-color:#9f1239; background:#9f1239; color:#fff; }
+
+  code { background:#eef2ff; padding:2px 6px; border-radius:8px; }
+  .tag { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:900; background:#eef2ff; color:#3730a3; }
+  .list { margin:8px 0 0; padding-left:18px; }
+  .list li { margin:8px 0; }
+
+  .hintbar {
+    margin-top:10px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .pill {
+    font-size:12px;
+    font-weight:900;
+    padding:6px 10px;
+    border-radius:999px;
+    border:1px solid #e2e8f0;
+    background:#f8fafc;
+    color:#0b1220;
+  }
+  .pill.ok { border-color:#bbf7d0; background:#f0fdf4; color:#14532d; }
+  .pill.warn2 { border-color:#fde68a; background:#fffbeb; color:#7c2d12; }
+
+  .pv-status {
+    margin-top:10px;
+    font-size:12px;
+    color:#64748b;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .dot {
+    width:8px; height:8px; border-radius:999px;
+    background:#94a3b8;
+    display:inline-block;
+  }
+  .dot.live { background:#22c55e; }
+  .dot.err { background:#ef4444; }
+</style>
+
+<div>
+  <div class="page-title">🧩 Scheduler Template (HTML)</div>
+  <p class="page-sub">
+    Preview is rendered using the <b>same Python renderer</b> the scheduler uses.
+  </p>
+</div>
+
+<div class="box" style="margin-bottom:14px;">
+  <div class="warn">
+    <b>⚠️ Don’t ruin your template:</b>
+    <ul class="list">
+      <li><b>No JavaScript</b> (no <code>&lt;script&gt;</code>, no event handlers like <code>onclick</code>).</li>
+      <li><b>Only use the variables listed below</b>.</li>
+      <li><b>Don’t paste full page HTML</b> (<code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>, <code>&lt;body&gt;</code>). Use only the email body.</li>
+      <li><b>Keep inline CSS simple</b>. Email clients are strict.</li>
+    </ul>
+  </div>
+
+  <div class="good" style="margin-top:12px;">
+    <b>✅ What works reliably:</b>
+    <div class="muted" style="margin-top:6px;">
+      Use <code>&lt;div&gt;</code>, <code>&lt;p&gt;</code>, <code>&lt;b&gt;</code>, <code>&lt;br&gt;</code>, <code>&lt;table&gt;</code>.
+      Variables like <code>{% raw %}{{name}}{% endraw %}</code>.
+      Conditionals like <code>{% raw %}{% if description %}...{% endif %}{% endraw %}</code>.
+    </div>
+  </div>
+</div>
+
+<div class="box" style="margin-bottom:14px;">
+  <div style="font-weight:950; margin-bottom:8px;">Available variables</div>
+
+  <div class="muted">
+    <span class="tag">Client</span>
+    <code class="mono">{% raw %}{{name}}{% endraw %}</code>
+    <code class="mono">{% raw %}{{type}}{% endraw %}</code>
+    <code class="mono">{% raw %}{{description}}{% endraw %}</code>
+    <code class="mono">{% raw %}{{due_date}}{% endraw %}</code>
+    <br><br>
+
+    <span class="tag">Branding</span>
+    <code class="mono">{% raw %}{{sender}}{% endraw %}</code>
+    <code class="mono">{% raw %}{{company_name}}{% endraw %}</code>
+    <code class="mono">{% raw %}{{support_email}}{% endraw %}</code>
+    <code class="mono">{% raw %}{{footer}}{% endraw %}</code>
+    <code class="mono">{% raw %}{{brand_logo}}{% endraw %}</code>
+  </div>
+</div>
+
+<form method="POST">
+  <div class="grid">
+    <div class="box">
+      <div style="font-weight:950; margin-bottom:8px;">Edit HTML</div>
+
+      <textarea id="htmlBox" name="html_content" class="mono">{{ (html_content or "")|e }}</textarea>
+
+      <div class="actions">
+        <button class="btn btn-primary" type="submit" name="action" value="save">💾 Save</button>
+
+        <button class="btn btn-danger" type="submit" name="action" value="reset"
+                onclick="return confirm('Reset scheduler template to default? This will overwrite your current template.')">
+          ♻️ Reset to default
+        </button>
+
+        <a class="btn" href="{{ url_for('dashboard') }}">← Back</a>
+      </div>
+
+      <div class="hintbar">
+        <span class="pill ok">Rendered preview ✅</span>
+        <span class="pill.warn2">Typing calls server preview</span>
+      </div>
+
+      <div class="pv-status">
+        <span class="dot" id="pvDot"></span>
+        <span id="pvMsg">Idle</span>
+        <span class="muted">Ctrl/Cmd + Enter forces refresh</span>
+      </div>
+    </div>
+
+    <div class="box">
+      <div style="font-weight:950; margin-bottom:8px;">Live Preview</div>
+      <iframe id="pv"></iframe>
+      <div class="muted" style="margin-top:10px;">
+        Preview uses sample values.
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+  const iframe = document.getElementById("pv");
+  const box = document.getElementById("htmlBox");
+  const dot = document.getElementById("pvDot");
+  const msg = document.getElementById("pvMsg");
+
+  const serverPreview = {{ (preview_html or "")|tojson }};
+  iframe.srcdoc = serverPreview;
+
+  function setStatus(state, text) {
+    dot.classList.remove("live", "err");
+    if (state === "live") dot.classList.add("live");
+    if (state === "err") dot.classList.add("err");
+    msg.textContent = text || "Idle";
+  }
+
+  let t = null;
+  let inflight = null;
+
+  async function renderOnServer(force=false) {
+    const tmpl = (box && box.value) ? box.value : "";
+
+    if (inflight) inflight.abort();
+    inflight = new AbortController();
+
+    try {
+      setStatus("live", force ? "Rendering..." : "Rendering...");
+
+      // ✅ HARD-CODE PATH (no endpoint-name conflicts)
+      const res = await fetch("/scheduler-template/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tmpl }),
+        signal: inflight.signal
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || data.ok === false) {
+        setStatus("err", "Preview error");
+        iframe.srcdoc = `<pre style="white-space:pre-wrap; font-family:ui-monospace,Menlo,monospace; padding:16px;">${escapeHtml(data.error || ("HTTP " + res.status))}</pre>`;
+        return;
+      }
+
+      iframe.srcdoc = data.preview_html || "";
+      setStatus("live", "Rendered ✅");
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+      setStatus("err", "Preview error");
+      iframe.srcdoc = `<pre style="white-space:pre-wrap; font-family:ui-monospace,Menlo,monospace; padding:16px;">${escapeHtml(String(e))}</pre>`;
+    }
+  }
+
+  function escapeHtml(s) {
+    return (s || "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  if (box) {
+    box.addEventListener("input", () => {
+      clearTimeout(t);
+      t = setTimeout(() => renderOnServer(false), 250);
+    });
+
+    box.addEventListener("keydown", (e) => {
+      const isEnter = e.key === "Enter";
+      const isCmd = e.metaKey || e.ctrlKey;
+      if (isCmd && isEnter) {
+        e.preventDefault();
+        clearTimeout(t);
+        renderOnServer(true);
+      }
+    });
+  }
+</script>
+
+{% endblock %}

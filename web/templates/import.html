@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .page-title { font-size:20px; font-weight:950; margin:0 0 6px; }
+  .page-sub { color:#64748b; font-size:13px; margin:0 0 14px; line-height:1.45; }
+
+  .card {
+    border:1px solid #e5e7eb;
+    border-radius:16px;
+    padding:16px;
+    background:#fff;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.04);
+    margin: 14px 0;
+  }
+
+  .muted { color:#64748b; font-size:12px; line-height:1.45; }
+  .section-title { font-weight:950; margin:0 0 10px; display:flex; gap:10px; align-items:center; }
+
+  .actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:14px; }
+  .btn {
+    border:1px solid #d1d5db;
+    background:#fff;
+    padding:10px 12px;
+    border-radius:14px;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    gap:8px;
+    align-items:center;
+    font-weight:950;
+  }
+  .btn-primary { border-color:#111827; background:#111827; color:#fff; }
+  .btn-soft { background:#f9fafb; }
+
+  input[type="file"]{
+    width:100%;
+    padding:12px;
+    border:1px dashed #cbd5e1;
+    border-radius:14px;
+    background:#f8fafc;
+    cursor:pointer;
+  }
+
+  .rules {
+    border:1px solid #e2e8f0;
+    background:#f8fafc;
+    padding:12px;
+    border-radius:14px;
+    margin-top:10px;
+  }
+  .rules ul { margin:8px 0 0; padding-left:18px; }
+  .rules li { margin:6px 0; }
+
+  code { background:#eef2ff; padding:2px 6px; border-radius:8px; }
+</style>
+
+<div>
+  <div class="page-title">📥 Import CSV</div>
+  <p class="page-sub">
+    Upload your CSV, we’ll create follow-ups in <b>Draft/Pending</b>. Nothing gets sent automatically until you schedule it.
+  </p>
+</div>
+
+<div class="card">
+  <div class="section-title">Upload file</div>
+  <div class="muted">
+    Only <b>.csv</b> is supported for now.
+  </div>
+
+  <form method="post" enctype="multipart/form-data" id="importForm">
+    <input type="file" name="file" accept=".csv,text/csv" required
+           title="Upload a CSV file (.csv)">
+
+    <div class="actions">
+      <button class="btn btn-primary" type="submit" id="btnImport"
+              title="Import this CSV into your follow-ups list">
+        🚀 Import CSV
+      </button>
+
+      <a class="btn btn-soft" href="{{ url_for('dashboard') }}"
+         title="Back to dashboard">
+        ← Back
+      </a>
+    </div>
+
+    <div class="rules">
+      <div style="font-weight:950;">Rules (so you don’t get surprised)</div>
+      <ul class="muted">
+        <li><b>No sending happens here.</b> Import only creates records.</li>
+        <li><b>Scheduling is separate</b> (go to <b>Schedule</b> after import).</li>
+        <li>If you schedule a time in the past, the app will <b>push it forward</b> (or prompt you) so you don’t “insta-send” by mistake.</li>
+        <li><b>Email is required</b> for sending. Missing/invalid emails will fail.</li>
+        <li>Recommended columns: <code>client_name</code>, <code>email</code>, <code>followup_type</code>, <code>message_override</code>, <code>description</code>.</li>
+        <li><b>Priority order when sending:</b> Personal message → Extra notes → Scheduler template.</li>
+        <li><b>Sent stays sent.</b> Pending / failed / scheduled can be re-scheduled.</li>
+      </ul>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="section-title">✅ Next steps after import</div>
+  <div class="muted">
+    After import:
+    <ol style="margin:8px 0 0; padding-left:18px;">
+      <li>Go to <b>Schedule</b></li>
+      <li>Select the imported follow-ups</li>
+      <li>Pick start date + send time + repeat</li>
+    </ol>
+  </div>
+
+  <div class="actions">
+    <a class="btn" href="{{ url_for('schedule') }}"
+       title="Schedule imported follow-ups (this is where sending rules apply)">
+      🗓 Go to Schedule
+    </a>
+  </div>
+</div>
+
+<script>
+  // tiny UX: disable button on submit (prevents double imports)
+  const form = document.getElementById("importForm");
+  const btn = document.getElementById("btnImport");
+  if (form && btn) {
+    form.addEventListener("submit", () => {
+      btn.disabled = true;
+      btn.textContent = "Importing…";
+    });
+  }
+</script>
+
+{% endblock %}

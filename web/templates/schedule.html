@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .page-title { font-size:20px; font-weight:950; margin:0 0 6px; }
+  .page-sub { color:#64748b; font-size:13px; margin:0 0 14px; line-height:1.45; }
+
+  .box {
+    border:1px solid #e5e7eb;
+    border-radius:16px;
+    padding:16px;
+    margin:14px 0;
+    background:#fff;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.04);
+  }
+
+  .muted { font-size:12px; color:#64748b; line-height:1.45; }
+  .actions { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+
+  .btn {
+    border:1px solid #d1d5db;
+    background:#fff;
+    padding:10px 12px;
+    border-radius:14px;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    gap:8px;
+    align-items:center;
+    font-weight:900;
+  }
+  .btn-primary { border-color:#111827; background:#111827; color:#fff; }
+  .btn-danger { border-color:#9f1239; background:#9f1239; color:#fff; }
+  .btn-soft { background:#f9fafb; }
+
+  input, select {
+    padding:10px 12px;
+    border-radius:14px;
+    border:1px solid #d1d5db;
+  }
+  label { display:grid; gap:6px; }
+
+  table { border-collapse:collapse; width:100%; }
+  th, td { border:1px solid #e5e7eb; padding:12px; vertical-align:top; }
+  th { background:#f9fafb; text-align:left; font-size:13px; }
+
+  .row-disabled { opacity:.55; }
+
+  .rules {
+    border:1px solid #e2e8f0;
+    background:#f8fafc;
+    padding:14px;
+    border-radius:14px;
+  }
+  .rules h3 { margin:0 0 8px 0; font-size:15px; }
+  .rules ul { margin:8px 0 0; padding-left:18px; }
+  .rules li { margin:8px 0; }
+
+  .tag {
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:900;
+    background:#eef2ff;
+    color:#3730a3;
+  }
+
+  code { background:#eef2ff; padding:2px 6px; border-radius:8px; }
+</style>
+
+<div class="actions" style="margin-bottom:12px;">
+  <a class="btn btn-soft" href="{{ url_for('dashboard') }}">← Back to dashboard</a>
+</div>
+
+<div>
+  <div class="page-title">🗓 Schedule</div>
+  <p class="page-sub">
+    Scheduling controls when follow-ups send.  
+    This page is powerful, read the rules once to avoid accidental sends.
+  </p>
+</div>
+
+<div class="box" style="border-color:#fed7aa; background:#fff7ed;">
+  <div style="display:flex; gap:12px; align-items:flex-start;">
+    <div style="font-size:22px;">⚠️</div>
+    <div>
+      <div style="font-weight:950; font-size:16px; margin-bottom:6px;">
+        Auto-stop on replies is OFF
+      </div>
+      <div class="muted" style="color:#7c2d12;">
+        This app only uses <code>gmail.send</code>.  
+        It can send emails but <b>cannot read replies</b>.
+      </div>
+      <ul class="muted" style="margin-top:10px; padding-left:18px;">
+        <li>Replies will <b>NOT</b> stop scheduled follow-ups automatically</li>
+        <li>You must manually <b>Clear schedule</b> or mark <b>Done</b></li>
+        <li>Recurring schedules should always have a <b>Stop date</b></li>
+        <li>Past date/time may cause <b>instant send</b></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="box">
+  <div class="rules">
+    <h3>Scheduling rules</h3>
+    <ul class="muted">
+      <li><span class="tag">Sent is final</span> Sent follow-ups can’t be scheduled again.</li>
+      <li><span class="tag">Scheduled ≠ Sent</span> Scheduled means future send.</li>
+      <li><span class="tag">Relative</span> Ignores date/time and sends from now.</li>
+      <li><span class="tag">Timezone</span> Uses app timezone.</li>
+      <li><span class="tag">Clear</span> Stops future sends only.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="box">
+  <div style="font-weight:950;">Bulk schedule</div>
+  <div class="muted">Select follow-ups below, then apply one rule.</div>
+
+  <form method="POST" action="{{ url_for('bulk_schedule') }}" id="bulkForm" class="actions" style="margin-top:14px;">
+    <input type="hidden" name="allow_past" value="0">
+
+    <label>
+      <span class="muted">Start date</span>
+      <input type="date" name="start_date" id="start_date" required>
+    </label>
+
+    <label>
+      <span class="muted">Stop date</span>
+      <input type="date" name="end_date" id="end_date">
+    </label>
+
+    <label>
+      <span class="muted">Send time</span>
+      <input type="time" name="send_time" value="09:00" required>
+    </label>
+
+    <label>
+      <span class="muted">Repeat</span>
+      <select name="repeat">
+        <option value="once">Once</option>
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="every_n_days">Every N days</option>
+        <option value="weekday">Specific weekdays</option>
+        <option value="relative">Relative</option>
+      </select>
+    </label>
+
+    <button class="btn btn-primary" type="submit">Apply to selected</button>
+  </form>
+</div>
+
+<div class="box">
+  <div style="font-weight:950;">Your follow-ups</div>
+
+  {% if followups %}
+  <table style="margin-top:12px;">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Client</th>
+        <th>Due</th>
+        <th>Next send</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in followups %}
+      <tr class="{% if f.status == 'sent' %}row-disabled{% endif %}">
+        <td>
+          <input type="checkbox" class="cb" value="{{ f.id }}" {% if f.status == 'sent' %}disabled{% endif %}>
+        </td>
+        <td>
+          <b>{{ f.client_name }}</b>
+          <div class="muted">{{ f.followup_type }}</div>
+        </td>
+        <td>{{ f.due_date or '—' }}</td>
+        <td>{{ f.next_send_at or '—' }}</td>
+        <td>
+          {% if f.status != 'sent' and f.schedule_enabled %}
+          <form method="POST" action="{{ url_for('schedule_clear', fid=f.id) }}">
+            <button class="btn btn-danger">Clear</button>
+          </form>
+          {% else %}
+          <span class="muted">—</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">No follow-ups yet.</p>
+  {% endif %}
+</div>
+
+<script>
+  const bulkForm = document.getElementById("bulkForm");
+
+  bulkForm.addEventListener("submit", function (e) {
+    bulkForm.querySelectorAll('input[name="followup_ids"]').forEach(x => x.remove());
+
+    const checked = Array.from(document.querySelectorAll(".cb"))
+      .filter(cb => cb.checked && !cb.disabled);
+
+    if (!checked.length) {
+      e.preventDefault();
+      alert("Select followups first.");
+      return;
+    }
+
+    checked.forEach(cb => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "followup_ids";
+      input.value = cb.value;
+      bulkForm.appendChild(input);
+    });
+  });
+</script>
+
+<script>
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function todayYMD(){
+    const d = new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  }
+
+  const startDate = document.getElementById("start_date");
+  const endDate = document.getElementById("end_date");
+  const TODAY = todayYMD();
+
+  if (startDate) {
+    startDate.min = TODAY;
+    startDate.value ||= TODAY;
+  }
+  if (endDate) endDate.min = TODAY;
+
+  function clamp(el, min){
+    if (el.value && el.value < min) el.value = min;
+  }
+
+  startDate?.addEventListener("input", () => clamp(startDate, TODAY));
+  endDate?.addEventListener("input", () => clamp(endDate, startDate.value || TODAY));
+</script>
+
+{% endblock %}

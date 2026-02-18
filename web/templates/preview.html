@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .wrap { max-width: 900px; margin: 0 auto; }
+  .head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:14px; }
+  .title { font-size:22px; font-weight:950; margin:0; }
+  .sub { color:#64748b; font-size:13px; margin-top:6px; line-height:1.4; }
+
+  .grid { display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+  @media (max-width: 900px){ .grid{ grid-template-columns:1fr; } }
+
+  .card { border:1px solid #e5e7eb; border-radius:16px; padding:14px; background:#fff; }
+  label { display:block; font-weight:900; font-size:13px; margin-bottom:6px; }
+  .hint { color:#64748b; font-size:12px; margin-top:6px; line-height:1.35; }
+  .row { display:grid; gap:10px; }
+  input, select, textarea {
+    width:100%;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid #d1d5db;
+    font-size:14px;
+    outline:none;
+  }
+  textarea { min-height: 120px; }
+  .readonly {
+    background:#f8fafc;
+    color:#334155;
+    cursor:not-allowed;
+  }
+  .pill { display:inline-flex; gap:8px; align-items:center; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:900; }
+  .pill-blue { background:#dbeafe; color:#1d4ed8; }
+  .pill-gray { background:#f1f5f9; color:#0f172a; }
+  .pill-green { background:#dcfce7; color:#166534; }
+  .pill-amber { background:#fef9c3; color:#854d0e; }
+
+  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  .btn {
+    border:1px solid #d1d5db;
+    background:#fff;
+    padding:10px 12px;
+    border-radius:12px;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    gap:8px;
+    align-items:center;
+    font-weight:900;
+  }
+  .btn-primary { border-color:#111827; background:#111827; color:#fff; }
+  .btn-danger { border-color:#9f1239; background:#9f1239; color:#fff; }
+  .btn-soft { background:#f9fafb; }
+
+  .two { display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+  @media (max-width: 900px){ .two{ grid-template-columns:1fr; } }
+
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+</style>
+
+<div class="wrap">
+
+  <div class="head">
+    <div>
+      <h2 class="title">Review & Edit</h2>
+      <div class="sub">
+        This is what will be sent. If you want rich formatting, links, or a clean layout — use <b>HTML</b> in the message box.
+        <br>
+        Quick rule: if this follow-up is <b>scheduled</b>, the scheduler controls timing. Don’t try to “hack” it by editing dates here.
+      </div>
+    </div>
+
+    <a class="btn btn-soft" href="{{ url_for('dashboard') }}">← Back</a>
+  </div>
+
+  <form method="POST" action="{{ url_for('preview_edit_all', fid=followup.id) }}">
+
+    <div class="grid">
+      <!-- LEFT: DETAILS -->
+      <div class="card row">
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <span class="pill pill-gray">🆔 ID: {{ followup.id }}</span>
+
+          {% if followup.schedule_enabled and followup.next_send_at %}
+            <span class="pill pill-blue">📅 Scheduled: {{ followup.next_send_at }}</span>
+          {% else %}
+            <span class="pill pill-gray">Not scheduled</span>
+          {% endif %}
+        </div>
+
+        <div class="two">
+          <div>
+            <label>Client name</label>
+            <input name="client_name" value="{{ followup.client_name or '' }}" placeholder="Client name">
+          </div>
+
+          <div>
+            <label>Follow-up type</label>
+            <input name="followup_type" value="{{ followup.followup_type or '' }}" placeholder="invoice / proposal / payment...">
+          </div>
+        </div>
+
+        <div class="two">
+          <div>
+            <label>Email</label>
+            <input name="email" value="{{ followup.email or '' }}" placeholder="client@email.com">
+            <div class="hint">Email is the safest channel for scheduler sends.</div>
+          </div>
+
+          <div>
+            <label>Phone</label>
+            <input name="phone" value="{{ followup.phone or '' }}" placeholder="+234... (optional)">
+            <div class="hint">Only useful if you later enable WhatsApp/SMS.</div>
+          </div>
+        </div>
+
+        <div>
+          <label>Preferred channel</label>
+          {% set pc = (followup.preferred_channel or 'email')|lower %}
+          <select name="preferred_channel">
+            <option value="email" {% if pc=='email' %}selected{% endif %}>Email</option>
+          </select>
+          <div class="hint">If you’re doing scheduler-only email right now, keep this on <b>Email</b>.</div>
+        </div>
+
+        <div>
+          <label>Due date (read-only)</label>
+
+          {# Use scheduler date if scheduled; otherwise show stored due_date #}
+          {% set due_display = followup.due_date %}
+          {% if followup.schedule_enabled and followup.next_send_at %}
+            {% set due_display = (followup.next_send_at|string)[:10] %}
+          {% endif %}
+
+          <input class="readonly" type="text" value="{{ due_display or '—' }}" readonly>
+
+          <div class="hint">
+            Due date is not editable here.
+            {% if followup.schedule_enabled and followup.next_send_at %}
+              This one is scheduled, so the date shown is pulled from the schedule.
+            {% else %}
+              To set a due date, do it from the Schedule page.
+            {% endif %}
+          </div>
+        </div>
+
+        <div>
+          <label>Description (plain text)</label>
+          <textarea name="description" rows="3" placeholder="Extra notes (optional)">{{ followup.description or '' }}</textarea>
+          <div class="hint">Use this for simple context. For polished output, use HTML in the message box.</div>
+        </div>
+      </div>
+
+      <!-- RIGHT: MESSAGE -->
+      <div class="card row">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+          <div style="font-weight:950;">Message</div>
+          <span class="pill pill-amber">💡 Tip: HTML gives you pro emails</span>
+        </div>
+
+        <div class="hint">
+          Want it to look clean in Gmail? Write HTML like:
+          <span class="mono">&lt;p&gt;Hi {{'{{name}}'}}&lt;/p&gt;</span>
+          <span class="mono">&lt;p&gt;Just checking in...&lt;/p&gt;</span>
+          <br>
+          Avoid scripts/iframes. Keep it simple: <b>p, b, i, a, ul, li, br</b>.
+        </div>
+
+        <textarea class="mono" name="message_override" rows="12" placeholder="Write HTML (recommended) or plain text...">{{ message or '' }}</textarea>
+
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">💾 Save changes</button>
+
+          <button class="btn btn-primary" type="submit"
+                  formaction="{{ url_for('send_followup', fid=followup.id) }}"
+                  formmethod="post"
+                  onclick="return confirm('Send now? This will send immediately.')">
+            📤 Send now
+          </button>
+
+          <button class="btn btn-danger" type="submit"
+                  formaction="{{ url_for('preview_reset', fid=followup.id) }}"
+                  formmethod="post"
+                  onclick="return confirm('Reset message override back to default/template?')">
+            ♻️ Reset message
+          </button>
+        </div>
+
+        <div class="hint">
+          If you’re scheduled: saving here updates what will be sent next time — it doesn’t change the schedule timing.
+        </div>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+{% endblock %}

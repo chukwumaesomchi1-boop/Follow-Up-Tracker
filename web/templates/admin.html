@@ -1,0 +1,31 @@
+<h2>Admin Dashboard</h2>
+
+<div>
+  <p>Total Users: {{ stats.users }}</p>
+  <p>Paid Users: {{ stats.paid }}</p>
+  <p>Pending Followups: {{ stats.pending }}</p>
+  <p>Completed: {{ stats.done }}</p>
+</div>
+
+<h3>Users</h3>
+<table>
+<tr>
+  <th>Email</th>
+  <th>Status</th>
+  <th>Trial End</th>
+</tr>
+
+{% for u in users %}
+<tr>
+  <td>{{ u.email }}</td>
+  <td>
+    {% if u.is_subscribed %}
+      PAID
+    {% else %}
+      TRIAL
+    {% endif %}
+  </td>
+  <td>{{ u.trial_end }}</td>
+</tr>
+{% endfor %}
+</table>

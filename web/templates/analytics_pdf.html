@@ -1,0 +1,20 @@
+<h2>Analytics Report</h2>
+<h3>Follow-ups Sent per Day</h3>
+<table border="1" cellspacing="0" cellpadding="5">
+<tr><th>Date</th><th>Follow-ups Sent</th></tr>
+{% for day, count in stats.sent_per_day %}
+<tr>
+<td>{{ day }}</td>
+<td>{{ count }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h3>Subscriptions</h3>
+<table border="1" cellspacing="0" cellpadding="5">
+<tr><th>Type</th><th>Users</th></tr>
+<tr><td>Paid</td><td>{{ stats.paid }}</td></tr>
+<tr><td>Trial</td><td>{{ stats.trial }}</td></tr>
+</table>
+<a href="{{ url_for('export_analytics_csv') }}" class="btn btn-primary">Export CSV</a>
+<a href="{{ url_for('export_analytics_pdf') }}" class="btn btn-secondary">Export PDF</a>

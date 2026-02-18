@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ template and "Edit" or "New" }} Email Template</h2>
+<form method="POST">
+    <label>Name</label>
+    <input type="text" name="name" value="{{ template.name if template else '' }}" required>
+
+    <label>Subject</label>
+    <input type="text" name="subject" value="{{ template.subject if template else '' }}" required>
+
+    <label>HTML Content</label>
+    <textarea name="html_content" rows="15">{{ template.html_content if template else '' }}</textarea>
+
+    <button type="submit">Save</button>
+</form>
+{% endblock %}

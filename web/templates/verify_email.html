@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .auth-wrap {
+    max-width:420px;
+    margin:40px auto;
+    background:#fff;
+    border:1px solid #e5e7eb;
+    border-radius:18px;
+    padding:22px;
+  }
+  h2 {
+    margin:0;
+    font-size:22px;
+    font-weight:900;
+  }
+  .sub {
+    margin-top:6px;
+    font-size:13px;
+    color:#64748b;
+    line-height:1.5;
+  }
+  .code-input {
+    width:100%;
+    padding:16px;
+    font-size:20px;
+    letter-spacing:6px;
+    text-align:center;
+    border-radius:12px;
+    border:1px solid #d1d5db;
+    margin-top:14px;
+  }
+  .btn-primary {
+    width:100%;
+    margin-top:16px;
+    padding:14px;
+    border-radius:12px;
+    border:0;
+    background:#111827;
+    color:#fff;
+    font-weight:900;
+    font-size:16px;
+    cursor:pointer;
+  }
+  .btn-soft {
+    width:100%;
+    margin-top:12px;
+    padding:14px;
+    border-radius:12px;
+    background:#fff;
+    border:1px solid #e5e7eb;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .hint {
+    margin-top:14px;
+    font-size:12px;
+    color:#64748b;
+    line-height:1.5;
+  }
+</style>
+
+<div class="auth-wrap">
+
+  <h2>Verify your email</h2>
+
+  <p class="sub">
+    We sent a <b>6-digit verification code</b> to<br>
+    <b>{{ email }}</b>
+  </p>
+
+  <form method="POST" action="{{ url_for('verify_email_submit') }}">
+    <input
+      name="otp"
+      inputmode="numeric"
+      pattern="[0-9]{6}"
+      maxlength="6"
+      placeholder="••••••"
+      required
+      class="code-input"
+    >
+
+    <button type="submit" class="btn-primary">
+      Verify email
+    </button>
+  </form>
+
+  <form method="POST" action="{{ url_for('verify_email_resend') }}">
+    <button id="resendBtn" type="submit" class="btn-soft">
+      Resend code
+    </button>
+  </form>
+
+  <div class="hint">
+    • Code expires after a short time<br>
+    • Check spam if you don’t see it<br>
+    • Resending too often is limited for security
+  </div>
+
+</div>
+
+<script>
+  // client-side cooldown (server still enforces real limit)
+  let secs = 60;
+  const btn = document.getElementById("resendBtn");
+  btn.disabled = true;
+
+  const timer = setInterval(() => {
+    secs--;
+    btn.textContent = secs > 0
+      ? `Resend code (${secs}s)`
+      : "Resend code";
+
+    if (secs <= 0) {
+      btn.disabled = false;
+      clearInterval(timer);
+    }
+  }, 1000);
+</script>
+
+{% endblock %}

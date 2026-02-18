@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .wrap { max-width: 900px; }
+  h2 { margin: 0 0 10px; font-size: 22px; font-weight: 950; }
+
+  .box {
+    border:1px solid #e5e7eb;
+    border-radius:16px;
+    padding:16px;
+    background:#fff;
+    margin: 14px 0;
+  }
+
+  .grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+  }
+  @media (max-width: 900px){ .grid { grid-template-columns:1fr; } }
+
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+  .muted { color:#64748b; font-size:13px; line-height: 1.45; }
+
+  .badge {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:6px 10px; border-radius:999px;
+    font-size:12px; font-weight:950;
+    border:1px solid #e5e7eb; background:#f8fafc; color:#0f172a;
+  }
+  .ok { border-color:#86efac; background:#f0fdf4; color:#14532d; }
+  .warn { border-color:#fde68a; background:#fffbeb; color:#7c2d12; }
+  .bad { border-color:#fecdd3; background:#fff1f2; color:#9f1239; }
+
+  .price { font-size:28px; font-weight:950; margin-top:6px; }
+  .pill {
+    display:inline-block; padding:2px 10px; border-radius:999px;
+    font-size:12px; font-weight:900;
+    background:#dcfce7; color:#166534;
+  }
+
+  .btn {
+    display:inline-flex; justify-content:center; align-items:center; gap:8px;
+    width:100%;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid #d1d5db;
+    background:#fff;
+    font-weight:900;
+    cursor:pointer;
+    text-decoration:none;
+  }
+  .btn-dark { border-color:#111827; background:#111827; color:#fff; }
+  .btn-blue { border-color:#0ea5e9; background:#0ea5e9; color:#fff; }
+  .btn-danger { border-color:#9f1239; background:#9f1239; color:#fff; }
+  .btn-soft { background:#f8fafc; }
+
+  .divider { height:1px; background:#e5e7eb; margin: 12px 0; }
+  ul { margin: 10px 0 0; padding-left: 18px; }
+  li { margin: 6px 0; }
+
+  .mini { font-size:12px; color:#64748b; margin-top:10px; }
+</style>
+
+<div class="wrap">
+  <h2>Billing</h2>
+
+  {# normalize inputs #}
+  {% set status = (subscription_status or '')|lower %}
+  {% set plan = (subscription_plan or '')|lower %}
+  {% set cur = (currency or 'NGN')|upper %}
+
+  {# -------- Current status card (ALWAYS show) -------- #}
+  <div class="box">
+    <div class="row">
+      <div style="font-weight:950; font-size:16px;">Current status</div>
+
+      {% if status == 'active' %}
+        <span class="badge ok">✅ Active</span>
+      {% elif status == 'canceling' %}
+        <span class="badge warn">⚠️ Cancels at period end</span>
+      {% elif trial_active %}
+        <span class="badge warn">🧪 Trial</span>
+      {% else %}
+        <span class="badge bad">No plan</span>
+      {% endif %}
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="muted">
+      {% if status == 'active' %}
+        Plan: <b>{{ plan|upper }}</b>
+        {% if current_period_end %}
+          · Renews: <b>{{ current_period_end }}</b>
+        {% endif %}
+        {% if cur %}
+          · Currency: <b>{{ cur }}</b>
+        {% endif %}
+
+      {% elif status == 'canceling' %}
+        Plan: <b>{{ plan|upper }}</b>
+        {% if current_period_end %}
+          · Ends: <b>{{ current_period_end }}</b>
+        {% endif %}
+        {% if cur %}
+          · Currency: <b>{{ cur }}</b>
+        {% endif %}
+        <div class="mini">You keep access until the end date. After that, your account goes back to free/trial rules.</div>
+
+      {% elif trial_active %}
+        Trial ends on <b>{{ trial_end }}</b>.
+        <div class="mini">Upgrade now so you don’t get interrupted.</div>
+
+      {% else %}
+        You’re on free mode. Pick a plan to unlock scheduler + unlimited follow-ups.
+      {% endif %}
+    </div>
+
+    {% if status in ['active','canceling'] %}
+      <div style="margin-top:12px;">
+        <form method="POST" action="{{ url_for('billing.cancel_subscription') }}">
+          <button class="btn btn-danger" type="submit"
+                  onclick="return confirm('Cancel at period end? You will keep access until the end date.')">
+            Cancel subscription
+          </button>
+        </form>
+        <div class="mini">Cancel doesn’t refund. It just stops renewal.</div>
+      </div>
+    {% endif %}
+  </div>
+
+  {# -------- Pricing cards -------- #}
+  <div class="grid">
+
+    <!-- Monthly -->
+    <div class="box">
+      <div class="row">
+        <h3 style="margin:0;">Monthly</h3>
+        {% if plan == 'monthly' and status in ['active','canceling'] %}
+          <span class="pill">Current</span>
+        {% endif %}
+      </div>
+
+      {% if cur == 'USD' %}
+        <div class="price">$9 <span class="muted">/ month</span></div>
+        <div class="muted">If you prefer NGN pricing, switch currency in your account settings (optional).</div>
+      {% else %}
+        <div class="price">₦12,600 <span class="muted">/ month</span></div>
+        <div class="muted">$9 USD equivalent</div>
+      {% endif %}
+
+      <ul class="muted">
+        <li>Unlimited follow-ups</li>
+        <li>Scheduler + templates</li>
+        <li>Email logs</li>
+      </ul>
+
+      {% if status in ['active','canceling'] %}
+        <div class="mini">You’re already subscribed. (Optional: add a “Change plan” flow later.)</div>
+      {% else %}
+        <form method="POST" action="{{ url_for('billing.subscribe') }}" style="margin-top:12px;">
+          <input type="hidden" name="plan" value="monthly">
+          <input type="hidden" name="currency" value="{{ cur }}">
+          <button class="btn btn-dark" type="submit">
+            {% if trial_active %}Upgrade now{% else %}Start Monthly{% endif %}
+          </button>
+        </form>
+      {% endif %}
+    </div>
+
+    <!-- Yearly -->
+    <div class="box">
+      <div class="row">
+        <h3 style="margin:0;">Yearly</h3>
+        <span class="pill">2 months free</span>
+      </div>
+
+      {% if plan == 'yearly' and status in ['active','canceling'] %}
+        <div class="mini"><b>Current plan</b></div>
+      {% endif %}
+
+      {% if cur == 'USD' %}
+        <div class="price">$90 <span class="muted">/ year</span></div>
+        <div class="muted">Best value.</div>
+      {% else %}
+        <div class="price">₦126,000 <span class="muted">/ year</span></div>
+        <div class="muted">$90 USD equivalent</div>
+      {% endif %}
+
+      <ul class="muted">
+        <li>Everything in Monthly</li>
+        <li>Best value</li>
+        <li>Lower churn</li>
+      </ul>
+
+      {% if status in ['active','canceling'] %}
+        <div class="mini">You’re already subscribed. (Optional: add a “Change plan” flow later.)</div>
+      {% else %}
+        <form method="POST" action="{{ url_for('billing.subscribe') }}" style="margin-top:12px;">
+          <input type="hidden" name="plan" value="yearly">
+          <input type="hidden" name="currency" value="{{ cur }}">
+          <button class="btn btn-blue" type="submit">
+            {% if trial_active %}Upgrade yearly{% else %}Start Yearly{% endif %}
+          </button>
+        </form>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+
+

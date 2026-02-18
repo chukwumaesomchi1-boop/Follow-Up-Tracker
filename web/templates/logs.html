@@ -1,0 +1,15 @@
+<h2>Message Logs</h2>
+<table>
+<tr><th>Sent At</th><th>Message</th></tr>
+{% for l in logs %}
+<tr>
+<td>{{ l.sent_at }}</td>
+<td>{{ l.message }}</td>
+</tr>
+{% endfor %}
+</table>
+<a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+<button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+    Send Now
+</button>
+<button title="Send this follow-up immediately">Send Now</button>

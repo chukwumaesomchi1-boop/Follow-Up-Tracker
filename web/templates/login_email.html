@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Continue with Email</h2>
+
+  <form method="post">
+    <input name="email" type="email" placeholder="you@example.com" required style="width: 320px; padding: 10px;">
+    <br><br>
+    <button type="submit">Send login link</button>
+  </form>
+
+  <p style="margin-top:12px; font-size: 14px;">
+    No password. We’ll email you a one-time login link.
+  </p>
+{% endblock %}

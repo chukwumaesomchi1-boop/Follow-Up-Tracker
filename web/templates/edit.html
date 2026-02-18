@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block content %}
+
+{# never let f be None #}
+{% set fc = f if f else {} %}
+
+<h2>Edit Follow-Up</h2>
+
+{% if fc and (fc.get('status') if fc.get is defined else fc.status) == 'failed' %}
+  <div style="background:#ffe6ea; border:1px solid #ffb3c1; padding:10px; margin:10px 0;">
+    <b>Send failed:</b>
+    {{
+      (
+        fc.get('last_error') if fc.get is defined else fc.last_error
+      ) or "Unknown error"
+    }}
+  </div>
+{% endif %}
+
+<form method="post" id="followupForm">
+  <input
+    name="client_name"
+    placeholder="Client name"
+    value="{{ fc.get('client_name','') if fc.get is defined else (fc.client_name if fc.client_name is defined else '') }}"
+    required
+  ><br>
+
+  <label>Send via</label>
+  {% set pref = (fc.get('preferred_channel','whatsapp') if fc.get is defined else (fc.preferred_channel if fc.preferred_channel is defined else 'whatsapp')) %}
+  <select name="preferred_channel" id="preferred_channel" required>
+    <option value="whatsapp" {% if pref == 'whatsapp' %}selected{% endif %}>WhatsApp</option>
+    <option value="sms" {% if pref == 'sms' %}selected{% endif %}>SMS</option>
+    <option value="email" {% if pref == 'email' %}selected{% endif %}>Email</option>
+  </select>
+
+  <p style="color:#666; margin-top:6px;">
+    WhatsApp / SMS → phone required (international format). Email → email required.
+  </p>
+
+  <div id="email_wrap">
+    <input
+      name="email"
+      id="email"
+      type="email"
+      placeholder="Email"
+      value="{{ fc.get('email','') if fc.get is defined else (fc.email if fc.email is defined else '') }}"
+    ><br>
+  </div>
+
+  <div id="phone_wrap">
+    <input
+      type="text"
+      name="phone"
+      id="phone"
+      placeholder="Phone number e.g. +2348012345678"
+      inputmode="tel"
+      value="{{ fc.get('phone','') if fc.get is defined else (fc.phone if fc.phone is defined else '') }}"
+      pattern="^\+\d{8,15}$"
+      title="Enter a valid phone number in international format, e.g. +2348012345678"
+    ><br>
+  </div>
+
+  <label>Follow-up type</label>
+  {% set ftype = (fc.get('followup_type','') if fc.get is defined else (fc.followup_type if fc.followup_type is defined else '')) %}
+  <select name="followup_type" required>
+    <option value="" {% if not ftype %}selected{% endif %}>Select follow-up type</option>
+    <option value="invoice" {% if ftype == 'invoice' %}selected{% endif %}>Invoice</option>
+    <option value="proposal" {% if ftype == 'proposal' %}selected{% endif %}>Proposal</option>
+    <option value="payment" {% if ftype == 'payment' %}selected{% endif %}>Payment</option>
+    <option value="meeting" {% if ftype == 'meeting' %}selected{% endif %}>Meeting</option>
+    <option value="email" {% if ftype == 'email' %}selected{% endif %}>Email</option>
+    <option value="other" {% if ftype == 'other' %}selected{% endif %}>Other</option>
+  </select><br>
+
+  <!-- ✅ Template selector + override -->
+  <label>Template (optional)</label>
+  <select id="template_stage" style="margin-bottom:10px;">
+    <option value="">No template</option>
+    <option value="0">Stage 0</option>
+    <option value="1">Stage 1</option>
+    <option value="2">Stage 2</option>
+    <option value="3">Stage 3</option>
+  </select><br>
+
+  <label>Message override (optional)</label>
+  <textarea
+    name="message_override"
+    id="message_override"
+    placeholder="Optional: custom message (overrides generated template)"
+    rows="4"
+  >{{ fc.get('message_override','') if fc.get is defined else (fc.message_override if fc.message_override is defined else '') }}</textarea><br>
+
+  <textarea
+    name="description"
+    placeholder="e.g. Follow up on proposal sent last Friday, confirm next steps..."
+    rows="4"
+  >{{ fc.get('description','') if fc.get is defined else (fc.description if fc.description is defined else '') }}</textarea><br>
+
+  <input
+    name="due_date"
+    type="date"
+    value="{{ fc.get('due_date','') if fc.get is defined else (fc.due_date if fc.due_date is defined else '') }}"
+    required
+  ><br>
+
+  <input
+    name="recurring_interval"
+    type="number"
+    min="0"
+    value="{{ fc.get('recurring_interval','') if fc.get is defined else (fc.recurring_interval if fc.recurring_interval is defined else '') }}"
+    placeholder="Recurring interval (days, optional)"
+  ><br>
+
+  <button type="submit">Save Changes</button>
+  <a href="{{ url_for('dashboard') }}" style="margin-left:10px;">Cancel</a>
+</form>
+
+<script>
+  async function loadTemplateStage(stage) {
+    if (!stage) return;
+    try {
+      const res = await fetch(`/api/template/${stage}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.content) {
+        // Only fill if empty (don’t overwrite user typing)
+        const box = document.getElementById("message_override");
+        if (box && !box.value.trim()) box.value = data.content;
+      }
+    } catch (e) {}
+  }
+
+  function syncChannelRules() {
+    const channel = document.getElementById("preferred_channel").value;
+    const email = document.getElementById("email");
+    const phone = document.getElementById("phone");
+    const emailWrap = document.getElementById("email_wrap");
+    const phoneWrap = document.getElementById("phone_wrap");
+
+    if (channel === "email") {
+      email.required = true;
+      phone.required = false;
+
+      email.disabled = false;
+      phone.disabled = true;
+
+      emailWrap.style.display = "block";
+      phoneWrap.style.display = "none";
+    } else {
+      // whatsapp OR sms
+      phone.required = true;
+      email.required = false;
+
+      phone.disabled = false;
+      email.disabled = true;
+
+      phoneWrap.style.display = "block";
+      emailWrap.style.display = "none";
+    }
+  }
+
+  const sel = document.getElementById("template_stage");
+  sel?.addEventListener("change", (e) => loadTemplateStage(e.target.value));
+
+  document.getElementById("preferred_channel")
+    .addEventListener("change", syncChannelRules);
+
+  syncChannelRules();
+</script>
+
+{% endblock %}

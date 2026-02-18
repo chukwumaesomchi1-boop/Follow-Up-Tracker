@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% set fc = f if f else {} %}
+{% set mode = mode if mode is defined else ('edit' if fc.get('id') else 'add') %}
+
+<style>
+  .page-title { font-size:20px; font-weight:950; margin:0 0 6px; }
+  .page-sub { color:#64748b; font-size:13px; margin:0 0 14px; line-height:1.45; }
+
+  .grid { display:grid; grid-template-columns: 1fr 1fr; gap:18px; align-items:start; }
+  @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    border:1px solid #e5e7eb;
+    border-radius:16px;
+    padding:16px;
+    background:#fff;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.04);
+  }
+
+  .section-title { font-weight:950; margin:0 0 10px; display:flex; gap:10px; align-items:center; }
+  .muted { color:#64748b; font-size:12px; line-height:1.45; }
+  .hint { margin-top:8px; padding:10px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; color:#334155; font-size:12px; }
+
+  label { display:block; font-weight:900; font-size:13px; margin:12px 0 6px; }
+  input, select, textarea {
+    width:100%;
+    padding:12px 12px;
+    border:1px solid #d1d5db;
+    border-radius:14px;
+    font-size:14px;
+    outline:none;
+    background:#fff;
+  }
+  textarea { resize: vertical; }
+
+  .row { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+
+  .actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:14px; }
+  .btn {
+    border:1px solid #d1d5db;
+    background:#fff;
+    padding:10px 12px;
+    border-radius:14px;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    gap:8px;
+    align-items:center;
+    font-weight:950;
+  }
+  .btn-primary { border-color:#111827; background:#111827; color:#fff; }
+  .btn-soft { background:#f9fafb; }
+
+  /* Preview */
+  .preview-wrap { display:grid; grid-template-columns: 1.2fr .8fr; gap:18px; align-items:start; }
+  @media (max-width: 980px) { .preview-wrap { grid-template-columns: 1fr; } }
+
+  .phone {
+    border:1px solid #e5e7eb;
+    border-radius:24px;
+    background:#0b1220;
+    padding:12px;
+    box-shadow: 0 12px 30px rgba(0,0,0,.12);
+  }
+  .phone-screen {
+    background:#cbd5e1;
+    border-radius:18px;
+    padding:12px;
+    min-height:420px;
+  }
+  .phone-top {
+    display:flex;
+    justify-content:space-between;
+    font-size:12px;
+    color:#334155;
+    margin-bottom:10px;
+  }
+  .bubble {
+    background:#ffffff;
+    border:1px solid #e5e7eb;
+    border-radius:16px;
+    padding:10px 12px;
+    max-width: 100%;
+    white-space:pre-wrap;
+    line-height:1.45;
+  }
+  .bubble small { color:#64748b; display:block; margin-bottom:6px; }
+  .chip {
+    display:inline-block;
+    padding:2px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:950;
+    background:#e2e8f0;
+    color:#0f172a;
+    border:1px solid #cbd5e1;
+  }
+
+  .mini-list { margin:0; padding-left:16px; }
+  .mini-list li { margin:6px 0; }
+</style>
+
+<div style="margin-bottom:12px;">
+  <div class="page-title">
+    {{ "Edit Follow-Up" if mode == "edit" else "Add Follow-Up" }}
+  </div>
+  <p class="page-sub">
+    Create the follow-up first. Scheduling happens on the <b>Schedule</b> page (so you don’t accidentally send into the past).
+  </p>
+</div>
+
+<form method="post" id="followupForm">
+  <input type="hidden" name="preferred_channel" value="email">
+
+  <div class="grid">
+
+    <!-- LEFT: DETAILS -->
+    <div class="card">
+      <div class="section-title">🧾 Follow-up details</div>
+      <div class="muted">
+        Keep this clean. The system uses this info for the email subject + preview.
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Client name</label>
+          <input
+            name="client_name"
+            placeholder="e.g. Nelly"
+            value="{{ fc.get('client_name','') }}"
+            required
+            title="Client’s name (used in email greeting if template is used)"
+          >
+          <div class="muted">Used as <b>{{'{{name}}'}}</b> when templates are used.</div>
+        </div>
+
+        <div>
+          <label>Client email</label>
+          <input
+            name="email"
+            type="email"
+            placeholder="e.g. nelly@email.com"
+            value="{{ fc.get('email','') }}"
+            required
+            title="Where the follow-up will be sent"
+          >
+          <div class="muted">Email only for now.</div>
+        </div>
+      </div>
+
+      <label>Follow-up type</label>
+      {% set ftype = fc.get('followup_type','') %}
+      <select name="followup_type" required title="Used in the email subject">
+        <option value="">Select follow-up type</option>
+        <option value="invoice" {% if ftype == 'invoice' %}selected{% endif %}>Invoice</option>
+        <option value="proposal" {% if ftype == 'proposal' %}selected{% endif %}>Proposal</option>
+        <option value="payment" {% if ftype == 'payment' %}selected{% endif %}>Payment</option>
+        <option value="meeting" {% if ftype == 'meeting' %}selected{% endif %}>Meeting</option>
+        <option value="email" {% if ftype == 'email' %}selected{% endif %}>Email</option>
+        <option value="other" {% if ftype == 'other' %}selected{% endif %}>Other</option>
+      </select>
+      <div class="muted">Subject will be: <b>Follow-up: {type}</b></div>
+
+      <label>Personal message (optional)</label>
+      <div class="muted" style="margin-bottom:8px;">
+        If you type here, scheduler sends it <b>exactly</b>. No template overrides.
+      </div>
+      <textarea
+        id="message_override"
+        name="message_override"
+        rows="5"
+        placeholder="Write what you want the client to receive..."
+        title="Highest priority message"
+      >{{ fc.get('message_override','') }}</textarea>
+
+      <label>Extra notes (optional)</label>
+      <div class="muted" style="margin-bottom:8px;">
+        Used only if personal message is empty.
+      </div>
+      <textarea
+        name="description"
+        rows="4"
+        placeholder="Extra notes (optional)"
+        title="Fallback content if personal message is empty"
+      >{{ fc.get('description','') }}</textarea>
+
+      <div class="hint">
+        <b>Send priority order:</b><br>
+        1) Personal message → 2) Extra notes → 3) Scheduler template
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" type="submit" title="Save this follow-up">
+          💾 {{ "Save Changes" if mode == "edit" else "Save Follow-Up" }}
+        </button>
+
+        <a class="btn" href="{{ url_for('dashboard') }}" title="Back to dashboard">
+          ← Cancel
+        </a>
+      </div>
+
+      <div class="muted" style="margin-top:10px;">
+        After saving: go to <b>Schedule</b> to choose date + recurrence safely.
+      </div>
+    </div>
+
+    <!-- RIGHT: LIVE PREVIEW -->
+    <div class="card">
+      <div class="section-title">📲 Live preview</div>
+      <div class="muted" style="margin-bottom:10px;">
+        This is what the client receives (based on your message fields).
+      </div>
+
+      <div class="preview-wrap">
+        <div>
+          <div class="muted" style="margin-bottom:8px;">
+            Channel <span class="chip" id="pvChannel">EMAIL</span>
+          </div>
+
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="phone-top">
+                <span id="pvTime">--:--</span>
+                <span>📶 🔋</span>
+              </div>
+
+              <div class="bubble">
+                <small><b id="pvSubject">Follow-up</b></small>
+                <div id="pvBody">Type your personal message to preview it here…</div>
+              </div>
+
+              <div class="muted" style="margin-top:10px;">
+                If both fields are empty, scheduler will use your <b>scheduler template</b>.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="muted">
+          <b>What to know</b>
+          <ul class="mini-list">
+            <li><b>Personal message</b> = exact send.</li>
+            <li><b>Extra notes</b> = fallback.</li>
+            <li><b>Empty</b> = scheduler template.</li>
+            <li>Scheduling is separate to avoid “oops it sent instantly”.</li>
+          </ul>
+
+          <div class="hint">
+            Want the default template? Edit it in:
+            <b>Scheduler Templates</b>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</form>
+
+<script>
+  function pad2(n){ return String(n).padStart(2, "0"); }
+  function updateTime(){
+    const d = new Date();
+    const el = document.getElementById("pvTime");
+    if (el) el.textContent = pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+  }
+  updateTime();
+  setInterval(updateTime, 30000);
+
+  const elType = document.querySelector('[name="followup_type"]');
+  const elDesc = document.querySelector('[name="description"]');
+  const elOverride = document.querySelector('[name="message_override"]');
+  const elChan = document.querySelector('[name="preferred_channel"]'); // hidden
+
+  function refreshPreview(){
+    const type = (elType && elType.value || "follow-up").trim();
+    const override = (elOverride && elOverride.value || "").trim();
+    const desc = (elDesc && elDesc.value || "").trim();
+
+    const msg = override || desc || "Type your personal message to preview it here…";
+
+    const s = document.getElementById("pvSubject");
+    const b = document.getElementById("pvBody");
+    const c = document.getElementById("pvChannel");
+
+    if (s) s.textContent = "Follow-up: " + type;
+    if (b) b.textContent = msg;
+
+    const ch = (elChan && elChan.value || "email").toLowerCase();
+    if (c) c.textContent = ch.toUpperCase();
+  }
+
+  if (elType) elType.addEventListener("change", refreshPreview);
+  if (elDesc) elDesc.addEventListener("input", refreshPreview);
+  if (elOverride) elOverride.addEventListener("input", refreshPreview);
+
+  refreshPreview();
+</script>
+
+{% endblock %}

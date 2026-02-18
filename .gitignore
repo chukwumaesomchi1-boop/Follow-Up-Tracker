@@ -1,0 +1,43 @@
+# secrets
+.env
+*.env
+Credentials.json
+credentials.json
+credentials*.json
+client_secret*.json
+token.json
+
+# databases
+*.db
+*.sqlite
+*.sqlite3
+
+# python junk
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# venv
+venv/
+.venv/
+
+# uploads / temp (optional)
+uploads/
+*.csv
+.env
+Credentials.json
+credentials.json
+*.db
+__pycache__/
+venv/
+.venv/
+.env
+*.db
+__pycache__/
+*.pyc
+venv/
+Credentials.json
+credentials.json
+*.json
+uploads/

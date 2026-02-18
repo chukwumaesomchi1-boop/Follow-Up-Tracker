@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{% block title %}Follow-Up Tracker{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
+  <meta name="theme-color" content="{{ branding.color }}" />
+
+  <link
+    href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css"
+    rel="stylesheet"
+  />
+
+  <style>
+    :root {
+      --primary: {{ branding.color }};
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #0b1220;
+      --muted: #64748b;
+      --border: #e5e7eb;
+
+      --sb: #0f172a;
+      --sbText: #e5e7eb;
+      --sbHover: rgba(255, 255, 255, 0.08);
+
+      --radius: 14px;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      --shadowSoft: 0 10px 24px rgba(0, 0, 0, 0.08);
+
+      --sbW: 260px;
+      --sbWCollapsed: 84px;
+      --topH: 62px;
+
+      --anim: 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .layout { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: var(--sbW);
+      background: var(--sb);
+      color: #fff;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      transition: width var(--anim);
+      overflow: hidden;
+    }
+
+    body.sb-collapsed .sidebar { width: var(--sbWCollapsed); }
+
+    .brand { display: flex; gap: 12px; align-items: center; padding: 8px 10px; border-radius: 12px; transition: background var(--anim); }
+    .brand:hover { background: rgba(255, 255, 255, 0.06); }
+    .brand a { display: flex; gap: 12px; align-items: center; text-decoration: none; color: inherit; width: 100%; }
+    .brand img { width: 44px; height: 44px; object-fit: cover; border-radius: 12px; background: #fff; flex: 0 0 auto; }
+    .brand h1 { font-size: 14px; margin: 0; line-height: 1.2; font-weight: 900; letter-spacing: 0.2px; white-space: nowrap; }
+    body.sb-collapsed .brand h1 { display: none; }
+
+    .sb-controls { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 6px; }
+    .sb-toggle {
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      transition: transform var(--anim), background var(--anim);
+    }
+    .sb-toggle:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-1px); }
+    .sb-toggle:active { transform: translateY(0px) scale(0.98); }
+    .sb-toggle span { font-size: 13px; opacity: 0.95; }
+    body.sb-collapsed .sb-toggle span { display: none; }
+
+    .nav { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+    .nav a {
+      text-decoration: none;
+      color: var(--sbText);
+      padding: 10px 12px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 14px;
+      position: relative;
+      transition: background var(--anim), color var(--anim), transform var(--anim);
+    }
+    .nav a:hover { background: var(--sbHover); color: #fff; transform: translateY(-1px); }
+    .nav a:active { transform: translateY(0px) scale(0.99); }
+    .nav .icon { width: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; flex: 0 0 auto; }
+    .nav .label { white-space: nowrap; }
+    body.sb-collapsed .nav .label { display: none; }
+
+    .nav a[data-tip]::after {
+      content: attr(data-tip);
+      position: absolute;
+      left: calc(100% + 10px);
+      top: 50%;
+      transform: translateY(-50%);
+      background: #0b1220;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      box-shadow: var(--shadowSoft);
+      transition: opacity var(--anim), transform var(--anim);
+      transform: translateY(-50%) translateX(-6px);
+      z-index: 9999;
+    }
+    .nav a[data-tip]::before {
+      content: "";
+      position: absolute;
+      left: calc(100% + 2px);
+      top: 50%;
+      transform: translateY(-50%);
+      border: 7px solid transparent;
+      border-right-color: #0b1220;
+      opacity: 0;
+      transition: opacity var(--anim);
+      pointer-events: none;
+    }
+    body.sb-collapsed .nav a:hover::after,
+    body.sb-collapsed .nav a:hover::before { opacity: 1; }
+
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: var(--topH);
+    }
+
+    .topbar .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      font-weight: 900;
+      font-size: 13px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .notif-wrap { position: relative; }
+    #notif-bell {
+      background: var(--primary);
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      border-radius: 999px;
+      padding: 10px 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 900;
+      transition: transform var(--anim), filter var(--anim);
+    }
+    #notif-bell:hover { transform: translateY(-1px); filter: brightness(1.05); }
+    #notif-bell:active { transform: translateY(0px) scale(0.98); }
+
+    #notif-count {
+      display: none;
+      background: #ef4444;
+      color: #fff;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 18px;
+    }
+
+    #notif-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 52px;
+      width: min(360px, 90vw);
+      max-height: 380px;
+      overflow-y: auto;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 8px;
+    }
+
+    .content {
+      padding: 18px;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      animation: pageIn 240ms ease-out;
+    }
+
+    @keyframes pageIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0px); }
+    }
+
+    .toast-stack { display: grid; gap: 10px; margin: 12px 0 16px; }
+    .toast {
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-weight: 900;
+      border: 1px solid var(--border);
+      background: #fff;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      animation: toastIn 200ms ease-out;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0px); }
+    }
+    .toast .msg { font-weight: 900; }
+    .toast .x { border: 0; background: transparent; cursor: pointer; font-size: 16px; line-height: 1; padding: 2px 6px; opacity: 0.7; }
+    .toast .x:hover { opacity: 1; }
+    .toast.success { border-color: #86efac; background: #f0fdf4; }
+    .toast.warning { border-color: #fde68a; background: #fffbeb; }
+    .toast.danger { border-color: #fca5a5; background: #fef2f2; }
+    .toast.info { border-color: #93c5fd; background: #eff6ff; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .content { padding: 14px; }
+      .topbar { padding: 10px 12px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+  </style>
+
+  <!-- ✅ Socket.IO v4 client (matches python-socketio v5) -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    // ✅ Create ONE shared socket for the whole app (polling only, no websocket upgrade)
+    window.appSocket = io({
+      transports: ["polling"],
+      upgrade: false
+    });
+  </script>
+</head>
+
+<body>
+  <div class="layout">
+    <aside class="sidebar" aria-label="Sidebar navigation">
+      <div class="brand">
+        <a href="{{ url_for('dashboard') }}" title="Go to dashboard">
+          <img src="{{ branding.logo }}" alt="Logo" />
+          <h1>Client Follow-Up<br />Tracker</h1>
+        </a>
+      </div>
+
+      <div class="sb-controls">
+        <button class="sb-toggle" id="sbToggle" type="button" title="Collapse sidebar">
+          ☰ <span>Collapse</span>
+        </button>
+      </div>
+
+      <nav class="nav">
+        <a href="{{ url_for('dashboard') }}" data-tip="Overview + what’s due next"><span class="icon">🏠</span> <span class="label">Dashboard</span></a>
+        <a href="{{ url_for('add') }}" data-tip="Create a new follow-up"><span class="icon">➕</span> <span class="label">Add Follow-up</span></a>
+        <a href="{{ url_for('import_csv') }}" data-tip="Bulk import from CSV"><span class="icon">📥</span> <span class="label">Import CSV</span></a>
+        <a href="{{ url_for('schedule') }}" data-tip="Schedule sends + recurring rules"><span class="icon">🗓</span> <span class="label">Schedule</span></a>
+        <a href="{{ url_for('template_scheduler') }}" data-tip="Edit the scheduler HTML template"><span class="icon">🧩</span> <span class="label">Scheduler Template</span></a>
+        <a href="{{ url_for('settings') }}" data-tip="Email + account preferences"><span class="icon">⚙️</span> <span class="label">Settings</span></a>
+        <a href="{{ url_for('branding') }}" data-tip="Logo, footer, support email"><span class="icon">🎨</span> <span class="label">Branding</span></a>
+        <a href="{{ url_for('billing') }}" data-tip="Trial + subscription status"><span class="icon">💳</span> <span class="label">Billing</span></a>
+        <a href="{{ url_for('logout') }}" data-tip="Log out safely"><span class="icon">🚪</span> <span class="label">Logout</span></a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="pill">✨ Stay on top of your follow-ups</div>
+
+        <div class="notif-wrap">
+          <button id="notif-bell" type="button" title="Notifications">
+            🔔 <span id="notif-count"></span>
+          </button>
+          <div id="notif-dropdown" aria-label="Notifications dropdown"></div>
+        </div>
+      </div>
+
+      <div class="content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="toast-stack" id="toastStack">
+              {% for category, message in messages %}
+                <div class="toast {{ category }}">
+                  <div class="msg">{{ message }}</div>
+                  <button class="x" type="button" aria-label="Dismiss">✕</button>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+
+  <script>
+    // ---- Sidebar collapse (desktop) ----
+    const sbToggle = document.getElementById("sbToggle");
+
+    function applySidebarState(v) {
+      if (v === "1") document.body.classList.add("sb-collapsed");
+      else document.body.classList.remove("sb-collapsed");
+    }
+
+    applySidebarState(localStorage.getItem("sbCollapsed") || "0");
+
+    sbToggle?.addEventListener("click", () => {
+      const isCollapsed = document.body.classList.toggle("sb-collapsed");
+      localStorage.setItem("sbCollapsed", isCollapsed ? "1" : "0");
+    });
+
+    // ---- Toast dismiss ----
+    document.querySelectorAll(".toast .x").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const t = btn.closest(".toast");
+        if (!t) return;
+        t.style.opacity = "0";
+        t.style.transform = "translateY(-6px)";
+        setTimeout(() => t.remove(), 160);
+      });
+    });
+
+    // ---- Notifications ----
+    const dropdown = document.getElementById("notif-dropdown");
+    const bell = document.getElementById("notif-bell");
+    const count = document.getElementById("notif-count");
+
+    function setBadge(n) {
+      if (!count) return;
+      if (!n || n <= 0) {
+        count.style.display = "none";
+        count.textContent = "";
+      } else {
+        count.style.display = "inline-block";
+        count.textContent = n;
+      }
+    }
+
+    bell?.addEventListener("click", () => {
+      if (!dropdown) return;
+      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+      if (dropdown.style.display === "block") loadNotifications();
+    });
+
+    async function loadNotifications() {
+      try {
+        const res = await fetch("/notifications");
+        if (dropdown) dropdown.innerHTML = await res.text();
+
+        const cRes = await fetch("/api/notifications/count");
+        const cData = await cRes.json();
+        setBadge(cData.count || 0);
+      } catch (e) {
+        console.error("Notif load failed", e);
+      }
+    }
+
+  //   loadNotifications();
+  //   window.appSocket?.on("new_notification", loadNotifications);
+
+  //   document.addEventListener("click", (e) => {
+  //     if (!dropdown || !bell) return;
+  //     if (!dropdown.contains(e.target) && !bell.contains(e.target)) {
+  //       dropdown.style.display = "none";
+  //     }
+  //   });
+  // </script>
+
+  <!-- CSV import progress (only runs on the import page because the elements won’t exist elsewhere) -->
+  <script>
+    const form = document.querySelector('form[action="{{ url_for("import_csv_mapped_start") }}"]');
+    const btn = form?.querySelector("button[type='submit']");
+    const progressWrap = document.getElementById("progressWrap");
+    const pctText = document.getElementById("pctText");
+    const rowText = document.getElementById("rowText");
+    const bar = document.getElementById("bar");
+
+    form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Importing…";
+      }
+      if (progressWrap) progressWrap.style.display = "block";
+      if (pctText) pctText.textContent = "0%";
+      if (rowText) rowText.textContent = "0 / 0 rows";
+      if (bar) bar.style.width = "0%";
+
+      const fd = new FormData(form);
+
+      const res = await fetch("{{ url_for('import_csv_mapped_start') }}", {
+        method: "POST",
+        body: fd,
+      });
+
+      const data = await res.json();
+      if (!data.ok) {
+        alert("Import failed to start: " + (data.error || "unknown_error"));
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "Import CSV";
+        }
+        if (progressWrap) progressWrap.style.display = "none";
+        return;
+      }
+
+      const jobId = data.job_id;
+
+      // ✅ Use the shared socket
+      window.appSocket.emit("join_import", { job_id: jobId });
+
+      window.appSocket.on("import_progress", (p) => {
+        if (p.job_id !== jobId) return;
+        const pct = Number(p.pct || 0);
+        if (pctText) pctText.textContent = pct + "%";
+        if (rowText) rowText.textContent = `${p.done || 0} / ${p.total || 0} rows`;
+        if (bar) bar.style.width = pct + "%";
+      });
+
+      window.appSocket.on("import_done", (d) => {
+        if (d.job_id !== jobId) return;
+        window.location.href = "{{ url_for('dashboard') }}";
+      });
+
+      window.appSocket.on("import_error", (d) => {
+        if (d.job_id !== jobId) return;
+        alert("Import failed: " + (d.error || "unknown_error"));
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "Import CSV";
+        }
+      });
+    });
+  </script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/static/service-worker.js")
+        .catch((err) => console.error("SW Registration failed:", err));
+    }
+  </script>
+</body>
+</html>
