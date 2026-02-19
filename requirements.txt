@@ -50,4 +50,5 @@ webencodings
 tqdm>=4.67.3
 APScheduler>=3.10.0,<4
 bleach==6.1.0
+flask-socketio==6.3.0
 
