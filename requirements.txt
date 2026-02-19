@@ -2,54 +2,49 @@
 Flask>=2.3,<3
 gunicorn>=21.0
 
-# Web concurrency
+# Concurrency / WebSocket
 gevent>=23.12.0
 gevent-websocket>=0.10.1
 
 # Auth & API
 Authlib==1.3.0
 requests==2.31.0
-google-auth
-google-auth-oauthlib
-google-api-python-client
+google-auth==2.48.0
+google-auth-oauthlib==1.2.4
+google-api-python-client==2.190.0
 requests-oauthlib>=2.0.0
 stripe>=14,<15
 
-# PDF / Rendering
-xhtml2pdf==0.2.8
-reportlab==3.6.12
-python-bidi==0.4.2
-pyHanko==0.12.1
-pyhanko-certvalidator==0.19.8
-pypdf>=3.1.0,<6.0.0
+# Images / text rendering
+Pillow>=10.0.0
 arabic-reshaper>=3.0.0
 html5lib>=1.1
-Pillow>=10.0.0
 
-# Environment management
+# Environment variables
 python-dotenv>=1.0
 
-# Misc / Safe deps
-bleach==6.1.0
-cachetools
-pyasn1
-pyasn1-modules
-rsa
-httplib2
-google-auth-httplib2
-google-api-core
-uritemplate
-googleapis-common-protos
-protobuf
-proto-plus
-pyparsing
-typing_extensions
-charset-normalizer
-idna
-urllib3
-certifi
+# Google API support
+cachetools>=2.0.0,<6.0
+pyasn1>=0.6.2
+pyasn1-modules>=0.4.2
+rsa>=3.1.4,<5
+httplib2>=0.15.0,<1.dev0
+google-auth-httplib2>=0.1.0
+google-api-core>=1.31.5,<3.0.0
+uritemplate>=3.0.1,<5
+googleapis-common-protos>=1.56.3,<2.0.0
+protobuf>=4.25.8,<7.0.0
+proto-plus>=1.22.3,<2.0.0
+pyparsing>=3.1,<4
+typing_extensions>=4.5.0,<5.0.0
+
+# Misc safe dependencies
+charset-normalizer>=2,<4
+idna>=2.5,<4
+urllib3>=1.21.1,<3
+certifi>=2017.4.17
 greenlet>=3.3.1
 zope.event
 zope.interface
 webencodings
-
+tqdm>=4.67.3
