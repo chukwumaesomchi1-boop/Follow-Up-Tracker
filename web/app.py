@@ -28,7 +28,7 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import stripe
-from xhtml2pdf import pisa
+#  from xhtml2pdf import pisa
 from google_auth_oauthlib.flow import Flow
 # from auth_utils import start_email_verification
 from database import init_db, get_connection, dict_connection
