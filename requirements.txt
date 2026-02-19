@@ -17,6 +17,7 @@ stripe>=14,<15
 
 # PDF / Rendering
 xhtml2pdf==0.2.8
+reportlab==3.6.12
 python-bidi==0.4.2
 pyHanko==0.12.1
 pyhanko-certvalidator==0.19.8
