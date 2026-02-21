@@ -2325,7 +2325,8 @@ def gmail_callback():
         state=state,
     )
     # flow.redirect_uri = url_for("gmail_callback", _external=True)
-    flow.redirect_uri = os.getenv("APP_BASE_URL") + "/auth/google/callback"
+    flow.redirect_uri = os.getenv("APP_BASE_URL") + "/gmail/callback"
+    
     try:
         flow.fetch_token(authorization_response=request.url)
     except RefreshError:
