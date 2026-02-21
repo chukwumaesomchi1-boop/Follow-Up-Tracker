@@ -2271,13 +2271,14 @@ def gmail_connect():
         scopes=SCOPES,
     )
 
-    flow.redirect_uri = url_for("gmail_callback", _external=True)
+    flow.redirect_uri = os.getenv("APP_BASE_URL") + "/gmail/callback"
 
     auth_url, state = flow.authorization_url(
         access_type="offline",
         include_granted_scopes=False,  # 🔥 MUST BE FALSE
         prompt="consent",              # 🔥 forces fresh refresh token
     )
+    
 
     session["gmail_oauth_state"] = state
     return redirect(auth_url)
@@ -2323,8 +2324,8 @@ def gmail_callback():
         scopes=SCOPES,  # ONLY gmail.send
         state=state,
     )
-    flow.redirect_uri = url_for("gmail_callback", _external=True)
-
+    # flow.redirect_uri = url_for("gmail_callback", _external=True)
+    flow.redirect_uri = os.getenv("APP_BASE_URL") + "/gmail/callback"
     try:
         flow.fetch_token(authorization_response=request.url)
     except RefreshError:
