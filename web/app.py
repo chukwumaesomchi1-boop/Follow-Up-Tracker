@@ -1291,7 +1291,7 @@ import os
 
 def send_email_smtp(to_email, subject, body_text, body_html=None):
     host = os.getenv("SMTP_HOST")
-    port = int(os.getenv("SMTP_PORT", "465"))
+    port = int(os.getenv("SMTP_PORT", "587"))
     user = os.getenv("SMTP_USER")
     password = os.getenv("SMTP_PASS")
 
