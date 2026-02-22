@@ -3,219 +3,190 @@
 {% block content %}
 
 <style>
-  /* Status pills */
-  .pill { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:900; }
-  .pill-pending { background:#eef2ff; color:#3730a3; }
-  .pill-sent { background:#dcfce7; color:#166534; }
-  .pill-failed { background:#ffe4e6; color:#9f1239; }
-  .pill-done { background:#f3f4f6; color:#374151; }
-  .pill-scheduled { background:#dbeafe; color:#1d4ed8; }
-  .pill-replied { background:#ecfdf5; color:#047857; }
-  .pill-running { background:#fef9c3; color:#854d0e; }
-  .pill-passed { background:#e5e7eb; color:#111827; }
-
-  /* Cards / UI */
-  .box { border:1px solid #e5e7eb; border-radius:14px; padding:14px; margin:14px 0; background:#fff; }
-  .box-danger { border-color:#fecdd3; background:#fff1f2; }
-  .box-title { font-weight:950; margin-bottom:6px; }
-  .muted { font-size:12px; opacity:.8; }
-  .actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-
-  .btn {
-    border:1px solid #d1d5db;
-    background:#fff;
-    padding:8px 12px;
-    border-radius:12px;
-    cursor:pointer;
-    text-decoration:none;
-    display:inline-flex;
-    gap:8px;
-    align-items:center;
-    font-weight:900;
+  /* --- Modern Status Pills --- */
+  .pill { 
+    display: inline-flex; 
+    align-items: center; 
+    padding: 4px 12px; 
+    border-radius: 99px; 
+    font-size: 11px; 
+    font-weight: 700; 
+    text-transform: uppercase; 
+    letter-spacing: 0.04em;
   }
-  .btn-primary { border-color:#111827; background:#111827; color:#fff; }
-  .btn-danger { border-color:#9f1239; background:#9f1239; color:#fff; }
-  .btn-soft { background:#f9fafb; }
+  .pill-pending   { background: #eef2ff; color: #4338ca; }
+  .pill-sent      { background: #dcfce7; color: #15803d; }
+  .pill-failed    { background: #fee2e2; color: #b91c1c; }
+  .pill-done      { background: #f1f5f9; color: #475569; }
+  .pill-scheduled { background: #e0f2fe; color: #0369a1; }
+  .pill-replied   { background: #ecfdf5; color: #047857; }
+  .pill-running   { background: #fef9c3; color: #854d0e; }
+  .pill-passed    { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
 
-  /* Table */
-  table { border-collapse:collapse; width:100%; }
-  th, td { border:1px solid #e5e7eb; padding:12px; vertical-align:top; }
-  th { background:#f9fafb; text-align:left; font-size:13px; }
+  /* --- Cards & UI Containers --- */
+  .box { 
+    border: 1px solid #e2e8f0; 
+    border-radius: 16px; 
+    padding: 24px; 
+    margin: 20px 0; 
+    background: #fff; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .box-danger { 
+    border-color: #fecdd3; 
+    background: #fffafa; 
+    border-left: 6px solid #ef4444;
+  }
+  .box-title { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+  .muted { font-size: 13px; color: #64748b; line-height: 1.5; }
+  
+  /* --- Actions & Buttons --- */
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  .btn:hover { background: #f8fafc; border-color: #cbd5e1; }
+  .btn-primary { border-color: #0f172a; background: #0f172a; color: #fff; }
+  .btn-primary:hover { background: #1e293b; color: #fff; transform: translateY(-1px); }
+  .btn-danger { border-color: #fee2e2; background: #fff; color: #dc2626; }
+  .btn-danger:hover { background: #fee2e2; }
+  .btn-soft { background: #f1f5f9; border: none; color: #475569; }
+  .btn-soft:hover { background: #e2e8f0; }
 
-  .row-failed { background:#fff0f3; }
-  .cell-stack { display:grid; gap:6px; }
+  /* --- Table Styling --- */
+  .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; }
+  table { border-collapse: collapse; width: 100%; min-width: 800px; }
+  th { background: #f8fafc; padding: 14px 16px; text-align: left; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
+  td { padding: 16px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; transition: background 0.2s; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fcfdfe; }
 
-  /* Add card */
-  .grid-top { display:grid; grid-template-columns: 1.2fr .8fr; gap:14px; }
+  .cell-stack { display: flex; flex-direction: column; gap: 4px; }
+  .client-name { font-weight: 700; color: #0f172a; font-size: 15px; }
+
+  /* --- Top Layout Grid --- */
+  .grid-top { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; align-items: stretch; }
   @media (max-width: 900px) { .grid-top { grid-template-columns: 1fr; } }
 
   .add-card {
-    border:1px solid #e5e7eb;
-    border-radius:16px;
-    background: linear-gradient(180deg, #fff, #f8fafc);
-    padding:16px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    background: #0f172a;
+    color: #fff;
+    border-radius: 20px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   }
-  .add-card h3 { margin:0 0 6px; font-size:16px; font-weight:950; }
-  .add-card p { margin:0; color:#475569; font-size:13px; line-height:1.45; }
+  .add-card h3 { margin: 0 0 8px; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+  .add-card p { margin: 0 0 20px; color: #94a3b8; font-size: 15px; }
 
-  /* Hover details tooltip */
+  /* --- Row Tooltip --- */
   .row-tip {
     position: fixed;
-    z-index: 9999;
-    width: min(380px, 92vw);
-    background: #0b1220;
+    z-index: 10000;
+    width: 320px;
+    background: #1e293b;
     color: #fff;
-    border: 1px solid rgba(255,255,255,0.14);
-    border-radius: 14px;
-    padding: 12px;
-    box-shadow: 0 12px 32px rgba(0,0,0,0.22);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     display: none;
     pointer-events: none;
+    font-size: 13px;
   }
-  .row-tip .t { font-weight: 950; margin-bottom: 6px; }
-  .row-tip .m { font-size: 12px; opacity: .9; line-height: 1.45; white-space: pre-wrap; }
-  .row-tip .k { opacity: .7; font-weight: 900; }
-  .row-tip hr { border:0; border-top:1px solid rgba(255,255,255,0.12); margin:10px 0; }
-
-  .help { display:block; font-size:12px; color:#64748b; margin-top:6px; font-weight:800; }
+  .row-tip .t { font-weight: 700; font-size: 14px; margin-bottom: 8px; color: #38bdf8; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
+  .row-tip .m { opacity: 0.9; line-height: 1.6; white-space: pre-wrap; }
 
   .chip {
-    display:inline-flex; align-items:center; gap:6px;
-    padding:4px 10px; border-radius:999px;
-    background:#f1f5f9; border:1px solid #e2e8f0;
-    font-weight:900; font-size:12px;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 8px;
+    background: #f1f5f9; border: 1px solid #e2e8f0;
+    font-weight: 700; font-size: 12px; color: #475569;
   }
+  
+  .help-text { font-size: 12px; color: #94a3b8; margin-top: 8px; display: block; font-style: italic; }
+
+  /* Custom Checkbox */
+  input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #0f172a; }
 </style>
 
 {# ========= TOP AREA ========= #}
 <div class="grid-top">
-
   <div class="add-card">
-    <h3>➕ Add a follow-up</h3>
-    <p>Create a follow-up, set details, then schedule it. Fast and clean.</p>
-
-    <div class="actions" style="margin-top:12px;">
-      <a class="btn btn-primary" href="{{ url_for('add') }}" title="Create a new follow-up (recommended)">
-        ➕ Add Follow-up
+    <h3>Start a New Follow-up</h3>
+    <p>Automate your outreach in seconds. Create, schedule, and forget.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="{{ url_for('add') }}">
+        <span>➕ Add Follow-up</span>
       </a>
-
-      <a class="btn btn-soft" href="{{ url_for('schedule') }}" title="Schedule sends + recurring rules">
+      <a class="btn" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: #fff;" href="{{ url_for('schedule') }}">
         🗓 Scheduling
       </a>
-
-      <a class="btn" href="{{ url_for('import_csv') }}" title="Upload a CSV to create many follow-ups at once">
+      <a class="btn" style="background: rgba(255,255,255,0.05); border-color: transparent; color: #94a3b8;" href="{{ url_for('import_csv') }}">
         📥 Import CSV
       </a>
     </div>
-
-    <span class="help">Tip: hover any row below to see full details.</span>
   </div>
 
-  <div class="box">
-    <div class="box-title">Quick guide</div>
+  <div class="box" style="margin: 0; display: flex; flex-direction: column; justify-content: center;">
+    <div class="box-title" style="font-size: 16px;">System Health</div>
     <div class="muted">
-      • <b>Pending</b> = waiting to be sent<br>
-      • <b>Scheduled</b> = has a next send time<br>
-      • <b>Failed</b> = didn’t send, check error + retry<br>
-      • Use bulk actions when doing many at once
+      • <b>Pending:</b> Waiting in queue.<br>
+      • <b>Scheduled:</b> Automation is active.<br>
+      • <b>Failed:</b> Requires manual fix.<br>
     </div>
+    <span class="help-text">💡 Hover rows to see email content.</span>
   </div>
-
 </div>
 
 {# ========= FAILED SECTION ========= #}
 {% set failed_items = (due_soon or []) | selectattr("status", "equalto", "failed") | list %}
 {% if failed_items %}
   <div class="box box-danger">
-    <div class="box-title">🚨 Failed Follow-ups ({{ failed_items|length }})</div>
-    <div class="muted">Fix the issue, then hit Retry. Hover a row to see the full error + description.</div>
+    <div class="box-title">🚨 Action Required ({{ failed_items|length }})</div>
+    <p class="muted">The following items failed to send. Fix the recipient or template and retry.</p>
 
-    <div style="overflow:auto; margin-top:10px;">
+    <div class="table-wrap" style="margin-top:16px;">
       <table>
         <thead>
           <tr>
             <th>Client</th>
             <th>Type</th>
-            <th>Due</th>
-            <th>Reason</th>
-            <th style="width:520px;">Actions</th>
+            <th>Last Error</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {% for f in failed_items %}
-          <tr class="row-failed js-row"
-              data-tip-title="{{ (f.client_name or 'Unknown')|e }} — {{ (f.followup_type or '')|e }}"
-              data-tip-body="Status: {{ (f.status or '')|e }}
-Due: {{ (f.due_date or '—')|e }}
-Email: {{ (f.email or '—')|e }}
-Phone: {{ (f.phone or '—')|e }}
-
-Description:
-{{ (f.description or '—')|e }}
-
-Last error:
-{{ (f.last_error or 'Unknown error')|e }}
-
-Next send:
-{{ (f.next_send_at or 'Not scheduled')|e }}">
+          <tr class="js-row"
+              data-tip-title="{{ (f.client_name or 'Client')|e }}"
+              data-tip-body="Error Detail: {{ (f.last_error or 'Unknown')|e }}">
             <td>
               <div class="cell-stack">
-                <div>
-                  <b>{{ f.client_name or 'Unknown' }}</b>
-                  <div class="muted">
-                    {% if f.phone %}📱 {{ f.phone }}{% endif %}
-                    {% if f.email %}{% if f.phone %} · {% endif %}✉️ {{ f.email }}{% endif %}
-                  </div>
-                </div>
-
-                {% if f.schedule_enabled and f.next_send_at %}
-                  <div>
-                    <span class="pill pill-scheduled">📅 Scheduled</span>
-                    <span class="muted">{{ f.next_send_at }}</span>
-                  </div>
-                {% endif %}
-
-                <div><span class="pill pill-failed">FAILED</span></div>
+                <span class="client-name">{{ f.client_name or 'Unknown' }}</span>
+                <span class="muted">{{ f.email }}</span>
               </div>
             </td>
-
-            <td>{{ f.followup_type }}</td>
-            <td>{{ f.due_date }}</td>
-
-            <td style="color:#9f1239; font-size:13px;">
-              {{ f.last_error or "Unknown error (no reason stored)." }}
-            </td>
-
+            <td><span class="pill pill-failed">Failed</span></td>
+            <td style="max-width: 250px;"><span class="muted" style="color: #b91c1c;">{{ f.last_error[:60] }}...</span></td>
             <td>
               <div class="actions">
-                <a class="btn btn-danger" href="{{ url_for('preview', fid=f.id) }}" title="Fix email/recipient/template then retry">
-                  🛠 Fix
-                </a>
-
-                <form method="post" action="{{ url_for('send_followup', fid=f.id) }}" style="display:inline;">
-                  <button class="btn btn-primary" type="submit"
-                          title="Retry sending this follow-up right now"
-                          onclick="return confirm('Retry sending now?')">
-                    🔁 Retry
-                  </button>
-                </form>
-
-                <a class="btn" href="{{ url_for('preview', fid=f.id) }}" title="Preview the exact email content before sending">
-                  👁️ Review
-                </a>
-
+                <a class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" href="{{ url_for('preview', fid=f.id) }}">🛠 Fix & Retry</a>
                 <form method="post" action="{{ url_for('delete_followup', fid=f.id) }}" style="display:inline;">
-                  <button class="btn btn-danger" type="submit"
-                          title="Delete this follow-up permanently"
-                          onclick="return confirm('Delete this follow-up?')">
-                    🗑 Delete
-                  </button>
+                  <button class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;" type="submit" onclick="return confirm('Delete?')">🗑</button>
                 </form>
-              </div>
-
-              <div class="muted" style="margin-top:8px;">
-                Tip: Fix first → Retry. Don’t spam retries.
               </div>
             </td>
           </tr>
@@ -227,162 +198,74 @@ Next send:
 {% endif %}
 
 {# ========= MAIN LIST ========= #}
-<h2>Follow-ups</h2>
+<div style="display: flex; align-items: center; justify-content: space-between; margin: 40px 0 20px;">
+  <h2 style="margin:0; font-weight: 800;">Pipeline</h2>
+  <div class="chip" id="sel_count">0 selected</div>
+</div>
 
 {% if due_soon %}
   <form method="post" action="{{ url_for('bulk_action') }}" id="bulkForm">
-
-    <div class="actions" style="margin:10px 0;">
-      <div>
-        <button class="btn" type="submit" name="action" value="done"
-                title="Mark selected follow-ups as done"
-                onclick="return confirm('Mark selected as done?')">
-          ✅ Mark Done Selected
-        </button>
-        <span class="help">Closes them out (stops you seeing them as pending).</span>
+    <div class="box" style="padding: 16px; background: #f8fafc; border-style: dashed;">
+      <div class="actions">
+        <button class="btn btn-primary" type="submit" name="action" value="send" onclick="return confirm('Send selected?')">📤 Bulk Send</button>
+        <button class="btn" type="submit" name="action" value="done">✅ Mark Done</button>
+        <button class="btn btn-danger" type="submit" name="action" value="delete" onclick="return confirm('Delete selected?')">🗑 Delete</button>
+        
+        <div style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+           <input type="checkbox" id="select_all"> <span class="muted" style="font-weight: 700;">Select All</span>
+        </div>
       </div>
-
-      <div>
-        <button class="btn btn-primary" type="submit" name="action" value="send"
-                title="Send selected follow-ups right now"
-                onclick="return confirm('Send selected follow-ups now?')">
-          📤 Send Selected
-        </button>
-        <span class="help">Use this when you’re done, this will send immediately.</span>
-      </div>
-
-      <div>
-        <button class="btn btn-danger" type="submit" name="action" value="delete"
-                title="Delete selected follow-ups permanently"
-                onclick="return confirm('Delete selected follow-ups?')">
-          🗑 Delete Selected
-        </button>
-        <span class="help">This is permanent. No undo.</span>
-      </div>
-
-      <span class="chip" id="sel_count">0 selected</span>
     </div>
 
-    <label style="display:block; margin:10px 0;">
-      <input type="checkbox" id="select_all"> Select all
-      <span class="muted">Bulk applies to everything selected.</span>
-    </label>
-
-    <table>
-      <thead>
-        <tr>
-          <th style="width:40px;"></th>
-          <th>Client</th>
-          <th>Type</th>
-          <th>Due</th>
-          <th>Status</th>
-          <th style="width:640px;">Actions</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        {% for f in due_soon %}
-        <tr class="js-row {% if f.status=='failed' %}row-failed{% endif %}"
-            data-tip-title="{{ (f.client_name or 'Unknown')|e }} — {{ (f.followup_type or '')|e }}"
-            data-tip-body="Status: {{ (f.status or '')|e }}
-Due: {{ (f.due_date or '—')|e }}
-Email: {{ (f.email or '—')|e }}
-Phone: {{ (f.phone or '—')|e }}
-
-Description:
-{{ (f.description or '—')|e }}
-
-Last error:
-{{ (f.last_error or '—')|e }}
-
-Next send:
-{{ (f.next_send_at or 'Not scheduled')|e }}">
-          <td>
-            <input type="checkbox" name="followup_ids" value="{{ f.id }}" class="cb">
-          </td>
-
-          <td>
-            <div class="cell-stack">
-              <div>
-                <b>{{ f.client_name or 'Unknown' }}</b>
-                <div class="muted">
-                  {% if f.phone %}📱 {{ f.phone }}{% endif %}
-                  {% if f.email %}{% if f.phone %} · {% endif %}✉️ {{ f.email }}{% endif %}
-                </div>
-                <div class="muted" style="margin-top:4px;">ID: {{ f.id }}</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 40px;"></th>
+            <th>Client</th>
+            <th>Sequence Type</th>
+            <th>Due Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in due_soon %}
+          <tr class="js-row" 
+              data-tip-title="{{ f.client_name|e }}"
+              data-tip-body="Email: {{ f.email|e }}&#10;Type: {{ f.followup_type|e }}&#10;&#10;{{ f.description|e }}">
+            <td><input type="checkbox" name="followup_ids" value="{{ f.id }}" class="cb"></td>
+            <td>
+              <div class="cell-stack">
+                <span class="client-name">{{ f.client_name or 'Unknown' }}</span>
+                <span class="muted">{{ f.email or 'No Email' }}</span>
               </div>
-
-              {% if f.schedule_enabled and f.next_send_at %}
-                <div>
-                  <span class="pill pill-scheduled">📅 Scheduled</span>
-                  <span class="muted">{{ f.next_send_at }}</span>
-                </div>
-              {% endif %}
-            </div>
-          </td>
-
-          <td>{{ f.followup_type }}</td>
-          <td>{{ f.due_date }}</td>
-
-          <td>
-            {% if f.status == 'failed' %}
-              <span class="pill pill-failed">FAILED</span>
-            {% elif f.status == 'sent' %}
-              <span class="pill pill-sent">SENT</span>
-            {% elif f.status == 'replied' %}
-              <span class="pill pill-replied">REPLIED</span>
-            {% elif f.status == 'running' %}
-              <span class="pill pill-running">RUNNING</span>
-            {% elif f.status == 'passed' %}
-              <span class="pill pill-passed">PASSED</span>
-            {% elif f.status == 'done' %}
-              <span class="pill pill-done">DONE</span>
-            {% else %}
-              <span class="pill pill-pending">PENDING</span>
-            {% endif %}
-          </td>
-
-          <td>
-            <div class="actions">
-              <a class="btn" href="{{ url_for('preview', fid=f.id) }}"
-                 title="Preview the email content (safe)">
-                👁️ Review
-              </a>
-
-            <div class="muted" style="margin-top:8px;">
-              Sending is done via <b>Bulk Send</b> above.
-            </div>
-
-            <div class="muted" style="margin-top:8px;">
-              Hover this row to see description + errors + next send.
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
+            </td>
+            <td><span class="muted" style="font-weight: 600;">{{ f.followup_type }}</span></td>
+            <td><span class="muted">{{ f.due_date }}</span></td>
+            <td>
+              {% if f.status == 'failed' %}<span class="pill pill-failed">FAILED</span>
+              {% elif f.status == 'sent' %}<span class="pill pill-sent">SENT</span>
+              {% elif f.status == 'scheduled' %}<span class="pill pill-scheduled">SCHEDULED</span>
+              {% elif f.status == 'done' %}<span class="pill pill-done">DONE</span>
+              {% else %}<span class="pill pill-pending">PENDING</span>{% endif %}
+            </td>
+            <td>
+              <a class="btn btn-soft" style="padding: 6px 12px; font-size: 12px;" href="{{ url_for('preview', fid=f.id) }}">👁️ Review</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </form>
 {% else %}
-  <div class="box">
-    <div class="box-title">No follow-ups 👌</div>
-    <div class="muted">Start by adding one, or import from CSV.</div>
-    <div class="actions" style="margin-top:12px;">
-      <a class="btn btn-primary" href="{{ url_for('add') }}" title="Create a new follow-up">
-        ➕ Add Follow-up
-      </a>
-      <a class="btn" href="{{ url_for('import_csv') }}" title="Import many follow-ups from a CSV">
-        📥 Import CSV
-      </a>
-      <a class="btn btn-soft" href="{{ url_for('schedule') }}" title="Schedule sends + recurring rules">
-        🗓 Scheduling
-      </a>
-    </div>
+  <div class="box" style="text-align: center; padding: 60px 20px; border-style: dashed;">
+    <div class="box-title">All caught up! ☕</div>
+    <p class="muted">No pending follow-ups found.</p>
+    <a class="btn btn-primary" style="margin-top: 10px;" href="{{ url_for('add') }}">Create your first</a>
   </div>
 {% endif %}
-
-<hr>
-<h2>Done: {{ done }}</h2>
 
 <div class="row-tip" id="rowTip">
   <div class="t" id="rowTipTitle">Details</div>
@@ -390,72 +273,52 @@ Next send:
 </div>
 
 <script>
-  // Bulk selection count
+  // Bulk selection logic
   const selectAll = document.getElementById("select_all");
   const selCount = document.getElementById("sel_count");
+  const checkboxes = document.querySelectorAll('input[name="followup_ids"]');
 
   function updateCount(){
     const n = document.querySelectorAll('input[name="followup_ids"]:checked').length;
-    if (selCount) selCount.textContent = n + " selected";
+    selCount.textContent = n + " selected";
+    selCount.style.background = n > 0 ? "#0f172a" : "#f1f5f9";
+    selCount.style.color = n > 0 ? "#fff" : "#475569";
   }
 
-  if (selectAll) {
-    selectAll.addEventListener("change", () => {
-      document.querySelectorAll('input[name="followup_ids"]').forEach(cb => cb.checked = selectAll.checked);
-      updateCount();
-    });
-  }
-
-  document.querySelectorAll('input[name="followup_ids"]').forEach(cb => {
-    cb.addEventListener("change", updateCount);
+  selectAll?.addEventListener("change", () => {
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+    updateCount();
   });
-  updateCount();
 
-  // Hover details tooltip
+  checkboxes.forEach(cb => cb.addEventListener("change", updateCount));
+
+  // Tooltip Logic
   const tip = document.getElementById("rowTip");
   const tipTitle = document.getElementById("rowTipTitle");
   const tipBody = document.getElementById("rowTipBody");
 
-  function showTip(e, title, body){
-    if (!tip) return;
-    tipTitle.textContent = title || "Details";
-    tipBody.textContent = body || "";
-    tip.style.display = "block";
-    moveTip(e);
-  }
-
-  function moveTip(e){
-    if (!tip) return;
-    const pad = 14;
-    const w = tip.offsetWidth || 360;
-    const h = tip.offsetHeight || 180;
-
-    let x = e.clientX + pad;
-    let y = e.clientY + pad;
-
-    if (x + w + pad > window.innerWidth) x = e.clientX - w - pad;
-    if (y + h + pad > window.innerHeight) y = e.clientY - h - pad;
-
-    tip.style.left = x + "px";
-    tip.style.top = y + "px";
-  }
-
-  function hideTip(){
-    if (!tip) return;
-    tip.style.display = "none";
-  }
-
   document.querySelectorAll(".js-row").forEach(row => {
-    const title = row.getAttribute("data-tip-title") || "Details";
-    const body = row.getAttribute("data-tip-body") || "";
+    row.addEventListener("mouseenter", (e) => {
+      tipTitle.textContent = row.getAttribute("data-tip-title");
+      tipBody.textContent = row.getAttribute("data-tip-body");
+      tip.style.display = "block";
+    });
 
-    row.addEventListener("mouseenter", (e) => showTip(e, title, body));
-    row.addEventListener("mousemove", (e) => moveTip(e));
-    row.addEventListener("mouseleave", hideTip);
+    row.addEventListener("mousemove", (e) => {
+      const x = e.clientX + 20;
+      const y = e.clientY + 20;
+      // Flip side if near edge
+      const finalX = (x + 320 > window.innerWidth) ? e.clientX - 340 : x;
+      const finalY = (y + 200 > window.innerHeight) ? e.clientY - 220 : y;
+      
+      tip.style.left = finalX + "px";
+      tip.style.top = finalY + "px";
+    });
+
+    row.addEventListener("mouseleave", () => tip.style.display = "none");
   });
 
-  // Don't trap tooltip when user scrolls
-  window.addEventListener("scroll", hideTip, { passive: true });
+  window.addEventListener("scroll", () => tip.style.display = "none", { passive: true });
 </script>
 
 {% endblock %}
