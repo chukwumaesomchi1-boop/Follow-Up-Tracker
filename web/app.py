@@ -3089,21 +3089,21 @@ def send_verification_code(uid: int, email: str, minutes: int = 15) -> None:
     </div>
     """.strip()
 
-    # Send email via Gmail SMTP SSL
     try:
-        logger.debug(f"Connecting to SMTP server {os.getenv('SMTP_SERVER')}:{os.getenv('SMTP_PORT')}")
+        smtp_server = os.getenv("SMTP_HOST", "smtp.gmail.com")
+        smtp_port = int(os.getenv("SMTP_PORT", 587))
+        smtp_user = os.getenv("SMTP_USER")
+        smtp_pass = os.getenv("SMTP_PASS")
+
+        logger.debug(f"Connecting to SMTP server {smtp_server}:{smtp_port}")
         msg = MIMEMultipart("alternative")
-        msg['From'] = os.getenv("SMTP_USER")
+        msg['From'] = os.getenv("SMTP_FROM", smtp_user)
         msg['To'] = email
         msg['Subject'] = subject
         msg.attach(MIMEText(body_text, "plain"))
         msg.attach(MIMEText(body_html, "html"))
 
-        smtp_user = os.getenv("SMTP_USER")
-        smtp_pass = os.getenv("SMTP_PASS")
-        smtp_server = os.getenv("SMTP_HOST", "smtp.gmail.com")
-        smtp_port = int(os.getenv("SMTP_PORT", 587))
-
+        # STARTTLS connection for Gmail
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.set_debuglevel(1)  # prints the SMTP handshake in logs
             server.ehlo()
@@ -3117,8 +3117,6 @@ def send_verification_code(uid: int, email: str, minutes: int = 15) -> None:
     except Exception as e:
         logger.exception(f"Failed to send verification email to {email}")
         raise
-
-
 
 
 @app.post("/verify/resend")
