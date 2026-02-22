@@ -3101,14 +3101,15 @@ def send_verification_code(uid: int, email: str, minutes: int = 15) -> None:
 
         smtp_user = os.getenv("SMTP_USER")
         smtp_pass = os.getenv("SMTP_PASS")
-        smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-        smtp_port = int(os.getenv("SMTP_PORT", 465))
+        smtp_server = os.getenv("SMTP_HOST", "smtp.gmail.com")
+        smtp_port = int(os.getenv("SMTP_PORT", 587))
 
-        with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.set_debuglevel(1)  # prints the SMTP handshake in logs
-            logger.debug("Logging in to SMTP server...")
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
             server.login(smtp_user, smtp_pass)
-            logger.debug("Sending email...")
             server.send_message(msg)
 
         logger.info(f"Verification email sent to {email}")
@@ -3116,6 +3117,8 @@ def send_verification_code(uid: int, email: str, minutes: int = 15) -> None:
     except Exception as e:
         logger.exception(f"Failed to send verification email to {email}")
         raise
+
+
 
 
 @app.post("/verify/resend")
