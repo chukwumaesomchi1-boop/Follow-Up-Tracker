@@ -128,6 +128,9 @@ ensure_auth_columns()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY") or secrets.token_urlsafe(32)
+app.config["SESSION_COOKIE_SECURE"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "None"
+
 # socketio = SocketIO(app)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 from flask_socketio import join_room
@@ -2308,98 +2311,135 @@ from flask import session, redirect, url_for, request, flash
 from google_auth_oauthlib.flow import Flow
 from google.auth.exceptions import RefreshError
 
+# @app.get("/gmail/callback")
+# def gmail_callback():
+#     user, block = require_user()
+#     if block:
+#         return block
+
+#     state = session.get("gmail_oauth_state")
+#     if not state:
+#         flash("OAuth state missing. Try again.", "danger")
+#         return redirect(url_for("settings"))
+
+#     flow = Flow.from_client_secrets_file(
+#         CLIENT_SECRETS,
+#         scopes=SCOPES,  # ONLY gmail.send
+#         state=state,
+#     )
+#     flow.redirect_uri = url_for("gmail_callback", _external=True)
+#     # flow.redirect_uri = os.getenv("APP_BASE_URL") + "/gmail/callback"
+#     try:
+#         flow.fetch_token(authorization_response=request.url)
+#     except RefreshError:
+#         flash("Gmail authorization failed. Please reconnect.", "danger")
+#         return redirect(url_for("settings"))
+#     except Exception as e:
+#         flash(f"Gmail auth failed: {type(e).__name__}", "danger")
+#         return redirect(url_for("settings"))
+
+#     creds = flow.credentials
+
+#     if not creds or not creds.refresh_token:
+#         flash("Failed to obtain Gmail credentials.", "danger")
+#         return redirect(url_for("settings"))
+
+#     # ✅ SAVE TOKEN (THIS is what actually matters)
+#     save_gmail_token(
+#         user_id=user["id"],
+#         token_json=creds.to_json(),
+#     )
+
+#     # ✅ DO NOT TOUCH id_token
+#     # Just use your app’s user email
+#     save_gmail_email(user["id"], user["email"])
+
+#     flash("Gmail connected ✅", "success")
+#     return redirect(url_for("settings"))
+
+import os
+import logging
+from flask import request, redirect, url_for, session, flash
+from google_auth_oauthlib.flow import Flow
+from google.auth.exceptions import RefreshError
+
+logger = logging.getLogger(__name__)
+
 @app.get("/gmail/callback")
 def gmail_callback():
     user, block = require_user()
     if block:
         return block
 
+    # ---- CHECK STATE ----
     state = session.get("gmail_oauth_state")
     if not state:
-        flash("OAuth state missing. Try again.", "danger")
+        logger.error("Missing gmail_oauth_state in session")
+        flash("OAuth state missing. Try reconnecting Gmail.", "danger")
         return redirect(url_for("settings"))
 
-    flow = Flow.from_client_secrets_file(
-        CLIENT_SECRETS,
-        scopes=SCOPES,  # ONLY gmail.send
-        state=state,
-    )
-    flow.redirect_uri = url_for("gmail_callback", _external=True)
-    # flow.redirect_uri = os.getenv("APP_BASE_URL") + "/gmail/callback"
+    # ---- BUILD FLOW ----
     try:
+        flow = Flow.from_client_secrets_file(
+            CLIENT_SECRETS,
+            scopes=SCOPES,  # gmail.send only
+            state=state,
+        )
+
+        # Hard-set redirect URI (DON’T rely on _external=True in prod)
+        base_url = os.getenv("APP_BASE_URL")
+        if not base_url:
+            logger.error("APP_BASE_URL not set in environment")
+            flash("Server configuration error.", "danger")
+            return redirect(url_for("settings"))
+
+        flow.redirect_uri = f"{base_url}/gmail/callback"
+
+        logger.info(f"OAuth callback URL: {request.url}")
+        logger.info(f"Expected redirect URI: {flow.redirect_uri}")
+
+        # ---- FETCH TOKEN ----
         flow.fetch_token(authorization_response=request.url)
-    except RefreshError:
+
+    except RefreshError as e:
+        logger.error(f"RefreshError during Gmail OAuth: {str(e)}")
         flash("Gmail authorization failed. Please reconnect.", "danger")
         return redirect(url_for("settings"))
+
     except Exception as e:
+        logger.exception("Unexpected Gmail OAuth error")
         flash(f"Gmail auth failed: {type(e).__name__}", "danger")
         return redirect(url_for("settings"))
 
     creds = flow.credentials
 
-    if not creds or not creds.refresh_token:
+    # ---- VALIDATE CREDS ----
+    if not creds:
+        logger.error("No credentials object returned")
         flash("Failed to obtain Gmail credentials.", "danger")
         return redirect(url_for("settings"))
 
-    # ✅ SAVE TOKEN (THIS is what actually matters)
-    save_gmail_token(
-        user_id=user["id"],
-        token_json=creds.to_json(),
-    )
+    if not creds.refresh_token:
+        logger.warning("No refresh token received from Google")
+        flash("Gmail connected but no refresh token returned. Try reconnecting.", "warning")
 
-    # ✅ DO NOT TOUCH id_token
-    # Just use your app’s user email
-    save_gmail_email(user["id"], user["email"])
+    # ---- SAVE TOKEN ----
+    try:
+        save_gmail_token(
+            user_id=user["id"],
+            token_json=creds.to_json(),
+        )
 
-    flash("Gmail connected ✅", "success")
+        save_gmail_email(user["id"], user["email"])
+
+        logger.info(f"Gmail connected successfully for user {user['id']}")
+        flash("Gmail connected ✅", "success")
+
+    except Exception:
+        logger.exception("Failed saving Gmail token")
+        flash("Gmail connected but failed saving credentials.", "danger")
+
     return redirect(url_for("settings"))
-
-
-# @app.route("/gmail/callback")
-# def gmail_callback():
-#     uid = session.get("user_id")
-#     if not uid:
-#         flash("Please log in first.", "warning")
-#         return redirect(url_for("login"))
-
-#     user = get_user_by_id(int(uid))
-#     if not user:
-#         session.clear()
-#         flash("Session expired. Login again.", "warning")
-#         return redirect(url_for("login"))
-
-#     flow = Flow.from_client_secrets_file(
-#         CLIENT_SECRETS,
-#         scopes=["https://www.googleapis.com/auth/gmail.send"],
-#         redirect_uri=url_for("gmail_callback", _external=True),
-#     )
-
-#     try:
-#         flow.fetch_token(authorization_response=request.url)
-#     except Exception as e:
-#         flash(f"Gmail auth failed: {type(e).__name__}", "danger")
-#         return redirect(url_for("settings"))
-
-#     creds = flow.credentials
-#     if not creds or not creds.token:
-#         flash("Gmail auth failed: no token returned.", "danger")
-#         return redirect(url_for("settings"))
-
-#     # ✅ Store full Google creds JSON string
-#     token_json = creds.to_json()
-
-#     conn = get_connection()
-#     c = conn.cursor()
-#     c.execute("UPDATE users SET gmail_token=? WHERE id=?", (token_json, int(user["id"])))
-#     conn.commit()
-#     conn.close()
-
-#     # ✅ Verify immediately (your exact debug)
-#     u2 = get_user_by_id(int(user["id"]))
-#     print("CALLBACK DB gmail_token exists?:", bool(u2.get("gmail_token")))
-
-#     flash("Gmail connected ✅", "success")
-#     return redirect(url_for("settings"))
 
 
 @app.post("/gmail/disconnect")
