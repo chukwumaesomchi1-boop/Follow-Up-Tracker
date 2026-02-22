@@ -3038,17 +3038,29 @@ def _gen_otp6() -> str:
 #         body_html=body_html,
 #     )
 
-import os
+
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from datetime import datetime, timedelta
-from database import get_connection # replace with your actual imports
+import logging
+from database import get_connection  # replace with your actual imports
+
+# ---- Set up logger ----
+logger = logging.getLogger("email_verification")
+logger.setLevel(logging.DEBUG)  # Debug level for full info
+if not logger.handlers:
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] %(message)s")
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
 
 def send_verification_code(uid: int, email: str, minutes: int = 15) -> None:
     code = _gen_otp6()
     now = datetime.utcnow().replace(microsecond=0)
     exp = (now + timedelta(minutes=minutes)).isoformat()
+
+    logger.debug(f"Storing verification code {code} for user {uid}, expires at {exp}")
 
     # Store code in DB
     conn = get_connection()
@@ -3066,7 +3078,6 @@ def send_verification_code(uid: int, email: str, minutes: int = 15) -> None:
     app_name = os.getenv("APP_NAME", "Follow-Up Tracker")
     subject = f"{app_name} verification code: {code}"
     body_text = f"Your verification code is: {code}\n\nThis code expires in {minutes} minutes."
-
     body_html = f"""
     <div style="font-family:Arial,sans-serif; font-size:14px; color:#111;">
       <h2 style="margin:0 0 10px;">Verify your email</h2>
@@ -3080,6 +3091,7 @@ def send_verification_code(uid: int, email: str, minutes: int = 15) -> None:
 
     # Send email via Gmail SMTP SSL
     try:
+        logger.debug(f"Connecting to SMTP server {os.getenv('SMTP_SERVER')}:{os.getenv('SMTP_PORT')}")
         msg = MIMEMultipart("alternative")
         msg['From'] = os.getenv("SMTP_USER")
         msg['To'] = email
@@ -3088,20 +3100,23 @@ def send_verification_code(uid: int, email: str, minutes: int = 15) -> None:
         msg.attach(MIMEText(body_html, "html"))
 
         smtp_user = os.getenv("SMTP_USER")
-        smtp_pass = os.getenv("SMTP_PASS")  # <- use your App Password here
+        smtp_pass = os.getenv("SMTP_PASS")
         smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
         smtp_port = int(os.getenv("SMTP_PORT", 465))
 
         with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
+            server.set_debuglevel(1)  # prints the SMTP handshake in logs
+            logger.debug("Logging in to SMTP server...")
             server.login(smtp_user, smtp_pass)
+            logger.debug("Sending email...")
             server.send_message(msg)
 
-        print(f"[INFO] Verification email sent to {email}")
+        logger.info(f"Verification email sent to {email}")
 
     except Exception as e:
-        # Log full exception, raise so your route can flash an error
-        print(f"[ERROR] Failed to send verification email to {email}: {e}")
+        logger.exception(f"Failed to send verification email to {email}")
         raise
+
 
 @app.post("/verify/resend")
 def resend_verify_code():
