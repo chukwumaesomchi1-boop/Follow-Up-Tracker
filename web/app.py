@@ -2997,12 +2997,60 @@ from mailer import send_email_smtp  # whatever your SMTP sender is
 def _gen_otp6() -> str:
     return f"{secrets.randbelow(1_000_000):06d}"
 
+# def send_verification_code(uid: int, email: str, minutes: int = 15) -> None:
+#     code = _gen_otp6()
+#     now = datetime.utcnow().replace(microsecond=0)
+#     exp = (now + timedelta(minutes=minutes)).isoformat()
+
+#     # store in DB
+#     conn = get_connection()
+#     c = conn.cursor()
+#     c.execute("""
+#         UPDATE users
+#         SET email_verify_code=?,
+#             email_verify_expires_at=?,
+#             email_verify_last_sent_at=?
+#         WHERE id=?
+#     """, (code, exp, now.isoformat(), int(uid)))
+#     conn.commit()
+#     conn.close()
+
+#     app_name = os.getenv("APP_NAME", "Your App")
+#     subject = f"{app_name} verification code: {code}"
+#     body_text = f"Your verification code is: {code}\n\nThis code expires in {minutes} minutes."
+
+#     # optional html
+#     body_html = f"""
+#     <div style="font-family:Arial,sans-serif; font-size:14px; color:#111;">
+#       <h2 style="margin:0 0 10px;">Verify your email</h2>
+#       <p>Your verification code is:</p>
+#       <div style="font-size:28px; font-weight:800; letter-spacing:4px; padding:12px 16px; background:#f3f4f6; display:inline-block; border-radius:10px;">
+#         {code}
+#       </div>
+#       <p style="margin-top:14px; color:#555;">Expires in {minutes} minutes.</p>
+#     </div>
+#     """.strip()
+
+#     send_email_smtp(
+#         to_email=email,
+#         subject=subject,
+#         body_text=body_text,
+#         body_html=body_html,
+#     )
+
+import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from datetime import datetime, timedelta
+from your_db_module import get_connection, _gen_otp6  # replace with your actual imports
+
 def send_verification_code(uid: int, email: str, minutes: int = 15) -> None:
     code = _gen_otp6()
     now = datetime.utcnow().replace(microsecond=0)
     exp = (now + timedelta(minutes=minutes)).isoformat()
 
-    # store in DB
+    # Store code in DB
     conn = get_connection()
     c = conn.cursor()
     c.execute("""
@@ -3011,15 +3059,14 @@ def send_verification_code(uid: int, email: str, minutes: int = 15) -> None:
             email_verify_expires_at=?,
             email_verify_last_sent_at=?
         WHERE id=?
-    """, (code, exp, now.isoformat(), int(uid)))
+    """, (code, exp, now.isoformat(), uid))
     conn.commit()
     conn.close()
 
-    app_name = os.getenv("APP_NAME", "Your App")
+    app_name = os.getenv("APP_NAME", "Follow-Up Tracker")
     subject = f"{app_name} verification code: {code}"
     body_text = f"Your verification code is: {code}\n\nThis code expires in {minutes} minutes."
 
-    # optional html
     body_html = f"""
     <div style="font-family:Arial,sans-serif; font-size:14px; color:#111;">
       <h2 style="margin:0 0 10px;">Verify your email</h2>
@@ -3031,14 +3078,30 @@ def send_verification_code(uid: int, email: str, minutes: int = 15) -> None:
     </div>
     """.strip()
 
-    send_email_smtp(
-        to_email=email,
-        subject=subject,
-        body_text=body_text,
-        body_html=body_html,
-    )
+    # Send email via Gmail SMTP SSL
+    try:
+        msg = MIMEMultipart("alternative")
+        msg['From'] = os.getenv("SMTP_USER")
+        msg['To'] = email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body_text, "plain"))
+        msg.attach(MIMEText(body_html, "html"))
 
+        smtp_user = os.getenv("SMTP_USER")
+        smtp_pass = os.getenv("SMTP_PASS")  # <- use your App Password here
+        smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+        smtp_port = int(os.getenv("SMTP_PORT", 465))
 
+        with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
+
+        print(f"[INFO] Verification email sent to {email}")
+
+    except Exception as e:
+        # Log full exception, raise so your route can flash an error
+        print(f"[ERROR] Failed to send verification email to {email}: {e}")
+        raise
 
 @app.post("/verify/resend")
 def resend_verify_code():
