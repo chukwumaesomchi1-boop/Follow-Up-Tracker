@@ -1,217 +1,233 @@
+{# templates/billing.html #}
 {% extends "base.html" %}
 {% block content %}
 
 <style>
-  .wrap { max-width: 900px; }
-  h2 { margin: 0 0 10px; font-size: 22px; font-weight: 950; }
-
-  .box {
-    border:1px solid #e5e7eb;
-    border-radius:16px;
-    padding:16px;
-    background:#fff;
-    margin: 14px 0;
+  /* --- Layout & Typography --- */
+  .wrap { max-width: 1000px; margin: 0 auto; }
+  .page-header { margin-bottom: 32px; }
+  .page-title { font-size: 28px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
+  
+  /* --- Status Hero Card --- */
+  .status-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
   }
+  @media (max-width: 768px) { .status-card { flex-direction: column; align-items: flex-start; } }
 
-  .grid {
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:16px;
-  }
-  @media (max-width: 900px){ .grid { grid-template-columns:1fr; } }
+  .status-info h3 { margin: 0 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
+  .status-main { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .status-text { font-size: 22px; font-weight: 800; color: #0f172a; }
 
-  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
-  .muted { color:#64748b; font-size:13px; line-height: 1.45; }
-
-  .badge {
-    display:inline-flex; align-items:center; gap:8px;
-    padding:6px 10px; border-radius:999px;
-    font-size:12px; font-weight:950;
-    border:1px solid #e5e7eb; background:#f8fafc; color:#0f172a;
-  }
-  .ok { border-color:#86efac; background:#f0fdf4; color:#14532d; }
-  .warn { border-color:#fde68a; background:#fffbeb; color:#7c2d12; }
-  .bad { border-color:#fecdd3; background:#fff1f2; color:#9f1239; }
-
-  .price { font-size:28px; font-weight:950; margin-top:6px; }
+  /* --- Badges --- */
   .pill {
-    display:inline-block; padding:2px 10px; border-radius:999px;
-    font-size:12px; font-weight:900;
-    background:#dcfce7; color:#166534;
+    display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 99px;
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+  }
+  .pill-ok { background: #dcfce7; color: #15803d; }
+  .pill-warn { background: #fef9c3; color: #854d0e; }
+  .pill-bad { background: #fee2e2; color: #b91c1c; }
+  .pill-indigo { background: #e0e7ff; color: #4338ca; }
+
+  /* --- Pricing Grid --- */
+  .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 768px) { .pricing-grid { grid-template-columns: 1fr; } }
+
+  .plan-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    padding: 32px;
+    position: relative;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+  }
+  .plan-card.active { border: 2px solid #6366f1; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+  .plan-tag {
+    position: absolute; top: -12px; right: 24px;
+    background: #6366f1; color: white; padding: 4px 12px;
+    border-radius: 99px; font-size: 12px; font-weight: 800;
   }
 
+  .price-wrap { margin: 24px 0; }
+  .price-large { font-size: 42px; font-weight: 800; color: #0f172a; letter-spacing: -1px; }
+  .price-period { color: #64748b; font-size: 16px; font-weight: 500; }
+
+  /* --- List Styling --- */
+  .feature-list { list-style: none; padding: 0; margin: 0 0 32px; flex-grow: 1; }
+  .feature-list li {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 15px; color: #475569; margin-bottom: 12px;
+  }
+  .check-icon { color: #22c55e; font-weight: 800; }
+
+  /* --- Buttons --- */
   .btn {
-    display:inline-flex; justify-content:center; align-items:center; gap:8px;
-    width:100%;
-    padding:12px;
-    border-radius:12px;
-    border:1px solid #d1d5db;
-    background:#fff;
-    font-weight:900;
-    cursor:pointer;
-    text-decoration:none;
+    width: 100%; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 15px;
+    display: flex; justify-content: center; align-items: center; gap: 8px;
+    cursor: pointer; transition: all 0.2s; text-decoration: none; border: 1px solid transparent;
   }
-  .btn-dark { border-color:#111827; background:#111827; color:#fff; }
-  .btn-blue { border-color:#0ea5e9; background:#0ea5e9; color:#fff; }
-  .btn-danger { border-color:#9f1239; background:#9f1239; color:#fff; }
-  .btn-soft { background:#f8fafc; }
+  .btn-primary { background: #0f172a; color: #fff; }
+  .btn-primary:hover { background: #1e293b; transform: translateY(-1px); }
+  .btn-outline { background: #fff; border-color: #e2e8f0; color: #475569; }
+  .btn-outline:hover { background: #f8fafc; border-color: #cbd5e1; }
+  .btn-danger-link { background: transparent; color: #ef4444; border: none; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: underline; margin-top: 16px; width: auto; padding: 0;}
 
-  .divider { height:1px; background:#e5e7eb; margin: 12px 0; }
-  ul { margin: 10px 0 0; padding-left: 18px; }
-  li { margin: 6px 0; }
-
-  .mini { font-size:12px; color:#64748b; margin-top:10px; }
+  .divider { border-top: 1px solid #f1f5f9; margin: 24px 0; }
+  .mini-note { font-size: 12px; color: #94a3b8; line-height: 1.5; margin-top: 12px; }
 </style>
 
 <div class="wrap">
-  <h2>Billing</h2>
+  <div class="page-header">
+    <h1 class="page-title">Billing & Plans</h1>
+    <p style="color: #64748b; margin-top: 4px;">Manage your subscription, invoices, and payment preferences.</p>
+  </div>
 
   {# normalize inputs #}
   {% set status = (subscription_status or '')|lower %}
   {% set plan = (subscription_plan or '')|lower %}
   {% set cur = (currency or 'NGN')|upper %}
 
-  {# -------- Current status card (ALWAYS show) -------- #}
-  <div class="box">
-    <div class="row">
-      <div style="font-weight:950; font-size:16px;">Current status</div>
-
-      {% if status == 'active' %}
-        <span class="badge ok">✅ Active</span>
-      {% elif status == 'canceling' %}
-        <span class="badge warn">⚠️ Cancels at period end</span>
-      {% elif trial_active %}
-        <span class="badge warn">🧪 Trial</span>
-      {% else %}
-        <span class="badge bad">No plan</span>
-      {% endif %}
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="muted">
-      {% if status == 'active' %}
-        Plan: <b>{{ plan|upper }}</b>
-        {% if current_period_end %}
-          · Renews: <b>{{ current_period_end }}</b>
+  {# -------- CURRENT STATUS HERO -------- #}
+  <div class="status-card">
+    <div class="status-info">
+      <h3>Account Membership</h3>
+      <div class="status-main">
+        <span class="status-text">
+          {% if status == 'active' or status == 'canceling' %}
+            {{ plan|upper }} Plan
+          {% elif trial_active %}
+            Trial Period
+          {% else %}
+            Free Tier
+          {% endif %}
+        </span>
+        
+        {% if status == 'active' %}
+          <span class="pill pill-ok">Active</span>
+        {% elif status == 'canceling' %}
+          <span class="pill pill-warn">Canceling</span>
+        {% elif trial_active %}
+          <span class="pill pill-indigo">Trial</span>
+        {% else %}
+          <span class="pill pill-bad">Inactive</span>
         {% endif %}
-        {% if cur %}
-          · Currency: <b>{{ cur }}</b>
-        {% endif %}
+      </div>
 
-      {% elif status == 'canceling' %}
-        Plan: <b>{{ plan|upper }}</b>
-        {% if current_period_end %}
-          · Ends: <b>{{ current_period_end }}</b>
+      <div class="mini-note" style="margin-top: 4px; color: #64748b; font-size: 14px;">
+        {% if status == 'active' %}
+          Next renewal: <b>{{ current_period_end }}</b> · Billing in <b>{{ cur }}</b>
+        {% elif status == 'canceling' %}
+          Your access will remain until <b>{{ current_period_end }}</b>. No further charges will occur.
+        {% elif trial_active %}
+          Your free trial expires on <b>{{ trial_end }}</b>. Upgrade to keep your automations running.
+        {% else %}
+          Upgrade now to unlock the scheduler and unlimited follow-ups.
         {% endif %}
-        {% if cur %}
-          · Currency: <b>{{ cur }}</b>
-        {% endif %}
-        <div class="mini">You keep access until the end date. After that, your account goes back to free/trial rules.</div>
-
-      {% elif trial_active %}
-        Trial ends on <b>{{ trial_end }}</b>.
-        <div class="mini">Upgrade now so you don’t get interrupted.</div>
-
-      {% else %}
-        You’re on free mode. Pick a plan to unlock scheduler + unlimited follow-ups.
-      {% endif %}
+      </div>
     </div>
 
     {% if status in ['active','canceling'] %}
-      <div style="margin-top:12px;">
+      <div style="text-align: right;">
         <form method="POST" action="{{ url_for('billing.cancel_subscription') }}">
-          <button class="btn btn-danger" type="submit"
-                  onclick="return confirm('Cancel at period end? You will keep access until the end date.')">
+          <button class="btn-danger-link" type="submit"
+                  onclick="return confirm('Are you sure you want to cancel? You will keep access until the end of your billing cycle.')">
             Cancel subscription
           </button>
         </form>
-        <div class="mini">Cancel doesn’t refund. It just stops renewal.</div>
       </div>
     {% endif %}
   </div>
 
-  {# -------- Pricing cards -------- #}
-  <div class="grid">
+  {# -------- PRICING CARDS -------- #}
+  <div class="pricing-grid">
 
-    <!-- Monthly -->
-    <div class="box">
-      <div class="row">
-        <h3 style="margin:0;">Monthly</h3>
-        {% if plan == 'monthly' and status in ['active','canceling'] %}
-          <span class="pill">Current</span>
+    <div class="plan-card {% if plan == 'monthly' and status != 'inactive' %}active{% endif %}">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <h2 style="margin:0; font-size: 20px; font-weight: 800;">Monthly</h2>
+        {% if plan == 'monthly' %}<span class="pill pill-indigo">Current</span>{% endif %}
+      </div>
+      
+      <div class="price-wrap">
+        {% if cur == 'USD' %}
+          <span class="price-large">$9</span><span class="price-period">/mo</span>
+        {% else %}
+          <span class="price-large">₦12,600</span><span class="price-period">/mo</span>
+          <div class="mini-note">Approx. $9 USD equivalent</div>
         {% endif %}
       </div>
 
-      {% if cur == 'USD' %}
-        <div class="price">$9 <span class="muted">/ month</span></div>
-        <div class="muted">If you prefer NGN pricing, switch currency in your account settings (optional).</div>
-      {% else %}
-        <div class="price">₦12,600 <span class="muted">/ month</span></div>
-        <div class="muted">$9 USD equivalent</div>
-      {% endif %}
-
-      <ul class="muted">
-        <li>Unlimited follow-ups</li>
-        <li>Scheduler + templates</li>
-        <li>Email logs</li>
+      <ul class="feature-list">
+        <li><span class="check-icon">✓</span> Unlimited follow-ups</li>
+        <li><span class="check-icon">✓</span> Full access to scheduler</li>
+        <li><span class="check-icon">✓</span> Custom email templates</li>
+        <li><span class="check-icon">✓</span> Basic email delivery logs</li>
       </ul>
 
-      {% if status in ['active','canceling'] %}
-        <div class="mini">You’re already subscribed. (Optional: add a “Change plan” flow later.)</div>
-      {% else %}
-        <form method="POST" action="{{ url_for('billing.subscribe') }}" style="margin-top:12px;">
+      {% if status not in ['active','canceling'] %}
+        <form method="POST" action="{{ url_for('billing.subscribe') }}">
           <input type="hidden" name="plan" value="monthly">
           <input type="hidden" name="currency" value="{{ cur }}">
-          <button class="btn btn-dark" type="submit">
-            {% if trial_active %}Upgrade now{% else %}Start Monthly{% endif %}
+          <button class="btn btn-primary" type="submit">
+            {% if trial_active %}Upgrade Now{% else %}Select Monthly{% endif %}
           </button>
         </form>
+      {% else %}
+        <button class="btn btn-outline" disabled>Currently Active</button>
       {% endif %}
     </div>
 
-    <!-- Yearly -->
-    <div class="box">
-      <div class="row">
-        <h3 style="margin:0;">Yearly</h3>
-        <span class="pill">2 months free</span>
+    <div class="plan-card {% if plan == 'yearly' and status != 'inactive' %}active{% endif %}">
+      <div class="plan-tag">2 MONTHS FREE</div>
+      
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <h2 style="margin:0; font-size: 20px; font-weight: 800;">Yearly</h2>
+        {% if plan == 'yearly' %}<span class="pill pill-indigo">Current</span>{% endif %}
+      </div>
+      
+      <div class="price-wrap">
+        {% if cur == 'USD' %}
+          <span class="price-large">$90</span><span class="price-period">/yr</span>
+        {% else %}
+          <span class="price-large">₦126,000</span><span class="price-period">/yr</span>
+          <div class="mini-note">Approx. $90 USD equivalent</div>
+        {% endif %}
       </div>
 
-      {% if plan == 'yearly' and status in ['active','canceling'] %}
-        <div class="mini"><b>Current plan</b></div>
-      {% endif %}
-
-      {% if cur == 'USD' %}
-        <div class="price">$90 <span class="muted">/ year</span></div>
-        <div class="muted">Best value.</div>
-      {% else %}
-        <div class="price">₦126,000 <span class="muted">/ year</span></div>
-        <div class="muted">$90 USD equivalent</div>
-      {% endif %}
-
-      <ul class="muted">
-        <li>Everything in Monthly</li>
-        <li>Best value</li>
-        <li>Lower churn</li>
+      <ul class="feature-list">
+        <li><span class="check-icon">✓</span> <b>All Monthly features</b></li>
+        <li><span class="check-icon">✓</span> 16% discount vs monthly</li>
+        <li><span class="check-icon">✓</span> Priority system priority</li>
+        <li><span class="check-icon">✓</span> Single annual invoice</li>
       </ul>
 
-      {% if status in ['active','canceling'] %}
-        <div class="mini">You’re already subscribed. (Optional: add a “Change plan” flow later.)</div>
-      {% else %}
-        <form method="POST" action="{{ url_for('billing.subscribe') }}" style="margin-top:12px;">
+      {% if status not in ['active','canceling'] %}
+        <form method="POST" action="{{ url_for('billing.subscribe') }}">
           <input type="hidden" name="plan" value="yearly">
           <input type="hidden" name="currency" value="{{ cur }}">
-          <button class="btn btn-blue" type="submit">
-            {% if trial_active %}Upgrade yearly{% else %}Start Yearly{% endif %}
+          <button class="btn btn-primary" style="background: #6366f1;" type="submit">
+            {% if trial_active %}Upgrade to Yearly{% else %}Select Yearly{% endif %}
           </button>
         </form>
+      {% else %}
+        <button class="btn btn-outline" disabled>Currently Active</button>
       {% endif %}
     </div>
 
   </div>
+
+  <div style="text-align: center; margin-top: 48px; border-top: 1px solid #e2e8f0; padding-top: 24px;">
+    <p class="muted">Need a custom plan for your team? <a href="mailto:support@yourapp.com" style="color: #6366f1; font-weight: 600;">Contact Support</a></p>
+  </div>
 </div>
 
 {% endblock %}
-
-
-

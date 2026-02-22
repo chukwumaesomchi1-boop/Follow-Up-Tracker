@@ -5,252 +5,248 @@
 {% set mode = mode if mode is defined else ('edit' if fc.get('id') else 'add') %}
 
 <style>
-  .page-title { font-size:20px; font-weight:950; margin:0 0 6px; }
-  .page-sub { color:#64748b; font-size:13px; margin:0 0 14px; line-height:1.45; }
+  /* --- Layout & Typography --- */
+  .page-header { margin-bottom: 24px; }
+  .page-title { font-size: 26px; font-weight: 800; color: #0f172a; margin: 0 0 6px; }
+  .page-sub { color: #64748b; font-size: 15px; line-height: 1.6; max-width: 700px; }
 
-  .grid { display:grid; grid-template-columns: 1fr 1fr; gap:18px; align-items:start; }
-  @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+  .grid-container { 
+    display: grid; 
+    grid-template-columns: 1.2fr 0.8fr; 
+    gap: 32px; 
+    align-items: start; 
+  }
+  @media (max-width: 1024px) { .grid-container { grid-template-columns: 1fr; } }
 
+  /* --- Professional Cards --- */
   .card {
-    border:1px solid #e5e7eb;
-    border-radius:16px;
-    padding:16px;
-    background:#fff;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.04);
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    padding: 32px;
+    background: #fff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   }
 
-  .section-title { font-weight:950; margin:0 0 10px; display:flex; gap:10px; align-items:center; }
-  .muted { color:#64748b; font-size:12px; line-height:1.45; }
-  .hint { margin-top:8px; padding:10px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; color:#334155; font-size:12px; }
-
-  label { display:block; font-weight:900; font-size:13px; margin:12px 0 6px; }
+  .section-header { margin-bottom: 24px; }
+  .section-title { font-size: 18px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+  
+  /* --- Form Elements --- */
+  .form-group { margin-bottom: 20px; }
+  label { display: block; font-weight: 700; font-size: 14px; color: #475569; margin-bottom: 8px; }
+  
   input, select, textarea {
-    width:100%;
-    padding:12px 12px;
-    border:1px solid #d1d5db;
-    border-radius:14px;
-    font-size:14px;
-    outline:none;
-    background:#fff;
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    font-size: 15px;
+    color: #1e293b;
+    background: #fff;
+    transition: all 0.2s ease;
+    outline: none;
   }
-  textarea { resize: vertical; }
+  input:focus, select:focus, textarea:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  }
 
-  .row { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .field-row { grid-template-columns: 1fr; } }
 
-  .actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:14px; }
+  .helper-text { font-size: 12px; color: #94a3b8; margin-top: 6px; display: block; }
+
+  /* --- Priority Flow Indicator --- */
+  .priority-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 16px;
+    margin: 24px 0;
+  }
+  .priority-steps {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-top: 8px;
+  }
+  .step-active { color: #6366f1; }
+
+  /* --- Buttons --- */
+  .actions { display: flex; gap: 12px; margin-top: 32px; }
   .btn {
-    border:1px solid #d1d5db;
-    background:#fff;
-    padding:10px 12px;
-    border-radius:14px;
-    cursor:pointer;
-    text-decoration:none;
-    display:inline-flex;
-    gap:8px;
-    align-items:center;
-    font-weight:950;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    border: 1px solid transparent;
   }
-  .btn-primary { border-color:#111827; background:#111827; color:#fff; }
-  .btn-soft { background:#f9fafb; }
+  .btn-primary { background: #0f172a; color: #fff; border: none; }
+  .btn-primary:hover { background: #1e293b; transform: translateY(-1px); }
+  .btn-outline { background: #fff; border-color: #e2e8f0; color: #475569; }
+  .btn-outline:hover { background: #f8fafc; }
 
-  /* Preview */
-  .preview-wrap { display:grid; grid-template-columns: 1.2fr .8fr; gap:18px; align-items:start; }
-  @media (max-width: 980px) { .preview-wrap { grid-template-columns: 1fr; } }
-
-  .phone {
-    border:1px solid #e5e7eb;
-    border-radius:24px;
-    background:#0b1220;
-    padding:12px;
-    box-shadow: 0 12px 30px rgba(0,0,0,.12);
+  /* --- iPhone Mockup --- */
+  .phone-frame {
+    width: 300px;
+    height: 600px;
+    background: #111827;
+    border-radius: 40px;
+    padding: 12px;
+    margin: 0 auto;
+    position: relative;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 4px solid #374151;
   }
   .phone-screen {
-    background:#cbd5e1;
-    border-radius:18px;
-    padding:12px;
-    min-height:420px;
+    background: #f1f5f9;
+    width: 100%;
+    height: 100%;
+    border-radius: 32px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
   }
-  .phone-top {
-    display:flex;
-    justify-content:space-between;
-    font-size:12px;
-    color:#334155;
-    margin-bottom:10px;
+  .phone-header {
+    background: #fff;
+    padding: 40px 16px 16px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 12px;
+    font-weight: 700;
   }
-  .bubble {
-    background:#ffffff;
-    border:1px solid #e5e7eb;
-    border-radius:16px;
-    padding:10px 12px;
-    max-width: 100%;
-    white-space:pre-wrap;
-    line-height:1.45;
+  .msg-container { padding: 16px; flex-grow: 1; }
+  .msg-bubble {
+    background: #fff;
+    border-radius: 18px;
+    padding: 14px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    font-size: 14px;
+    line-height: 1.5;
+    color: #334155;
+    border-bottom-left-radius: 4px;
   }
-  .bubble small { color:#64748b; display:block; margin-bottom:6px; }
-  .chip {
-    display:inline-block;
-    padding:2px 10px;
-    border-radius:999px;
-    font-size:12px;
-    font-weight:950;
-    background:#e2e8f0;
-    color:#0f172a;
-    border:1px solid #cbd5e1;
-  }
-
-  .mini-list { margin:0; padding-left:16px; }
-  .mini-list li { margin:6px 0; }
+  .msg-meta { font-size: 11px; color: #94a3b8; margin-bottom: 6px; display: block; }
 </style>
 
-<div style="margin-bottom:12px;">
-  <div class="page-title">
-    {{ "Edit Follow-Up" if mode == "edit" else "Add Follow-Up" }}
-  </div>
+<div class="page-header">
+  <h1 class="page-title">{{ "Edit Follow-Up" if mode == "edit" else "Create Follow-Up" }}</h1>
   <p class="page-sub">
-    Create the follow-up first. Scheduling happens on the <b>Schedule</b> page (so you don’t accidentally send into the past).
+    Define the recipient and the content. Once saved, you can set the delivery schedule on the <b>Schedule</b> page.
   </p>
 </div>
 
 <form method="post" id="followupForm">
   <input type="hidden" name="preferred_channel" value="email">
 
-  <div class="grid">
-
-    <!-- LEFT: DETAILS -->
+  <div class="grid-container">
+    
     <div class="card">
-      <div class="section-title">🧾 Follow-up details</div>
-      <div class="muted">
-        Keep this clean. The system uses this info for the email subject + preview.
-      </div>
-
-      <div class="row">
-        <div>
-          <label>Client name</label>
-          <input
-            name="client_name"
-            placeholder="e.g. Nelly"
-            value="{{ fc.get('client_name','') }}"
-            required
-            title="Client’s name (used in email greeting if template is used)"
-          >
-          <div class="muted">Used as <b>{{'{{name}}'}}</b> when templates are used.</div>
-        </div>
-
-        <div>
-          <label>Client email</label>
-          <input
-            name="email"
-            type="email"
-            placeholder="e.g. nelly@email.com"
-            value="{{ fc.get('email','') }}"
-            required
-            title="Where the follow-up will be sent"
-          >
-          <div class="muted">Email only for now.</div>
+      <div class="section-header">
+        <div class="section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          Recipient Information
         </div>
       </div>
 
-      <label>Follow-up type</label>
-      {% set ftype = fc.get('followup_type','') %}
-      <select name="followup_type" required title="Used in the email subject">
-        <option value="">Select follow-up type</option>
-        <option value="invoice" {% if ftype == 'invoice' %}selected{% endif %}>Invoice</option>
-        <option value="proposal" {% if ftype == 'proposal' %}selected{% endif %}>Proposal</option>
-        <option value="payment" {% if ftype == 'payment' %}selected{% endif %}>Payment</option>
-        <option value="meeting" {% if ftype == 'meeting' %}selected{% endif %}>Meeting</option>
-        <option value="email" {% if ftype == 'email' %}selected{% endif %}>Email</option>
-        <option value="other" {% if ftype == 'other' %}selected{% endif %}>Other</option>
-      </select>
-      <div class="muted">Subject will be: <b>Follow-up: {type}</b></div>
-
-      <label>Personal message (optional)</label>
-      <div class="muted" style="margin-bottom:8px;">
-        If you type here, scheduler sends it <b>exactly</b>. No template overrides.
+      <div class="field-row">
+        <div class="form-group">
+          <label>Client Name</label>
+          <input name="client_name" placeholder="John Doe" value="{{ fc.get('client_name','') }}" required>
+          <span class="helper-text">Used for personalized greetings.</span>
+        </div>
+        <div class="form-group">
+          <label>Client Email</label>
+          <input name="email" type="email" placeholder="john@example.com" value="{{ fc.get('email','') }}" required>
+        </div>
       </div>
-      <textarea
-        id="message_override"
-        name="message_override"
-        rows="5"
-        placeholder="Write what you want the client to receive..."
-        title="Highest priority message"
-      >{{ fc.get('message_override','') }}</textarea>
 
-      <label>Extra notes (optional)</label>
-      <div class="muted" style="margin-bottom:8px;">
-        Used only if personal message is empty.
+      <div class="form-group">
+        <label>Subject / Category</label>
+        {% set ftype = fc.get('followup_type','') %}
+        <select name="followup_type" required>
+          <option value="">Select a category...</option>
+          <option value="invoice" {% if ftype == 'invoice' %}selected{% endif %}>Invoice</option>
+          <option value="proposal" {% if ftype == 'proposal' %}selected{% endif %}>Proposal</option>
+          <option value="payment" {% if ftype == 'payment' %}selected{% endif %}>Payment</option>
+          <option value="meeting" {% if ftype == 'meeting' %}selected{% endif %}>Meeting</option>
+          <option value="other" {% if ftype == 'other' %}selected{% endif %}>Other</option>
+        </select>
       </div>
-      <textarea
-        name="description"
-        rows="4"
-        placeholder="Extra notes (optional)"
-        title="Fallback content if personal message is empty"
-      >{{ fc.get('description','') }}</textarea>
 
-      <div class="hint">
-        <b>Send priority order:</b><br>
-        1) Personal message → 2) Extra notes → 3) Scheduler template
+      <div class="divider" style="height:1px; background:#f1f5f9; margin:32px 0;"></div>
+
+      <div class="section-header">
+        <div class="section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Message Content
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Personal Message (Highest Priority)</label>
+        <textarea id="message_override" name="message_override" rows="5" placeholder="Write the exact message you want sent...">{{ fc.get('message_override','') }}</textarea>
+        <span class="helper-text">If this is filled, it bypasses your default templates.</span>
+      </div>
+
+      <div class="form-group">
+        <label>Extra Internal Notes (Optional Fallback)</label>
+        <textarea name="description" rows="3" placeholder="Additional details...">{{ fc.get('description','') }}</textarea>
+      </div>
+
+      <div class="priority-box">
+        <label style="margin:0;">System Logic Priority:</label>
+        <div class="priority-steps">
+          <span class="step-active">1. Personal Message</span>
+          <span>→</span>
+          <span>2. Extra Notes</span>
+          <span>→</span>
+          <span>3. Global Template</span>
+        </div>
       </div>
 
       <div class="actions">
-        <button class="btn btn-primary" type="submit" title="Save this follow-up">
-          💾 {{ "Save Changes" if mode == "edit" else "Save Follow-Up" }}
+        <button class="btn btn-primary" type="submit">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          {{ "Save Changes" if mode == "edit" else "Create Follow-Up" }}
         </button>
-
-        <a class="btn" href="{{ url_for('dashboard') }}" title="Back to dashboard">
-          ← Cancel
-        </a>
-      </div>
-
-      <div class="muted" style="margin-top:10px;">
-        After saving: go to <b>Schedule</b> to choose date + recurrence safely.
+        <a class="btn btn-outline" href="{{ url_for('dashboard') }}">Cancel</a>
       </div>
     </div>
 
-    <!-- RIGHT: LIVE PREVIEW -->
-    <div class="card">
-      <div class="section-title">📲 Live preview</div>
-      <div class="muted" style="margin-bottom:10px;">
-        This is what the client receives (based on your message fields).
+    <div style="position: sticky; top: 20px;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <span class="pill" style="background: #e0e7ff; color: #4338ca; padding: 6px 16px; border-radius: 99px; font-size: 12px; font-weight: 800;">LIVE PREVIEW</span>
       </div>
-
-      <div class="preview-wrap">
-        <div>
-          <div class="muted" style="margin-bottom:8px;">
-            Channel <span class="chip" id="pvChannel">EMAIL</span>
+      
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="phone-header">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+              <span id="pvTime">12:00</span>
+              <span>📶 🔋</span>
+            </div>
+            <div style="color: #64748b; font-size: 11px;">Subject:</div>
+            <div id="pvSubject" style="font-size: 14px; color: #1e293b;">Follow-up: Invoice</div>
           </div>
-
-          <div class="phone">
-            <div class="phone-screen">
-              <div class="phone-top">
-                <span id="pvTime">--:--</span>
-                <span>📶 🔋</span>
-              </div>
-
-              <div class="bubble">
-                <small><b id="pvSubject">Follow-up</b></small>
-                <div id="pvBody">Type your personal message to preview it here…</div>
-              </div>
-
-              <div class="muted" style="margin-top:10px;">
-                If both fields are empty, scheduler will use your <b>scheduler template</b>.
-              </div>
+          
+          <div class="msg-container">
+            <span class="msg-meta">Now · Email</span>
+            <div class="msg-bubble" id="pvBody">
+              Your message preview will appear here as you type...
             </div>
           </div>
-        </div>
-
-        <div class="muted">
-          <b>What to know</b>
-          <ul class="mini-list">
-            <li><b>Personal message</b> = exact send.</li>
-            <li><b>Extra notes</b> = fallback.</li>
-            <li><b>Empty</b> = scheduler template.</li>
-            <li>Scheduling is separate to avoid “oops it sent instantly”.</li>
-          </ul>
-
-          <div class="hint">
-            Want the default template? Edit it in:
-            <b>Scheduler Templates</b>
+          
+          <div style="padding: 16px; background: #fff; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center;">
+            This is a simulation of the client's view.
           </div>
         </div>
       </div>
@@ -260,41 +256,31 @@
 </form>
 
 <script>
-  function pad2(n){ return String(n).padStart(2, "0"); }
-  function updateTime(){
-    const d = new Date();
-    const el = document.getElementById("pvTime");
-    if (el) el.textContent = pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+  // Dynamic Time for Phone
+  function updateTime() {
+    const now = new Date();
+    document.getElementById("pvTime").textContent = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
   }
   updateTime();
-  setInterval(updateTime, 30000);
+  setInterval(updateTime, 60000);
 
+  // Preview Logic
   const elType = document.querySelector('[name="followup_type"]');
   const elDesc = document.querySelector('[name="description"]');
   const elOverride = document.querySelector('[name="message_override"]');
-  const elChan = document.querySelector('[name="preferred_channel"]'); // hidden
 
-  function refreshPreview(){
-    const type = (elType && elType.value || "follow-up").trim();
+  function refreshPreview() {
+    const type = (elType && elType.value || "General").charAt(0).toUpperCase() + (elType && elType.value || "General").slice(1);
     const override = (elOverride && elOverride.value || "").trim();
     const desc = (elDesc && elDesc.value || "").trim();
 
-    const msg = override || desc || "Type your personal message to preview it here…";
-
-    const s = document.getElementById("pvSubject");
-    const b = document.getElementById("pvBody");
-    const c = document.getElementById("pvChannel");
-
-    if (s) s.textContent = "Follow-up: " + type;
-    if (b) b.textContent = msg;
-
-    const ch = (elChan && elChan.value || "email").toLowerCase();
-    if (c) c.textContent = ch.toUpperCase();
+    document.getElementById("pvSubject").textContent = "Follow-up: " + type;
+    document.getElementById("pvBody").textContent = override || desc || "Start typing in the Personal Message or Extra Notes fields to see a preview of what your client will receive.";
   }
 
-  if (elType) elType.addEventListener("change", refreshPreview);
-  if (elDesc) elDesc.addEventListener("input", refreshPreview);
-  if (elOverride) elOverride.addEventListener("input", refreshPreview);
+  [elType, elDesc, elOverride].forEach(el => {
+    if(el) el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', refreshPreview);
+  });
 
   refreshPreview();
 </script>
