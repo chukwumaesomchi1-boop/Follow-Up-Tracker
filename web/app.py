@@ -3043,7 +3043,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
-from your_db_module import get_connection, _gen_otp6  # replace with your actual imports
+from database import get_connection # replace with your actual imports
 
 def send_verification_code(uid: int, email: str, minutes: int = 15) -> None:
     code = _gen_otp6()
