@@ -2,130 +2,173 @@
 {% block content %}
 
 <style>
-  .page-title { font-size:20px; font-weight:950; margin:0 0 6px; }
-  .page-sub { color:#64748b; font-size:13px; margin:0 0 14px; line-height:1.45; }
+  /* --- Typography & Layout --- */
+  .page-header { margin-bottom: 24px; }
+  .page-title { font-size: 26px; font-weight: 800; color: #0f172a; margin: 0 0 6px; display: flex; align-items: center; gap: 12px; }
+  .page-sub { color: #64748b; font-size: 15px; margin: 0; line-height: 1.6; max-width: 600px; }
 
   .card {
-    border:1px solid #e5e7eb;
-    border-radius:16px;
-    padding:16px;
-    background:#fff;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.04);
-    margin: 14px 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 32px;
+    background: #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    margin-bottom: 24px;
   }
 
-  .muted { color:#64748b; font-size:12px; line-height:1.45; }
-  .section-title { font-weight:950; margin:0 0 10px; display:flex; gap:10px; align-items:center; }
+  .section-title { font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
 
-  .actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:14px; }
+  /* --- Enhanced File Upload --- */
+  .file-drop-zone {
+    position: relative;
+    border: 2px dashed #cbd5e1;
+    border-radius: 16px;
+    background: #f8fafc;
+    padding: 40px 20px;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  .file-drop-zone:hover { border-color: #6366f1; background: #f5f7ff; }
+  .file-drop-zone input[type="file"] {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .upload-icon { font-size: 32px; margin-bottom: 12px; display: block; }
+
+  /* --- Buttons --- */
+  .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 24px; }
   .btn {
-    border:1px solid #d1d5db;
-    background:#fff;
-    padding:10px 12px;
-    border-radius:14px;
-    cursor:pointer;
-    text-decoration:none;
-    display:inline-flex;
-    gap:8px;
-    align-items:center;
-    font-weight:950;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    text-decoration: none;
   }
-  .btn-primary { border-color:#111827; background:#111827; color:#fff; }
-  .btn-soft { background:#f9fafb; }
+  .btn-primary { background: #0f172a; color: white; border: none; }
+  .btn-primary:hover { background: #1e293b; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15,23,42,0.15); }
+  .btn-soft { background: #f1f5f9; color: #475569; }
+  .btn-soft:hover { background: #e2e8f0; }
 
-  input[type="file"]{
-    width:100%;
-    padding:12px;
-    border:1px dashed #cbd5e1;
-    border-radius:14px;
-    background:#f8fafc;
-    cursor:pointer;
+  /* --- Informational Sections --- */
+  .info-box {
+    background: #eef2ff;
+    border: 1px solid #e0e7ff;
+    padding: 20px;
+    border-radius: 16px;
+    margin-top: 24px;
+  }
+  .info-box ul { margin: 12px 0 0; padding-left: 20px; color: #4338ca; }
+  .info-box li { margin-bottom: 8px; font-size: 14px; line-height: 1.5; }
+
+  .step-card {
+    background: #ffffff;
+    border-left: 4px solid #6366f1;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .step-number {
+    background: #6366f1;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    flex-shrink: 0;
   }
 
-  .rules {
-    border:1px solid #e2e8f0;
-    background:#f8fafc;
-    padding:12px;
-    border-radius:14px;
-    margin-top:10px;
-  }
-  .rules ul { margin:8px 0 0; padding-left:18px; }
-  .rules li { margin:6px 0; }
-
-  code { background:#eef2ff; padding:2px 6px; border-radius:8px; }
+  code { background: #ffffff; border: 1px solid #e0e7ff; padding: 2px 6px; border-radius: 6px; color: #4338ca; font-weight: 600; }
 </style>
 
-<div>
-  <div class="page-title">📥 Import CSV</div>
+<div class="page-header">
+  <h1 class="page-title">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+    Import Follow-ups
+  </h1>
   <p class="page-sub">
-    Upload your CSV, we’ll create follow-ups in <b>Draft/Pending</b>. Nothing gets sent automatically until you schedule it.
+    Upload your client list via CSV. Imported records are saved as <b>Drafts</b>—nothing is sent until you manually schedule them.
   </p>
 </div>
 
 <div class="card">
-  <div class="section-title">Upload file</div>
-  <div class="muted">
-    Only <b>.csv</b> is supported for now.
-  </div>
-
+  <div class="section-title">Step 1: Choose CSV File</div>
+  
   <form method="post" enctype="multipart/form-data" id="importForm">
-    <input type="file" name="file" accept=".csv,text/csv" required
-           title="Upload a CSV file (.csv)">
-
-    <div class="actions">
-      <button class="btn btn-primary" type="submit" id="btnImport"
-              title="Import this CSV into your follow-ups list">
-        🚀 Import CSV
-      </button>
-
-      <a class="btn btn-soft" href="{{ url_for('dashboard') }}"
-         title="Back to dashboard">
-        ← Back
-      </a>
+    <div class="file-drop-zone" id="dropZone">
+      <span class="upload-icon">📄</span>
+      <div style="font-weight: 700; color: #0f172a; margin-bottom: 4px;" id="fileNameDisplay">Click or drag to upload</div>
+      <div style="font-size: 13px; color: #64748b;">Supports .csv files up to 5MB</div>
+      <input type="file" name="file" id="fileInput" accept=".csv,text/csv" required>
     </div>
 
-    <div class="rules">
-      <div style="font-weight:950;">Rules (so you don’t get surprised)</div>
-      <ul class="muted">
-        <li><b>No sending happens here.</b> Import only creates records.</li>
-        <li><b>Scheduling is separate</b> (go to <b>Schedule</b> after import).</li>
-        <li>If you schedule a time in the past, the app will <b>push it forward</b> (or prompt you) so you don’t “insta-send” by mistake.</li>
-        <li><b>Email is required</b> for sending. Missing/invalid emails will fail.</li>
-        <li>Recommended columns: <code>client_name</code>, <code>email</code>, <code>followup_type</code>, <code>message_override</code>, <code>description</code>.</li>
-        <li><b>Priority order when sending:</b> Personal message → Extra notes → Scheduler template.</li>
-        <li><b>Sent stays sent.</b> Pending / failed / scheduled can be re-scheduled.</li>
+    <div class="actions">
+      <button class="btn btn-primary" type="submit" id="btnImport">
+        <span>🚀 Start Import</span>
+      </button>
+      <a class="btn btn-soft" href="{{ url_for('dashboard') }}">Cancel</a>
+    </div>
+
+    <div class="info-box">
+      <div style="font-weight: 800; color: #312e81; font-size: 13px; text-transform: uppercase;">CSV Column Guide</div>
+      <ul>
+        <li><b>Required:</b> <code>email</code></li>
+        <li><b>Recommended:</b> <code>client_name</code>, <code>followup_type</code>, <code>description</code></li>
+        <li><b>Power Tip:</b> Use <code>message_override</code> to set a custom email body for specific rows.</li>
       </ul>
     </div>
   </form>
 </div>
 
-<div class="card">
-  <div class="section-title">✅ Next steps after import</div>
-  <div class="muted">
-    After import:
-    <ol style="margin:8px 0 0; padding-left:18px;">
-      <li>Go to <b>Schedule</b></li>
-      <li>Select the imported follow-ups</li>
-      <li>Pick start date + send time + repeat</li>
-    </ol>
+<div class="card step-card">
+  <div class="step-number">2</div>
+  <div style="flex-grow: 1;">
+    <div style="font-weight: 700; color: #0f172a;">What happens next?</div>
+    <div style="font-size: 14px; color: #64748b; margin-top: 2px;">After importing, head to the <b>Scheduling</b> tab to set your send times.</div>
   </div>
-
-  <div class="actions">
-    <a class="btn" href="{{ url_for('schedule') }}"
-       title="Schedule imported follow-ups (this is where sending rules apply)">
-      🗓 Go to Schedule
-    </a>
-  </div>
+  <a class="btn btn-soft" href="{{ url_for('schedule') }}" style="border-style: dashed; background: transparent;">
+    🗓 Go to Schedule
+  </a>
 </div>
 
 <script>
-  // tiny UX: disable button on submit (prevents double imports)
   const form = document.getElementById("importForm");
   const btn = document.getElementById("btnImport");
+  const fileInput = document.getElementById("fileInput");
+  const fileNameDisplay = document.getElementById("fileNameDisplay");
+  const dropZone = document.getElementById("dropZone");
+
+  // Visual feedback for file selection
+  fileInput.addEventListener("change", (e) => {
+    if (fileInput.files.length > 0) {
+      const name = fileInput.files[0].name;
+      fileNameDisplay.textContent = `Selected: ${name}`;
+      dropZone.style.borderColor = "#6366f1";
+      dropZone.style.background = "#f5f7ff";
+    }
+  });
+
+  // Prevent double submission
   if (form && btn) {
     form.addEventListener("submit", () => {
       btn.disabled = true;
-      btn.textContent = "Importing…";
+      btn.style.opacity = "0.7";
+      btn.querySelector('span').textContent = "Processing File...";
     });
   }
 </script>
