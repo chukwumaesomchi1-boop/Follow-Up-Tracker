@@ -2,103 +2,107 @@
 {% block content %}
 
 <style>
-  .auth-wrap { max-width: 520px; margin: 0 auto; padding: 8px 0; }
-  .card { background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:18px; box-shadow: 0 10px 24px rgba(0,0,0,0.04); }
-  .title { margin:0; font-size:22px; font-weight:950; }
-  .sub { margin-top:6px; color:#64748b; font-size:13px; line-height:1.45; }
-  .field { margin-top:12px; }
-  label { display:block; font-weight:900; font-size:13px; margin-bottom:6px; color:#0f172a; }
-
-  .input-wrap { position: relative; }
-  input {
-    width:100%; padding:12px; border-radius:12px; border:1px solid #d1d5db; font-size:14px;
-    outline:none; background:#fff;
+  /* Wrapper: Narrowed the max-width slightly for a better single-button card proportion */
+  .auth-wrap { 
+    max-width: 420px; 
+    margin: 40px auto; 
+    padding: 0 16px; 
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
-  input:focus { border-color: #94a3b8; box-shadow: 0 0 0 3px rgba(148,163,184,.25); }
 
-  .toggle {
-    position:absolute; right:10px; top:50%; transform:translateY(-50%);
-    border:1px solid #e5e7eb; background:#fff; border-radius:999px;
-    padding:6px 10px; font-weight:900; font-size:12px; cursor:pointer;
-    color:#0f172a;
+  /* Card: Added softer, layered shadows and refined padding */
+  .card { 
+    background: #ffffff; 
+    border: 1px solid #f1f5f9; 
+    border-radius: 16px; 
+    padding: 40px 32px; 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05); 
+    text-align: center; 
   }
-  .toggle:hover { background:#f8fafc; }
 
-  .row { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:10px; }
-  .muted { color:#64748b; font-size:12px; text-decoration:none; font-weight:800; }
-  .muted:hover { color:#0f172a; text-decoration:underline; }
-
-  .divider { display:flex; align-items:center; gap:10px; margin:16px 0; color:#94a3b8; font-size:12px; font-weight:800; }
-  .divider:before, .divider:after { content:""; height:1px; background:#e5e7eb; flex:1; }
-
-  .btn {
-    width:100%; padding:12px; border-radius:12px; border:1px solid #d1d5db; background:#fff;
-    font-weight:950; cursor:pointer; text-decoration:none; display:inline-flex; justify-content:center; align-items:center; gap:10px;
+  /* Typography: Dropped font weights from 950 (which can render harshly) to 700/600 */
+  .title { 
+    margin: 0; 
+    font-size: 24px; 
+    font-weight: 700; 
+    color: #0f172a;
   }
-  .btn:hover { background:#f8fafc; }
-  .btn-primary { background:#111827; border-color:#111827; color:#fff; }
-  .btn-primary:hover { background:#0b1220; }
-  .btn-google { background:#fff; border-color:#d1d5db; }
-  .btn-google:hover { background:#f8fafc; }
+  .sub { 
+    margin-top: 8px; 
+    color: #64748b; 
+    font-size: 14px; 
+    line-height: 1.5; 
+  }
 
-  .tiny { font-size:12px; margin-top:12px; color:#64748b; line-height:1.5; }
-  .tiny a { color:#0ea5e9; font-weight:900; text-decoration:none; }
-  .tiny a:hover { text-decoration:underline; }
+  /* Button: Updated to follow Google's standard Sign-In button design guidelines */
+  .btn-google {
+    display: inline-flex; 
+    justify-content: center; 
+    align-items: center; 
+    gap: 12px;
+    width: 100%; 
+    padding: 12px 16px; 
+    margin-top: 28px;
+    background: #ffffff;
+    color: #334155;
+    font-size: 15px;
+    font-weight: 600; 
+    text-decoration: none; 
+    border: 1px solid #cbd5e1; 
+    border-radius: 8px; 
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    cursor: pointer; 
+  }
+  .btn-google:hover { 
+    background: #f8fafc; 
+    border-color: #94a3b8;
+  }
+  .btn-google svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Footer Links: Improved contrast for accessibility */
+  .tiny { 
+    font-size: 12px; 
+    margin-top: 24px; 
+    color: #94a3b8; 
+    line-height: 1.6; 
+  }
+  .tiny a { 
+    color: #0284c7; 
+    font-weight: 600; 
+    text-decoration: none; 
+    transition: color 0.2s ease;
+  }
+  .tiny a:hover { 
+    color: #0369a1;
+    text-decoration: underline; 
+  }
 </style>
 
 <div class="auth-wrap">
   <div class="card">
     <h2 class="title">Welcome back</h2>
-    <div class="sub">Log in to manage follow-ups, schedules, and templates.</div>
+    <div class="sub">Sign in securely using your Google account.</div>
 
-    <form method="POST" action="{{ url_for('login') }}" autocomplete="on">
-      <div class="field">
-        <label for="email">Email</label>
-        <input id="email" type="email" name="email" placeholder="you@company.com" required autofocus autocomplete="email">
-      </div>
-
-      <div class="field">
-        <label for="password">Password</label>
-        <div class="input-wrap">
-          <input id="password" type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
-          <button class="toggle" type="button" id="pwToggle" aria-label="Show/Hide password">Show</button>
-        </div>
-      </div>
-
-      <div class="row">
-        <a class="muted" href="{{ url_for('forgot_password') }}">Forgot password?</a>
-        <a class="muted" href="{{ url_for('register') }}">Create account</a>
-      </div>
-
-      <button class="btn btn-primary" type="submit" style="margin-top:14px;">
-        Log in
-      </button>
-    </form>
-
-    <div class="divider">or</div>
-
-    <a class="btn btn-google" href="{{ url_for('auth_google') }}">
-      <span aria-hidden="true">🔒</span> Continue with Google
+    <a class="btn-google" href="{{ url_for('auth_google') }}">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Continue with Google
     </a>
 
     <div class="tiny">
-      By continuing, you agree to our <a href="{{ url_for('terms') if 'terms' in (request.url_rule.endpoint if request.url_rule else '') else '#' }}">Terms</a>
-      and <a href="{{ url_for('privacy') if 'privacy' in (request.url_rule.endpoint if request.url_rule else '') else '#' }}">Privacy Policy</a>.
+      By continuing, you agree to our <br>
+      <a href="https://chukwumaesomchi1-boop.github.io/terms.html">Terms of Service</a> and 
+      <a href="https://chukwumaesomchi1-boop.github.io/privacy.html">Privacy Policy</a>.
     </div>
   </div>
 </div>
-
-<script>
-  // simple show/hide password
-  const btn = document.getElementById("pwToggle");
-  const pw = document.getElementById("password");
-  if (btn && pw) {
-    btn.addEventListener("click", () => {
-      const isPw = pw.type === "password";
-      pw.type = isPw ? "text" : "password";
-      btn.textContent = isPw ? "Hide" : "Show";
-    });
-  }
-</script>
 
 {% endblock %}

@@ -8,262 +8,330 @@
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
   <meta name="theme-color" content="{{ branding.color }}" />
 
-  <link
-    href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css"
-    rel="stylesheet"
-  />
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
 
   <style>
+    /* --- Design Tokens --- */
     :root {
       --primary: {{ branding.color }};
-      --bg: #f6f7fb;
+      --bg: #f8fafc; /* Slightly softer slate background */
       --card: #ffffff;
-      --text: #0b1220;
+      --text: #0f172a;
       --muted: #64748b;
-      --border: #e5e7eb;
+      --border: #e2e8f0;
 
+      /* Sidebar styling */
       --sb: #0f172a;
-      --sbText: #e5e7eb;
-      --sbHover: rgba(255, 255, 255, 0.08);
+      --sbText: #94a3b8;
+      --sbHoverText: #f8fafc;
+      --sbHover: rgba(255, 255, 255, 0.05);
 
-      --radius: 14px;
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-      --shadowSoft: 0 10px 24px rgba(0, 0, 0, 0.08);
+      /* Layout & FX */
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+      --shadowSoft: 0 4px 20px rgba(0, 0, 0, 0.08);
 
       --sbW: 260px;
-      --sbWCollapsed: 84px;
-      --topH: 62px;
+      --sbWCollapsed: 80px;
+      --topH: 68px;
 
-      --anim: 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      --anim: 200ms cubic-bezier(0.4, 0, 0.2, 1);
     }
 
+    /* --- Global Resets --- */
     * { box-sizing: border-box; }
-    html, body { height: 100%; }
-
+    html, body { height: 100%; margin: 0; }
     body {
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
+      -webkit-font-smoothing: antialiased;
     }
 
+    /* --- Layout --- */
     .layout { display: flex; min-height: 100vh; }
 
+    /* --- Sidebar --- */
     .sidebar {
       width: var(--sbW);
       background: var(--sb);
       color: #fff;
-      padding: 16px 12px;
+      padding: 20px 16px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 24px;
       position: sticky;
       top: 0;
       height: 100vh;
       transition: width var(--anim);
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
+      border-right: 1px solid rgba(255,255,255,0.05);
     }
-
     body.sb-collapsed .sidebar { width: var(--sbWCollapsed); }
 
-    .brand { display: flex; gap: 12px; align-items: center; padding: 8px 10px; border-radius: 12px; transition: background var(--anim); }
-    .brand:hover { background: rgba(255, 255, 255, 0.06); }
-    .brand a { display: flex; gap: 12px; align-items: center; text-decoration: none; color: inherit; width: 100%; }
-    .brand img { width: 44px; height: 44px; object-fit: cover; border-radius: 12px; background: #fff; flex: 0 0 auto; }
-    .brand h1 { font-size: 14px; margin: 0; line-height: 1.2; font-weight: 900; letter-spacing: 0.2px; white-space: nowrap; }
+    /* Brand Header */
+    .brand { transition: transform var(--anim); }
+    .brand a { 
+      display: flex; 
+      gap: 12px; 
+      align-items: center; 
+      text-decoration: none; 
+      color: inherit; 
+      padding: 8px;
+      border-radius: var(--radius);
+      transition: background var(--anim);
+    }
+    .brand a:hover { background: var(--sbHover); }
+    .brand img { 
+      width: 40px; 
+      height: 40px; 
+      object-fit: cover; 
+      border-radius: 10px; 
+      background: #fff; 
+      flex-shrink: 0; 
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .brand h1 { 
+      font-size: 15px; 
+      margin: 0; 
+      line-height: 1.3; 
+      font-weight: 800; 
+      letter-spacing: -0.2px; 
+      white-space: nowrap; 
+    }
     body.sb-collapsed .brand h1 { display: none; }
 
-    .sb-controls { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 6px; }
+    /* Sidebar Controls */
+    .sb-controls { padding: 0 8px; }
     .sb-toggle {
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      background: rgba(255, 255, 255, 0.06);
-      color: #fff;
-      border-radius: 12px;
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--sbText);
+      border-radius: 10px;
       padding: 10px 12px;
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 900;
-      transition: transform var(--anim), background var(--anim);
-    }
-    .sb-toggle:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-1px); }
-    .sb-toggle:active { transform: translateY(0px) scale(0.98); }
-    .sb-toggle span { font-size: 13px; opacity: 0.95; }
-    body.sb-collapsed .sb-toggle span { display: none; }
-
-    .nav { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
-    .nav a {
-      text-decoration: none;
-      color: var(--sbText);
-      padding: 10px 12px;
-      border-radius: 12px;
       display: flex;
       align-items: center;
       gap: 12px;
-      font-weight: 800;
+      font-weight: 600;
+      transition: all var(--anim);
+    }
+    .sb-toggle:hover { 
+      background: rgba(255, 255, 255, 0.08); 
+      color: #fff;
+    }
+    .sb-toggle span { font-size: 13px; }
+    body.sb-collapsed .sb-toggle { justify-content: center; }
+    body.sb-collapsed .sb-toggle span { display: none; }
+
+    /* Sidebar Navigation */
+    .nav { display: flex; flex-direction: column; gap: 4px; }
+    .nav a {
+      text-decoration: none;
+      color: var(--sbText);
+      padding: 12px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-weight: 600;
       font-size: 14px;
       position: relative;
-      transition: background var(--anim), color var(--anim), transform var(--anim);
+      transition: all var(--anim);
     }
-    .nav a:hover { background: var(--sbHover); color: #fff; transform: translateY(-1px); }
-    .nav a:active { transform: translateY(0px) scale(0.99); }
-    .nav .icon { width: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; flex: 0 0 auto; }
+    .nav a:hover { 
+      background: var(--sbHover); 
+      color: var(--sbHoverText); 
+      transform: translateX(4px);
+    }
+    .nav .icon { 
+      width: 24px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      font-size: 18px; 
+      flex-shrink: 0; 
+    }
     .nav .label { white-space: nowrap; }
     body.sb-collapsed .nav .label { display: none; }
 
+    /* Tooltips for collapsed sidebar */
     .nav a[data-tip]::after {
       content: attr(data-tip);
       position: absolute;
-      left: calc(100% + 10px);
+      left: calc(100% + 12px);
       top: 50%;
-      transform: translateY(-50%);
-      background: #0b1220;
+      transform: translateY(-50%) translateX(-10px);
+      background: #1e293b;
       color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 8px 10px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 800;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
       white-space: nowrap;
       opacity: 0;
       pointer-events: none;
       box-shadow: var(--shadowSoft);
-      transition: opacity var(--anim), transform var(--anim);
-      transform: translateY(-50%) translateX(-6px);
-      z-index: 9999;
+      transition: all var(--anim);
+      z-index: 100;
     }
-    .nav a[data-tip]::before {
-      content: "";
-      position: absolute;
-      left: calc(100% + 2px);
-      top: 50%;
-      transform: translateY(-50%);
-      border: 7px solid transparent;
-      border-right-color: #0b1220;
-      opacity: 0;
-      transition: opacity var(--anim);
-      pointer-events: none;
+    body.sb-collapsed .nav a:hover::after { 
+      opacity: 1; 
+      transform: translateY(-50%) translateX(0); 
     }
-    body.sb-collapsed .nav a:hover::after,
-    body.sb-collapsed .nav a:hover::before { opacity: 1; }
 
+    /* --- Main Content Area --- */
     .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 
+    /* Topbar */
     .topbar {
       position: sticky;
       top: 0;
       z-index: 50;
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
-      padding: 12px 18px;
+      padding: 0 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      min-height: var(--topH);
+      height: var(--topH);
     }
 
     .topbar .pill {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
+      gap: 8px;
+      padding: 6px 14px;
       border-radius: 999px;
       background: #f1f5f9;
-      font-weight: 900;
+      color: #334155;
+      font-weight: 600;
       font-size: 13px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid var(--border);
     }
 
+    /* Notifications */
     .notif-wrap { position: relative; }
     #notif-bell {
-      background: var(--primary);
-      border: none;
-      color: #fff;
-      font-size: 16px;
-      border-radius: 999px;
-      padding: 10px 12px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 18px;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
       cursor: pointer;
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 8px;
-      font-weight: 900;
-      transition: transform var(--anim), filter var(--anim);
+      justify-content: center;
+      transition: all var(--anim);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
-    #notif-bell:hover { transform: translateY(-1px); filter: brightness(1.05); }
-    #notif-bell:active { transform: translateY(0px) scale(0.98); }
+    #notif-bell:hover { 
+      background: #f8fafc; 
+      transform: translateY(-1px); 
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    #notif-bell:active { transform: translateY(0); }
 
     #notif-count {
       display: none;
+      position: absolute;
+      top: -4px;
+      right: -4px;
       background: #ef4444;
       color: #fff;
-      border-radius: 999px;
-      padding: 2px 8px;
-      font-size: 12px;
-      font-weight: 900;
-      line-height: 18px;
+      border-radius: 99px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: 800;
+      border: 2px solid #fff;
     }
 
     #notif-dropdown {
       display: none;
       position: absolute;
       right: 0;
-      top: 52px;
-      width: min(360px, 90vw);
-      max-height: 380px;
+      top: 50px;
+      width: 320px;
+      max-height: 400px;
       overflow-y: auto;
       background: #fff;
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 8px;
+      box-shadow: var(--shadowSoft);
+      padding: 12px;
     }
 
+    /* Content Area */
     .content {
-      padding: 18px;
+      padding: 24px;
       max-width: 1200px;
       width: 100%;
       margin: 0 auto;
-      animation: pageIn 240ms ease-out;
+      animation: pageIn 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
     @keyframes pageIn {
-      from { opacity: 0; transform: translateY(6px); }
+      from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0px); }
     }
 
-    .toast-stack { display: grid; gap: 10px; margin: 12px 0 16px; }
+    /* Toasts */
+    .toast-stack { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 12px; 
+      margin-bottom: 24px; 
+    }
     .toast {
-      padding: 12px 14px;
-      border-radius: 14px;
-      font-weight: 900;
-      border: 1px solid var(--border);
+      padding: 14px 16px;
+      border-radius: 10px;
+      font-weight: 500;
+      font-size: 14px;
+      border-left: 4px solid var(--border);
       background: #fff;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+      box-shadow: var(--shadow);
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      animation: toastIn 200ms ease-out;
+      gap: 12px;
+      animation: toastIn 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      transition: opacity 200ms, transform 200ms;
     }
     @keyframes toastIn {
-      from { opacity: 0; transform: translateY(-6px); }
-      to { opacity: 1; transform: translateY(0px); }
+      from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
-    .toast .msg { font-weight: 900; }
-    .toast .x { border: 0; background: transparent; cursor: pointer; font-size: 16px; line-height: 1; padding: 2px 6px; opacity: 0.7; }
-    .toast .x:hover { opacity: 1; }
-    .toast.success { border-color: #86efac; background: #f0fdf4; }
-    .toast.warning { border-color: #fde68a; background: #fffbeb; }
-    .toast.danger { border-color: #fca5a5; background: #fef2f2; }
-    .toast.info { border-color: #93c5fd; background: #eff6ff; }
+    .toast .msg { flex: 1; }
+    .toast .x { 
+      border: 0; 
+      background: transparent; 
+      cursor: pointer; 
+      font-size: 18px; 
+      color: var(--muted);
+      padding: 4px; 
+      line-height: 1;
+      border-radius: 4px;
+      transition: background var(--anim);
+    }
+    .toast .x:hover { background: rgba(0,0,0,0.05); color: var(--text); }
+    
+    /* Toast Colors */
+    .toast.success { border-left-color: #22c55e; background: #f0fdf4; color: #166534; }
+    .toast.warning { border-left-color: #f59e0b; background: #fffbeb; color: #92400e; }
+    .toast.danger { border-left-color: #ef4444; background: #fef2f2; color: #991b1b; }
+    .toast.info { border-left-color: #3b82f6; background: #eff6ff; color: #1e40af; }
 
+    /* Responsive */
     @media (max-width: 900px) {
-      .sidebar { display: none; }
-      .content { padding: 14px; }
-      .topbar { padding: 10px 12px; }
+      .sidebar { display: none; } /* Consider adding a mobile menu button later! */
+      .content { padding: 16px; }
+      .topbar { padding: 0 16px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -271,10 +339,8 @@
     }
   </style>
 
-  <!-- ✅ Socket.IO v4 client (matches python-socketio v5) -->
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
-    // ✅ Create ONE shared socket for the whole app (polling only, no websocket upgrade)
     window.appSocket = io({
       transports: ["polling"],
       upgrade: false
@@ -293,7 +359,7 @@
       </div>
 
       <div class="sb-controls">
-        <button class="sb-toggle" id="sbToggle" type="button" title="Collapse sidebar">
+        <button class="sb-toggle" id="sbToggle" type="button" title="Toggle sidebar">
           ☰ <span>Collapse</span>
         </button>
       </div>
@@ -330,7 +396,7 @@
               {% for category, message in messages %}
                 <div class="toast {{ category }}">
                   <div class="msg">{{ message }}</div>
-                  <button class="x" type="button" aria-label="Dismiss">✕</button>
+                  <button class="x" type="button" aria-label="Dismiss">&times;</button>
                 </div>
               {% endfor %}
             </div>
@@ -345,141 +411,148 @@
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
 
   <script>
-    // ---- Sidebar collapse (desktop) ----
-    const sbToggle = document.getElementById("sbToggle");
+    document.addEventListener("DOMContentLoaded", () => {
+      // ---- Sidebar Management ----
+      const sbToggle = document.getElementById("sbToggle");
+      
+      const applySidebarState = (v) => {
+        if (v === "1") document.body.classList.add("sb-collapsed");
+        else document.body.classList.remove("sb-collapsed");
+      };
 
-    function applySidebarState(v) {
-      if (v === "1") document.body.classList.add("sb-collapsed");
-      else document.body.classList.remove("sb-collapsed");
-    }
+      applySidebarState(localStorage.getItem("sbCollapsed") || "0");
 
-    applySidebarState(localStorage.getItem("sbCollapsed") || "0");
-
-    sbToggle?.addEventListener("click", () => {
-      const isCollapsed = document.body.classList.toggle("sb-collapsed");
-      localStorage.setItem("sbCollapsed", isCollapsed ? "1" : "0");
-    });
-
-    // ---- Toast dismiss ----
-    document.querySelectorAll(".toast .x").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const t = btn.closest(".toast");
-        if (!t) return;
-        t.style.opacity = "0";
-        t.style.transform = "translateY(-6px)";
-        setTimeout(() => t.remove(), 160);
-      });
-    });
-
-    // ---- Notifications ----
-    const dropdown = document.getElementById("notif-dropdown");
-    const bell = document.getElementById("notif-bell");
-    const count = document.getElementById("notif-count");
-
-    function setBadge(n) {
-      if (!count) return;
-      if (!n || n <= 0) {
-        count.style.display = "none";
-        count.textContent = "";
-      } else {
-        count.style.display = "inline-block";
-        count.textContent = n;
-      }
-    }
-
-    bell?.addEventListener("click", () => {
-      if (!dropdown) return;
-      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-      if (dropdown.style.display === "block") loadNotifications();
-    });
-
-    async function loadNotifications() {
-      try {
-        const res = await fetch("/notifications");
-        if (dropdown) dropdown.innerHTML = await res.text();
-
-        const cRes = await fetch("/api/notifications/count");
-        const cData = await cRes.json();
-        setBadge(cData.count || 0);
-      } catch (e) {
-        console.error("Notif load failed", e);
-      }
-    }
-
-  //   loadNotifications();
-  //   window.appSocket?.on("new_notification", loadNotifications);
-
-  //   document.addEventListener("click", (e) => {
-  //     if (!dropdown || !bell) return;
-  //     if (!dropdown.contains(e.target) && !bell.contains(e.target)) {
-  //       dropdown.style.display = "none";
-  //     }
-  //   });
-  // </script>
-
-  <!-- CSV import progress (only runs on the import page because the elements won’t exist elsewhere) -->
-  <script>
-    const form = document.querySelector('form[action="{{ url_for("import_csv_mapped_start") }}"]');
-    const btn = form?.querySelector("button[type='submit']");
-    const progressWrap = document.getElementById("progressWrap");
-    const pctText = document.getElementById("pctText");
-    const rowText = document.getElementById("rowText");
-    const bar = document.getElementById("bar");
-
-    form?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = "Importing…";
-      }
-      if (progressWrap) progressWrap.style.display = "block";
-      if (pctText) pctText.textContent = "0%";
-      if (rowText) rowText.textContent = "0 / 0 rows";
-      if (bar) bar.style.width = "0%";
-
-      const fd = new FormData(form);
-
-      const res = await fetch("{{ url_for('import_csv_mapped_start') }}", {
-        method: "POST",
-        body: fd,
+      sbToggle?.addEventListener("click", () => {
+        const isCollapsed = document.body.classList.toggle("sb-collapsed");
+        localStorage.setItem("sbCollapsed", isCollapsed ? "1" : "0");
       });
 
-      const data = await res.json();
-      if (!data.ok) {
-        alert("Import failed to start: " + (data.error || "unknown_error"));
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = "Import CSV";
+      // ---- Toast Dismissal ----
+      document.querySelectorAll(".toast .x").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const t = btn.closest(".toast");
+          if (!t) return;
+          t.style.opacity = "0";
+          t.style.transform = "translateY(-10px) scale(0.98)";
+          setTimeout(() => t.remove(), 200);
+        });
+      });
+
+      // ---- Notifications ----
+      const dropdown = document.getElementById("notif-dropdown");
+      const bell = document.getElementById("notif-bell");
+      const count = document.getElementById("notif-count");
+
+      const setBadge = (n) => {
+        if (!count) return;
+        if (!n || n <= 0) {
+          count.style.display = "none";
+          count.textContent = "";
+        } else {
+          count.style.display = "block";
+          count.textContent = n;
         }
-        if (progressWrap) progressWrap.style.display = "none";
-        return;
+      };
+
+      bell?.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent immediate document click close
+        if (!dropdown) return;
+        
+        const isClosed = dropdown.style.display === "none" || dropdown.style.display === "";
+        dropdown.style.display = isClosed ? "block" : "none";
+        if (isClosed) loadNotifications();
+      });
+
+      async function loadNotifications() {
+        try {
+          const res = await fetch("/notifications");
+          if (dropdown) dropdown.innerHTML = await res.text();
+
+          const cRes = await fetch("/api/notifications/count");
+          const cData = await cRes.json();
+          setBadge(cData.count || 0);
+        } catch (e) {
+          console.error("Notif load failed", e);
+        }
       }
 
-      const jobId = data.job_id;
+      /* Uncomment when ready to use!
+      loadNotifications();
+      window.appSocket?.on("new_notification", loadNotifications);
 
-      // ✅ Use the shared socket
-      window.appSocket.emit("join_import", { job_id: jobId });
-
-      window.appSocket.on("import_progress", (p) => {
-        if (p.job_id !== jobId) return;
-        const pct = Number(p.pct || 0);
-        if (pctText) pctText.textContent = pct + "%";
-        if (rowText) rowText.textContent = `${p.done || 0} / ${p.total || 0} rows`;
-        if (bar) bar.style.width = pct + "%";
+      document.addEventListener("click", (e) => {
+        if (!dropdown || !bell) return;
+        if (!dropdown.contains(e.target) && !bell.contains(e.target)) {
+          dropdown.style.display = "none";
+        }
       });
+      */
+    });
+  </script>
 
-      window.appSocket.on("import_done", (d) => {
-        if (d.job_id !== jobId) return;
-        window.location.href = "{{ url_for('dashboard') }}";
-      });
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.querySelector('form[action="{{ url_for("import_csv_mapped_start") }}"]');
+      if (!form) return; // Safely exit if not on the import page
 
-      window.appSocket.on("import_error", (d) => {
-        if (d.job_id !== jobId) return;
-        alert("Import failed: " + (d.error || "unknown_error"));
+      const btn = form.querySelector("button[type='submit']");
+      const progressWrap = document.getElementById("progressWrap");
+      const pctText = document.getElementById("pctText");
+      const rowText = document.getElementById("rowText");
+      const bar = document.getElementById("bar");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
         if (btn) {
-          btn.disabled = false;
-          btn.textContent = "Import CSV";
+          btn.disabled = true;
+          btn.textContent = "Importing…";
+        }
+        if (progressWrap) progressWrap.style.display = "block";
+        if (pctText) pctText.textContent = "0%";
+        if (rowText) rowText.textContent = "0 / 0 rows";
+        if (bar) bar.style.width = "0%";
+
+        const fd = new FormData(form);
+
+        try {
+          const res = await fetch("{{ url_for('import_csv_mapped_start') }}", {
+            method: "POST",
+            body: fd,
+          });
+
+          const data = await res.json();
+          if (!data.ok) throw new Error(data.error || "unknown_error");
+
+          const jobId = data.job_id;
+
+          window.appSocket.emit("join_import", { job_id: jobId });
+
+          window.appSocket.on("import_progress", (p) => {
+            if (p.job_id !== jobId) return;
+            const pct = Number(p.pct || 0);
+            if (pctText) pctText.textContent = pct + "%";
+            if (rowText) rowText.textContent = `${p.done || 0} / ${p.total || 0} rows`;
+            if (bar) bar.style.width = pct + "%";
+          });
+
+          window.appSocket.on("import_done", (d) => {
+            if (d.job_id !== jobId) return;
+            window.location.href = "{{ url_for('dashboard') }}";
+          });
+
+          window.appSocket.on("import_error", (d) => {
+            if (d.job_id !== jobId) return;
+            throw new Error(d.error || "unknown_error");
+          });
+
+        } catch (err) {
+          alert("Import failed: " + err.message);
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = "Import CSV";
+          }
+          if (progressWrap) progressWrap.style.display = "none";
         }
       });
     });
@@ -487,9 +560,11 @@
 
   <script>
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/static/service-worker.js")
-        .catch((err) => console.error("SW Registration failed:", err));
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register("/static/service-worker.js")
+          .catch((err) => console.error("SW Registration failed:", err));
+      });
     }
   </script>
 </body>
