@@ -2274,7 +2274,7 @@ def gmail_connect():
         scopes=SCOPES,
     )
 
-    flow.redirect_uri = os.getenv("APP_BASE_URL") + "/auth/google/callback"
+    flow.redirect_uri = os.getenv("APP_BASE_URL") + "/gmail/callback"
 
     auth_url, state = flow.authorization_url(
         access_type="offline",
