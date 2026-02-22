@@ -1409,40 +1409,43 @@ def build_verify_email_html(code: str, app_name: str, support_email: str | None 
 
 
 
-@app.route("/login", methods=["GET", "POST"])
+# @app.route("/login", methods=["GET", "POST"])
+# def login():
+#     if request.method == "POST":
+#         email = (request.form.get("email") or "").strip().lower()
+#         password = request.form.get("password") or ""
+
+#         conn = dict_connection()
+#         c = conn.cursor()
+#         c.execute("SELECT * FROM users WHERE lower(email)=?", (email,))
+#         user = c.fetchone()
+#         conn.close()
+
+#         if not user:
+#             flash("Invalid email or password", "danger")
+#             return render_template("login.html")
+
+#         user = dict(user)
+#         if not check_password_hash(user["password_hash"], password):
+#             flash("Invalid email or password", "danger")
+#             return render_template("login.html")
+
+#         # 👇 email not verified? stop them here
+#         if int(user.get("email_verified") or 0) != 1:
+#             session["pending_verify_user_id"] = user["id"]
+#             flash("Verify your email to continue.", "danger")
+#             return redirect(url_for("verify_email"))
+
+#         # ✅ verified → log them in
+#         session["user_id"] = user["id"]
+#         flash("Welcome back!", "success")
+#         return redirect(url_for("dashboard"))
+
+#     return render_template("login.html")
+
+@app.route("/login")
 def login():
-    if request.method == "POST":
-        email = (request.form.get("email") or "").strip().lower()
-        password = request.form.get("password") or ""
-
-        conn = dict_connection()
-        c = conn.cursor()
-        c.execute("SELECT * FROM users WHERE lower(email)=?", (email,))
-        user = c.fetchone()
-        conn.close()
-
-        if not user:
-            flash("Invalid email or password", "danger")
-            return render_template("login.html")
-
-        user = dict(user)
-        if not check_password_hash(user["password_hash"], password):
-            flash("Invalid email or password", "danger")
-            return render_template("login.html")
-
-        # 👇 email not verified? stop them here
-        if int(user.get("email_verified") or 0) != 1:
-            session["pending_verify_user_id"] = user["id"]
-            flash("Verify your email to continue.", "danger")
-            return redirect(url_for("verify_email"))
-
-        # ✅ verified → log them in
-        session["user_id"] = user["id"]
-        flash("Welcome back!", "success")
-        return redirect(url_for("dashboard"))
-
-    return render_template("login.html")
-
+    return redirect(url_for("auth_google"))
 
 from functools import wraps
 from flask import session, redirect, url_for, flash
