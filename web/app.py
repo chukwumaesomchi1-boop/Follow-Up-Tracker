@@ -143,10 +143,9 @@ def join_import(data):
     join_room(job_id)
 
 
-@app.route("/")
+@app.route("/", endpoint="landing")
 def landing():
     return render_template("index.html")
-
 import logging
 
 # Quiet down engineio/socketio internal logs
@@ -812,6 +811,9 @@ PUBLIC_PATH_PREFIXES = (
     "/auth/google",
     "/stripe/webhook",
     "/webhooks/paystack",
+    "/",
+    "landing",
+
 )
 
 @app.before_request
@@ -859,7 +861,7 @@ BILLING_OPEN_ENDPOINTS = {
     "reset_password_submit",
     "reset_password",
 
-    "static","landing",
+    "static","landing","/",
 }
 
 OPEN_ENDPOINTS = {
@@ -869,7 +871,7 @@ OPEN_ENDPOINTS = {
     "forgot_password", "forgot_password_verify",
     "reset_password_submit",      # ✅ add this
     "reset_password",             # ✅ if you have a GET page
-    "static","landing",
+    "static","landing","/",
 }
 
 # @app.before_request
