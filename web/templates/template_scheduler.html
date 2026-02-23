@@ -2,281 +2,107 @@
 {% block content %}
 
 <style>
-  .page-title { font-size:20px; font-weight:950; margin:0 0 6px; }
-  .page-sub { color:#64748b; font-size:13px; margin:0 0 14px; line-height:1.45; }
-
-  .grid { display:grid; grid-template-columns: 1fr 1fr; gap:18px; align-items:start; }
-  @media (max-width: 980px){ .grid { grid-template-columns: 1fr; } }
-
-  .box {
-    border:1px solid #e5e7eb; border-radius:16px; padding:16px; background:#fff;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.04);
+  /* Wrapper: Narrowed the max-width slightly for a better single-button card proportion */
+  .auth-wrap { 
+    max-width: 420px; 
+    margin: 40px auto; 
+    padding: 0 16px; 
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
 
-  .warn {
-    border:1px solid #fca5a5;
-    background:#fef2f2;
-    border-radius:14px;
-    padding:12px;
-    color:#7f1d1d;
-  }
-  .warn b { color:#7f1d1d; }
-
-  .good {
-    border:1px solid #86efac;
-    background:#f0fdf4;
-    border-radius:14px;
-    padding:12px;
-    color:#14532d;
+  /* Card: Added softer, layered shadows and refined padding */
+  .card { 
+    background: #ffffff; 
+    border: 1px solid #f1f5f9; 
+    border-radius: 16px; 
+    padding: 40px 32px; 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05); 
+    text-align: center; 
   }
 
-  .muted { color:#64748b; font-size:12px; line-height:1.45; }
-  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12.5px; }
-
-  textarea {
-    width:100%;
-    min-height:500px;
-    padding:12px;
-    border:1px solid #d1d5db;
-    border-radius:14px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size:12.5px;
-    line-height:1.45;
+  /* Typography: Dropped font weights from 950 (which can render harshly) to 700/600 */
+  .title { 
+    margin: 0; 
+    font-size: 24px; 
+    font-weight: 700; 
+    color: #0f172a;
+  }
+  .sub { 
+    margin-top: 8px; 
+    color: #64748b; 
+    font-size: 14px; 
+    line-height: 1.5; 
   }
 
-  iframe {
-    width:100%;
-    height:500px;
-    border:1px solid #e5e7eb;
-    border-radius:14px;
-    background:#fff;
+  /* Button: Updated to follow Google's standard Sign-In button design guidelines */
+  .btn-google {
+    display: inline-flex; 
+    justify-content: center; 
+    align-items: center; 
+    gap: 12px;
+    width: 100%; 
+    padding: 12px 16px; 
+    margin-top: 28px;
+    background: #ffffff;
+    color: #334155;
+    font-size: 15px;
+    font-weight: 600; 
+    text-decoration: none; 
+    border: 1px solid #cbd5e1; 
+    border-radius: 8px; 
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    cursor: pointer; 
+  }
+  .btn-google:hover { 
+    background: #f8fafc; 
+    border-color: #94a3b8;
+  }
+  .btn-google svg {
+    width: 20px;
+    height: 20px;
   }
 
-  .actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:12px; }
-
-  .btn {
-    border:1px solid #d1d5db;
-    background:#fff;
-    padding:10px 12px;
-    border-radius:14px;
-    cursor:pointer;
-    text-decoration:none;
-    display:inline-flex;
-    gap:8px;
-    align-items:center;
-    font-weight:900;
+  /* Footer Links: Improved contrast for accessibility */
+  .tiny { 
+    font-size: 12px; 
+    margin-top: 24px; 
+    color: #94a3b8; 
+    line-height: 1.6; 
   }
-  .btn-primary { border-color:#111827; background:#111827; color:#fff; }
-  .btn-danger { border-color:#9f1239; background:#9f1239; color:#fff; }
-
-  code { background:#eef2ff; padding:2px 6px; border-radius:8px; }
-  .tag { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:900; background:#eef2ff; color:#3730a3; }
-  .list { margin:8px 0 0; padding-left:18px; }
-  .list li { margin:8px 0; }
-
-  .hintbar {
-    margin-top:10px;
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    align-items:center;
+  .tiny a { 
+    color: #0284c7; 
+    font-weight: 600; 
+    text-decoration: none; 
+    transition: color 0.2s ease;
   }
-  .pill {
-    font-size:12px;
-    font-weight:900;
-    padding:6px 10px;
-    border-radius:999px;
-    border:1px solid #e2e8f0;
-    background:#f8fafc;
-    color:#0b1220;
+  .tiny a:hover { 
+    color: #0369a1;
+    text-decoration: underline; 
   }
-  .pill.ok { border-color:#bbf7d0; background:#f0fdf4; color:#14532d; }
-  .pill.warn2 { border-color:#fde68a; background:#fffbeb; color:#7c2d12; }
-
-  .pv-status {
-    margin-top:10px;
-    font-size:12px;
-    color:#64748b;
-    display:flex;
-    gap:10px;
-    align-items:center;
-    flex-wrap:wrap;
-  }
-  .dot {
-    width:8px; height:8px; border-radius:999px;
-    background:#94a3b8;
-    display:inline-block;
-  }
-  .dot.live { background:#22c55e; }
-  .dot.err { background:#ef4444; }
 </style>
 
-<div>
-  <div class="page-title">🧩 Scheduler Template (HTML)</div>
-  <p class="page-sub">
-    Preview is rendered using the <b>same Python renderer</b> the scheduler uses.
-  </p>
-</div>
+<div class="auth-wrap">
+  <div class="card">
+    <h2 class="title">Welcome back</h2>
+    <div class="sub">Sign in securely using your Google account.</div>
 
-<div class="box" style="margin-bottom:14px;">
-  <div class="warn">
-    <b>⚠️ Don’t ruin your template:</b>
-    <ul class="list">
-      <li><b>No JavaScript</b> (no <code>&lt;script&gt;</code>, no event handlers like <code>onclick</code>).</li>
-      <li><b>Only use the variables listed below</b>.</li>
-      <li><b>Don’t paste full page HTML</b> (<code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>, <code>&lt;body&gt;</code>). Use only the email body.</li>
-      <li><b>Keep inline CSS simple</b>. Email clients are strict.</li>
-    </ul>
-  </div>
+    <a class="btn-google" href="{{ url_for('auth_google') }}">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Continue with Google
+    </a>
 
-  <div class="good" style="margin-top:12px;">
-    <b>✅ What works reliably:</b>
-    <div class="muted" style="margin-top:6px;">
-      Use <code>&lt;div&gt;</code>, <code>&lt;p&gt;</code>, <code>&lt;b&gt;</code>, <code>&lt;br&gt;</code>, <code>&lt;table&gt;</code>.
-      Variables like <code>{% raw %}{{name}}{% endraw %}</code>.
-      Conditionals like <code>{% raw %}{% if description %}...{% endif %}{% endraw %}</code>.
+    <div class="tiny">
+      By continuing, you agree to our <br>
+      <a href="#">Terms of Service</a> and 
+      <a href="#">Privacy Policy</a>.
     </div>
   </div>
 </div>
-
-<div class="box" style="margin-bottom:14px;">
-  <div style="font-weight:950; margin-bottom:8px;">Available variables</div>
-
-  <div class="muted">
-    <span class="tag">Client</span>
-    <code class="mono">{% raw %}{{name}}{% endraw %}</code>
-    <code class="mono">{% raw %}{{type}}{% endraw %}</code>
-    <code class="mono">{% raw %}{{description}}{% endraw %}</code>
-    <code class="mono">{% raw %}{{due_date}}{% endraw %}</code>
-    <br><br>
-
-    <span class="tag">Branding</span>
-    <code class="mono">{% raw %}{{sender}}{% endraw %}</code>
-    <code class="mono">{% raw %}{{company_name}}{% endraw %}</code>
-    <code class="mono">{% raw %}{{support_email}}{% endraw %}</code>
-    <code class="mono">{% raw %}{{footer}}{% endraw %}</code>
-    <code class="mono">{% raw %}{{brand_logo}}{% endraw %}</code>
-  </div>
-</div>
-
-<form method="POST">
-  <div class="grid">
-    <div class="box">
-      <div style="font-weight:950; margin-bottom:8px;">Edit HTML</div>
-
-      <textarea id="htmlBox" name="html_content" class="mono">{{ (html_content or "")|e }}</textarea>
-
-      <div class="actions">
-        <button class="btn btn-primary" type="submit" name="action" value="save">💾 Save</button>
-
-        <button class="btn btn-danger" type="submit" name="action" value="reset"
-                onclick="return confirm('Reset scheduler template to default? This will overwrite your current template.')">
-          ♻️ Reset to default
-        </button>
-
-        <a class="btn" href="{{ url_for('dashboard') }}">← Back</a>
-      </div>
-
-      <div class="hintbar">
-        <span class="pill ok">Rendered preview ✅</span>
-        <span class="pill.warn2">Typing calls server preview</span>
-      </div>
-
-      <div class="pv-status">
-        <span class="dot" id="pvDot"></span>
-        <span id="pvMsg">Idle</span>
-        <span class="muted">Ctrl/Cmd + Enter forces refresh</span>
-      </div>
-    </div>
-
-    <div class="box">
-      <div style="font-weight:950; margin-bottom:8px;">Live Preview</div>
-      <iframe id="pv"></iframe>
-      <div class="muted" style="margin-top:10px;">
-        Preview uses sample values.
-      </div>
-    </div>
-  </div>
-</form>
-
-<script>
-  const iframe = document.getElementById("pv");
-  const box = document.getElementById("htmlBox");
-  const dot = document.getElementById("pvDot");
-  const msg = document.getElementById("pvMsg");
-
-  const serverPreview = {{ (preview_html or "")|tojson }};
-  iframe.srcdoc = serverPreview;
-
-  function setStatus(state, text) {
-    dot.classList.remove("live", "err");
-    if (state === "live") dot.classList.add("live");
-    if (state === "err") dot.classList.add("err");
-    msg.textContent = text || "Idle";
-  }
-
-  let t = null;
-  let inflight = null;
-
-  async function renderOnServer(force=false) {
-    const tmpl = (box && box.value) ? box.value : "";
-
-    if (inflight) inflight.abort();
-    inflight = new AbortController();
-
-    try {
-      setStatus("live", force ? "Rendering..." : "Rendering...");
-
-      // ✅ HARD-CODE PATH (no endpoint-name conflicts)
-      const res = await fetch("/scheduler-template/preview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tmpl }),
-        signal: inflight.signal
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok || data.ok === false) {
-        setStatus("err", "Preview error");
-        iframe.srcdoc = `<pre style="white-space:pre-wrap; font-family:ui-monospace,Menlo,monospace; padding:16px;">${escapeHtml(data.error || ("HTTP " + res.status))}</pre>`;
-        return;
-      }
-
-      iframe.srcdoc = data.preview_html || "";
-      setStatus("live", "Rendered ✅");
-    } catch (e) {
-      if (e && e.name === "AbortError") return;
-      setStatus("err", "Preview error");
-      iframe.srcdoc = `<pre style="white-space:pre-wrap; font-family:ui-monospace,Menlo,monospace; padding:16px;">${escapeHtml(String(e))}</pre>`;
-    }
-  }
-
-  function escapeHtml(s) {
-    return (s || "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  if (box) {
-    box.addEventListener("input", () => {
-      clearTimeout(t);
-      t = setTimeout(() => renderOnServer(false), 250);
-    });
-
-    box.addEventListener("keydown", (e) => {
-      const isEnter = e.key === "Enter";
-      const isCmd = e.metaKey || e.ctrlKey;
-      if (isCmd && isEnter) {
-        e.preventDefault();
-        clearTimeout(t);
-        renderOnServer(true);
-      }
-    });
-  }
-</script>
 
 {% endblock %}

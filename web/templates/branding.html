@@ -2,298 +2,253 @@
 {% block content %}
 
 <style>
-  .page-title { font-size:20px; font-weight:950; margin:0 0 6px; }
-  .page-sub { color:#64748b; font-size:13px; margin:0 0 16px; line-height:1.45; }
-
-  .grid { display:grid; grid-template-columns: 1fr 1fr; gap:18px; align-items:start; }
-  @media (max-width: 980px){ .grid { grid-template-columns: 1fr; } }
-
-  .box {
-    border:1px solid #e5e7eb; border-radius:16px; padding:16px; background:#fff;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.04);
+  :root {
+    --bg-app: #f8fafc;
+    --card-bg: #ffffff;
+    --border-color: #e2e8f0;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --accent-default: #6366f1;
   }
 
-  label { display:grid; gap:6px; margin-top:12px; font-weight:900; color:#111827; }
+  /* --- Layout Architecture --- */
+  .page-header { margin-bottom: 32px; }
+  .page-title { font-size: 26px; font-weight: 850; color: var(--text-dark); letter-spacing: -0.02em; }
+  .page-sub { color: var(--text-muted); font-size: 15px; margin-top: 4px; max-width: 600px; }
+
+  .brand-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 450px; 
+    gap: 32px; 
+    align-items: start; 
+  }
+  @media (max-width: 1024px) { .brand-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  }
+
+  /* --- Form Styling --- */
+  .form-group { margin-bottom: 24px; }
+  .label-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  label { font-size: 13px; font-weight: 750; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.03em; }
+  
   input, textarea {
-    padding:12px 12px;
-    border-radius:14px;
-    border:1px solid #d1d5db;
-    outline:none;
-    width:100%;
-    background:#fff;
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    font-size: 14px;
+    transition: all 0.2s;
+    background: #fdfdfd;
   }
-  textarea { min-height:120px; resize:vertical; }
-  input:focus, textarea:focus { border-color:#94a3b8; box-shadow: 0 0 0 3px rgba(148,163,184,0.25); }
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent-default);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    background: #fff;
+  }
 
-  .muted { color:#64748b; font-size:12px; line-height:1.45; }
-  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .color-input-wrapper { display: flex; gap: 12px; align-items: center; }
+  .color-swatch { width: 42px; height: 42px; border-radius: 10px; border: 1px solid var(--border-color); flex-shrink: 0; }
 
+  /* --- Live Preview (Mock Email) --- */
+  .preview-container { position: sticky; top: 24px; }
+  .preview-label { font-size: 12px; font-weight: 800; color: var(--text-muted); margin-bottom: 12px; text-align: center; }
+  
+  .mock-email {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+  .email-header { padding: 20px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px; }
+  .email-logo { width: 40px; height: 40px; border-radius: 8px; object-fit: contain; background: #f8fafc; }
+  .email-body { padding: 32px 24px; font-family: -apple-system, sans-serif; color: #334155; }
+  .email-btn { 
+    display: inline-block; 
+    padding: 10px 20px; 
+    border-radius: 8px; 
+    color: #fff; 
+    text-decoration: none; 
+    font-weight: 600; 
+    font-size: 13px; 
+    margin-top: 16px;
+  }
+  .email-footer { padding: 24px; background: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+  /* --- UI Elements --- */
   .btn {
-    border:1px solid #d1d5db; background:#fff; padding:10px 12px; border-radius:14px;
-    cursor:pointer; text-decoration:none; display:inline-flex; gap:8px; align-items:center;
-    font-weight:900;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    border: 1px solid transparent;
   }
-  .btn-primary { border-color:#111827; background:#111827; color:#fff; }
-  .btn-soft { background:#f8fafc; }
+  .btn-primary { background: var(--text-dark); color: #fff; border-color: var(--text-dark); }
+  .btn-primary:hover { background: #1e293b; transform: translateY(-1px); }
+  .btn-ghost { background: transparent; color: var(--text-muted); border-color: var(--border-color); }
+  .btn-ghost:hover { background: #f1f5f9; color: var(--text-dark); }
 
-  .rule {
-    border:1px solid #e5e7eb; border-radius:14px; padding:12px; background:#f8fafc;
-    display:grid; gap:6px;
+  .doc-note {
+    background: #fffbeb;
+    border: 1px solid #fef3c7;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 24px;
   }
-  .badge {
-    display:inline-flex; align-items:center; gap:6px;
-    padding:4px 10px; border-radius:999px; font-size:12px; font-weight:950;
-    border:1px solid #e5e7eb; background:#fff; color:#0f172a;
-    width:max-content;
-  }
-  .ok { border-color:#86efac; background:#f0fdf4; color:#14532d; }
-  .warn { border-color:#fde68a; background:#fffbeb; color:#7c2d12; }
-  .danger { border-color:#fca5a5; background:#fef2f2; color:#7f1d1d; }
-
-  .preview {
-    border:1px solid #e5e7eb; border-radius:16px; overflow:hidden; background:#fff;
-  }
-  .pv-top {
-    padding:12px 14px; border-bottom:1px solid #e5e7eb; background:#f8fafc;
-    display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
-  }
-  .pv-body { padding:14px; }
-  .logo {
-    width:44px; height:44px; border-radius:12px; background:#fff; border:1px solid #e5e7eb;
-    object-fit:cover;
-  }
-  .mini { font-size:12px; color:#64748b; }
-  .pv-card {
-    border:1px solid #e5e7eb; border-radius:14px; padding:12px; background:#fff;
-  }
-  .pv-line { margin:0; line-height:1.5; }
+  .doc-note h4 { font-size: 13px; font-weight: 800; color: #92400e; margin-bottom: 4px; }
+  .doc-note p { font-size: 12px; color: #b45309; line-height: 1.5; margin: 0; }
 </style>
 
-<div>
-  <div class="page-title">🎨 Branding</div>
-  <p class="page-sub">
-    These settings are used inside scheduler emails (logo, sender name, support line, footer).  
-    Think of this as “how your brand shows up in the client’s inbox.”
-  </p>
+<div class="page-header">
+  <h1 class="page-title">🎨 Brand Studio</h1>
+  <p class="page-sub">Define how your automated outreach looks to your clients. These variables are injected into your email templates.</p>
 </div>
 
-<div class="grid">
-  <!-- LEFT: FORM -->
-  <div class="box">
-    <div style="font-weight:950; font-size:16px;">Brand details</div>
-    <div class="muted" style="margin-top:6px;">
-      Save once and you’re set. Your Scheduler Template can reference these variables.
-    </div>
-
-    <form method="POST" id="brandForm" style="margin-top:10px;">
-      <label title="Shown in email footer and used as company_name in templates">
-        Company name <span class="muted">(required)</span>
-      </label>
-      <input
-        name="company_name"
-        id="company_name"
-        value="{{ branding.company_name }}"
-        placeholder="Your Company Ltd"
-        required
-      >
-
-      <label title="Used for 'Need help?' line and support_email variable in templates">
-        Support email <span class="muted">(recommended)</span>
-      </label>
-      <input
-        name="support_email"
-        id="support_email"
-        value="{{ branding.support_email }}"
-        placeholder="support@yourcompany.com"
-      >
-
-      <label title="Must be a direct image URL. Best: PNG/SVG with transparent background.">
-        Logo URL <span class="muted">(optional)</span>
-      </label>
-      <input
-        name="logo"
-        id="logo"
-        value="{{ branding.logo }}"
-        placeholder="https://.../logo.png"
-      >
-      <div class="muted">
-        Rule: Use a <b>direct image link</b> (ends with .png/.jpg/.svg). If the link opens a webpage, it may not show.
+<div class="brand-grid">
+  
+  <div class="card">
+    <form method="POST" id="brandForm">
+      
+      <div class="form-group">
+        <div class="label-flex">
+          <label for="company_name">Company Name</label>
+          <span style="font-size: 11px; color: #ef4444; font-weight: 700;">Required</span>
+        </div>
+        <input name="company_name" id="company_name" value="{{ branding.company_name }}" placeholder="Acme Consulting Group" required>
       </div>
 
-      <label title="Used in the app theme color + emails where applicable">
-        Brand color <span class="muted">(hex)</span>
-      </label>
-      <input
-        name="color"
-        id="color"
-        value="{{ branding.color }}"
-        placeholder="#111827"
-      >
-      <div class="muted">
-        Rule: Must be a hex color like <b>#111827</b>. If you type random stuff, the UI can look broken.
+      <div class="form-group">
+        <label for="support_email">Support Email</label>
+        <input name="support_email" id="support_email" value="{{ branding.support_email }}" placeholder="hello@acme.com">
       </div>
 
-      <label title="Optional line at the bottom of emails. Plain text recommended.">
-        Footer <span class="muted">(optional)</span>
-      </label>
-      <textarea
-        name="footer"
-        id="footer"
-        placeholder="Short footer shown under the email..."
-      >{{ branding.footer }}</textarea>
+      <div class="form-group">
+        <label for="logo">Logo Direct URL</label>
+        <input name="logo" id="logo" value="{{ branding.logo }}" placeholder="https://yourdomain.com/logo.png">
+        <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Must be a direct link to a .png or .jpg file.</p>
+      </div>
 
-      <div class="rule" style="margin-top:12px;">
-        <div class="badge warn">Rules (don’t skip)</div>
-        <div class="muted">
-          <b>1)</b> Footer is plain text. Keep it short (1–3 lines).<br>
-          <b>2)</b> If Footer is empty and Support email exists, we auto-generate: <i>“Need help? Contact support@...”</i><br>
-          <b>3)</b> If both Footer + Support email are empty, your email may look “unfinished”.<br>
-          <b>4)</b> If Logo URL is bad, emails still send — they just show no logo.
+      <div class="form-group">
+        <label for="color">Brand Identity Color</label>
+        <div class="color-input-wrapper">
+          <div class="color-swatch" id="colorSwatch"></div>
+          <input name="color" id="color" value="{{ branding.color or '#6366f1' }}" placeholder="#6366f1">
         </div>
       </div>
 
-      <div class="row" style="margin-top:14px;">
-        <button class="btn btn-primary" type="submit" title="Save branding">
-          💾 Save branding
-        </button>
-        <a class="btn btn-soft" href="{{ url_for('dashboard') }}" title="Back to dashboard">
-          ← Back
-        </a>
-        <a class="btn" href="{{ url_for('template_scheduler') }}" title="Edit the HTML template used when personal message is empty">
-          🧩 Scheduler Template
-        </a>
+      <div class="form-group">
+        <label for="footer">Custom Email Footer</label>
+        <textarea name="footer" id="footer" placeholder="123 Business Way, Suite 100">{{ branding.footer }}</textarea>
       </div>
 
-      <div class="muted" style="margin-top:10px;">
-        Tip: Branding only affects scheduler emails. If you type a Personal message on a follow-up, that content wins.
+      <div class="doc-note">
+        <h4>System Logic</h4>
+        <p>If you leave the footer blank but provide a support email, we'll automatically add a "Need help? Reply to..." line to protect your sender reputation.</p>
+      </div>
+
+      <div style="display: flex; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border-color);">
+        <button class="btn btn-primary" type="submit">💾 Save Changes</button>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-ghost">Cancel</a>
+        <a href="{{ url_for('template_scheduler') }}" class="btn btn-ghost" style="margin-left: auto;">🧩 Edit HTML Template</a>
       </div>
     </form>
   </div>
 
-  <!-- RIGHT: LIVE OUTCOME PREVIEW (plain and safe) -->
-  <div class="box">
-    <div style="font-weight:950; font-size:16px;">What the client sees</div>
-    <div class="muted" style="margin-top:6px;">
-      This preview is based on your branding inputs + sample client data.
-      It’s not sending anything.
+  <div class="preview-container">
+    <div class="preview-label">LIVE INBOX PREVIEW</div>
+    
+    <div class="mock-email">
+      <div class="email-header">
+        <img class="email-logo" id="pvLogo" src="{{ branding.logo }}" alt="" onerror="this.style.opacity='0'">
+        <div>
+          <div style="font-size: 14px; font-weight: 800;" id="pvCompany">{{ branding.company_name or "Your Company" }}</div>
+          <div style="font-size: 11px; color: var(--text-muted);" id="pvSupport">{{ branding.support_email or "support@company.com" }}</div>
+        </div>
+      </div>
+
+      <div class="email-body">
+        <p style="margin: 0; font-size: 15px; font-weight: 700;">Hi Nelly,</p>
+        <p style="margin: 12px 0 0; font-size: 14px; line-height: 1.6;">
+          Just a quick note following up on our proposal. Looking forward to hearing your thoughts on the timeline.
+        </p>
+        <a href="#" class="email-btn" id="pvBtn">View Proposal</a>
+        
+        <p style="margin: 24px 0 0; font-size: 14px;">
+          Best regards,<br>
+          <strong id="pvSender">{{ branding.company_name or "Your Company" }}</strong>
+        </p>
+      </div>
+
+      <div class="email-footer" id="pvFooter">
+        </div>
     </div>
 
-    <div class="preview" style="margin-top:12px;">
-      <div class="pv-top">
-        <div class="row" style="gap:10px;">
-          <img class="logo" id="pvLogo" src="{{ branding.logo }}" alt="Logo" onerror="this.style.display='none'">
-          <div>
-            <div style="font-weight:950;" id="pvCompany">{{ branding.company_name or "Your Company" }}</div>
-            <div class="mini" id="pvSupport">{{ branding.support_email or "support@yourcompany.com" }}</div>
-          </div>
-        </div>
-
-        <div class="badge ok" id="pvColorBadge">Brand color</div>
-      </div>
-
-      <div class="pv-body">
-        <div class="pv-card">
-          <p class="pv-line"><b>Hi Nelly,</b></p>
-          <p class="pv-line" style="margin-top:6px;">Just a quick reminder about <b>proposal</b>.</p>
-          <p class="pv-line" style="margin-top:6px;">Please confirm payment timeline.</p>
-          <p class="pv-line" style="margin-top:10px;">
-            Thanks,<br>
-            <span id="pvSender">{{ branding.company_name or "Your Company" }}</span>
-          </p>
-
-          <div class="muted" style="margin-top:10px;" id="pvFooter"></div>
-        </div>
-
-        <div class="muted" style="margin-top:10px;">
-          Heads up: your actual email layout is controlled by the <b>Scheduler Template</b>.
-          Branding fills the variables used inside that template.
-        </div>
-      </div>
-    </div>
-
-    <div class="rule" style="margin-top:12px;">
-      <div class="badge danger">If preview looks wrong…</div>
-      <div class="muted">
-        <b>•</b> Logo missing? Your Logo URL isn’t a direct image link.<br>
-        <b>•</b> Support email blank? Add one so clients know where to reply if needed.<br>
-        <b>•</b> Footer looks messy? Keep it plain text (no weird HTML).
-      </div>
+    <div style="margin-top: 20px; text-align: center;">
+      <p style="font-size: 12px; color: var(--text-muted);">
+        Actual layout may vary based on your <br><strong>Scheduler Template</strong> settings.
+      </p>
     </div>
   </div>
+
 </div>
 
 <script>
-  function isHexColor(v){
-    v = (v || "").trim();
-    return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(v);
-  }
+  const inputs = ["company_name", "support_email", "logo", "footer", "color"];
+  
+  function updatePreview() {
+    const data = {};
+    inputs.forEach(id => {
+      data[id] = document.getElementById(id).value.trim();
+    });
 
-  function safeText(v, fallback){
-    v = (v || "").trim();
-    return v ? v : fallback;
-  }
+    // Text Updates
+    document.getElementById('pvCompany').textContent = data.company_name || "Your Company";
+    document.getElementById('pvSender').textContent = data.company_name || "Your Company";
+    document.getElementById('pvSupport').textContent = data.support_email || "support@company.com";
 
-  function refreshBrandPreview(){
-    const company = safeText(document.getElementById("company_name")?.value, "Your Company");
-    const support = safeText(document.getElementById("support_email")?.value, "support@yourcompany.com");
-    const logo = (document.getElementById("logo")?.value || "").trim();
-    const footer = (document.getElementById("footer")?.value || "").trim();
-    const color = (document.getElementById("color")?.value || "").trim();
-
-    const pvCompany = document.getElementById("pvCompany");
-    const pvSupport = document.getElementById("pvSupport");
-    const pvSender = document.getElementById("pvSender");
-    const pvFooter = document.getElementById("pvFooter");
-    const pvLogo = document.getElementById("pvLogo");
-    const badge = document.getElementById("pvColorBadge");
-
-    if (pvCompany) pvCompany.textContent = company;
-    if (pvSupport) pvSupport.textContent = support;
-    if (pvSender) pvSender.textContent = company;
-
-    // footer rules
-    if (pvFooter) {
-      if (footer) {
-        pvFooter.textContent = footer;
-      } else if (support) {
-        pvFooter.textContent = "Need help? Contact " + support;
-      } else {
-        pvFooter.textContent = "";
-      }
+    // Logo Update
+    const logoEl = document.getElementById('pvLogo');
+    if(data.logo) {
+      logoEl.src = data.logo;
+      logoEl.style.opacity = '1';
+    } else {
+      logoEl.style.opacity = '0';
     }
 
-    // logo
-    if (pvLogo) {
-      if (logo) {
-        pvLogo.style.display = "";
-        pvLogo.src = logo;
-      } else {
-        pvLogo.style.display = "none";
-      }
-    }
+    // Color Update
+    const hex = /^#([0-9a-fA-F]{3}){1,2}$/.test(data.color) ? data.color : '#6366f1';
+    document.getElementById('colorSwatch').style.backgroundColor = hex;
+    document.getElementById('pvBtn').style.backgroundColor = hex;
 
-    // color badge (visual sanity check)
-    if (badge) {
-      if (isHexColor(color)) {
-        badge.style.borderColor = color;
-        badge.style.background = color + "22";
-        badge.style.color = "#0f172a";
-        badge.textContent = "Brand color " + color;
-      } else {
-        badge.style.borderColor = "#fde68a";
-        badge.style.background = "#fffbeb";
-        badge.style.color = "#7c2d12";
-        badge.textContent = "Brand color (invalid)";
-      }
+    // Footer Update
+    const footerEl = document.getElementById('pvFooter');
+    if(data.footer) {
+      footerEl.textContent = data.footer;
+    } else if (data.support_email) {
+      footerEl.innerHTML = `Need help? Reach out at <strong>${data.support_email}</strong>`;
+    } else {
+      footerEl.textContent = "Your business address or contact info here.";
     }
   }
 
-  ["company_name","support_email","logo","footer","color"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener("input", refreshBrandPreview);
+  inputs.forEach(id => {
+    document.getElementById(id).addEventListener('input', updatePreview);
   });
 
-  refreshBrandPreview();
+  // Init
+  updatePreview();
 </script>
 
 {% endblock %}
