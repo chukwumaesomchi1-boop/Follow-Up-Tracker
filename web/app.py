@@ -143,6 +143,9 @@ def join_import(data):
     join_room(job_id)
 
 
+@app.route("/")
+def landing():
+    return render_template("index.html")
 
 import logging
 
@@ -856,7 +859,7 @@ BILLING_OPEN_ENDPOINTS = {
     "reset_password_submit",
     "reset_password",
 
-    "static",
+    "static","landing",
 }
 
 OPEN_ENDPOINTS = {
@@ -866,7 +869,7 @@ OPEN_ENDPOINTS = {
     "forgot_password", "forgot_password_verify",
     "reset_password_submit",      # ✅ add this
     "reset_password",             # ✅ if you have a GET page
-    "static",
+    "static","landing",
 }
 
 # @app.before_request
