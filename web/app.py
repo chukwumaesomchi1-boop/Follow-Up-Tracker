@@ -819,7 +819,7 @@ from flask import request, redirect, url_for, flash, session
 PUBLIC_PATH_PREFIXES = (
     "/static",
     "/login",
-    "/register",
+    "/google9d0db175634d2a6b",
     "/logout",
     "/verify",                 # email verify page
     "/forgot",                 # ✅ covers /forgot-password and /forgot_password
