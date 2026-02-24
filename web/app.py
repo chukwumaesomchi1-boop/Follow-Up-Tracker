@@ -2554,25 +2554,6 @@ def start_email_login():
     flash("We sent a code to your email (check terminal log for now).", "success")
     return redirect(url_for("verify_email_login"))
 
-# -----------------------------
-# TEMPLATES / SETTINGS / BRANDING / EMAIL TEMPLATES / ANALYTICS / ADMIN
-# -----------------------------
-# @app.route("/templates", methods=["GET", "POST"])
-# def templates():
-#     user, block = require_user()
-#     if block:
-#         return block
-
-#     uid = user["id"]
-#     if request.method == "POST":
-#         for stage in range(4):
-#             content = request.form.get(f"stage_{stage}")
-#             if content is not None:
-#                 save_template(uid, stage, content)
-#         flash("Templates saved ✅", "success")
-#         return redirect(url_for("templates"))
-
-#     return render_template("templates.html", templates=get_templates(uid))
 
 
 @app.route("/templates/scheduler", methods=["GET", "POST"])
@@ -2635,11 +2616,11 @@ def template_scheduler():
     branding = get_branding(uid)
 
     sample_followup = {
-        "client_name": "Nelly",
+        "client_name": "john duo",
         "followup_type": "proposal",
         "description": "Please confirm payment timeline.",
         "message_override": "",
-        "due_date": "2026-02-02",
+        "due_date": "2026-00-00",
     }
 
     preview_html = render_scheduler_html(html_content, user, sample_followup, branding)
@@ -2649,7 +2630,6 @@ def template_scheduler():
         html_content=html_content,
         preview_html=preview_html,
     )
-
 
 
 @app.post("/templates/scheduler")
