@@ -881,7 +881,7 @@ BILLING_OPEN_ENDPOINTS = {
     "reset_password_submit",
     "reset_password",
 
-    "static","landing","/",
+    "static","landing","/","/google9d0db175634d2a6b.html",
 }
 
 OPEN_ENDPOINTS = {
@@ -891,7 +891,7 @@ OPEN_ENDPOINTS = {
     "forgot_password", "forgot_password_verify",
     "reset_password_submit",      # ✅ add this
     "reset_password",             # ✅ if you have a GET page
-    "static","landing","/",
+    "static","landing","/","/google9d0db175634d2a6b.html",
 }
 
 # @app.before_request
