@@ -147,9 +147,13 @@ def join_import(data):
 def landing():
     return render_template("index.html")
 
-@app.route("/google9d0db175634d2a6b.html", endpoint="google9d0db175634d2a6b.html")
-def google9d0db175634d2a6b():
-    return render_template("google9d0db175634d2a6b.html")
+@app.route("/google9d0db175634d2a6b.html")
+def google_verification():
+    return "google-site-verification: google9d0db175634d2a6b.html", 200, {
+        "Content-Type": "text/html"
+    }
+
+
 import logging
 
 # Quiet down engineio/socketio internal logs
@@ -207,6 +211,7 @@ OPEN_ENDPOINTS = {
     "billing",
     "subscribe",
     "billing_success",
+    "google_verification",
     "billing_cancel",
 }
 
@@ -823,7 +828,7 @@ from flask import request, redirect, url_for, flash, session
 PUBLIC_PATH_PREFIXES = (
     "/static",
     "/login",
-    "/google9d0db175634d2a6b.html",
+    "google_verification",
     "/logout",
     "/verify",                 # email verify page
     "/forgot",                 # ✅ covers /forgot-password and /forgot_password
@@ -881,7 +886,7 @@ BILLING_OPEN_ENDPOINTS = {
     "reset_password_submit",
     "reset_password",
 
-    "static","landing","/","/google9d0db175634d2a6b.html",
+    "static","landing","/","google_verification",
 }
 
 OPEN_ENDPOINTS = {
@@ -891,7 +896,7 @@ OPEN_ENDPOINTS = {
     "forgot_password", "forgot_password_verify",
     "reset_password_submit",      # ✅ add this
     "reset_password",             # ✅ if you have a GET page
-    "static","landing","/","/google9d0db175634d2a6b.html",
+    "static","landing","/","google_verification",
 }
 
 # @app.before_request
