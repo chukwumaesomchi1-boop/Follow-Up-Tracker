@@ -146,6 +146,10 @@ def join_import(data):
 @app.route("/", endpoint="landing")
 def landing():
     return render_template("index.html")
+
+@app.route("/google9d0db175634d2a6b.html", endpoint="google9d0db175634d2a6b.html")
+def google9d0db175634d2a6b():
+    return render_template("google9d0db175634d2a6b.html")
 import logging
 
 # Quiet down engineio/socketio internal logs
@@ -1029,7 +1033,7 @@ from werkzeug.security import generate_password_hash
 def _utc_iso():
     return datetime.utcnow().replace(microsecond=0).isoformat()
 
-@app.route("/google9d0db175634d2a6b.html", methods=["GET", "POST"])
+@app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         name = (request.form.get("name") or "").strip()
