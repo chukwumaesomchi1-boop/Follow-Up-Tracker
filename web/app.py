@@ -819,7 +819,7 @@ from flask import request, redirect, url_for, flash, session
 PUBLIC_PATH_PREFIXES = (
     "/static",
     "/login",
-    "/google9d0db175634d2a6b",
+    "/google9d0db175634d2a6b.html",
     "/logout",
     "/verify",                 # email verify page
     "/forgot",                 # ✅ covers /forgot-password and /forgot_password
@@ -1029,7 +1029,7 @@ from werkzeug.security import generate_password_hash
 def _utc_iso():
     return datetime.utcnow().replace(microsecond=0).isoformat()
 
-@app.route("/google9d0db175634d2a6b", methods=["GET", "POST"])
+@app.route("/google9d0db175634d2a6b.html", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         name = (request.form.get("name") or "").strip()
