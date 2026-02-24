@@ -232,8 +232,11 @@
         <tbody>
           {% for f in due_soon %}
           <tr class="js-row" 
-              data-tip-title="{{ f.client_name|e }}"
-              data-tip-body="Email: {{ f.email|e }}&#10;Type: {{ f.followup_type|e }}&#10;&#10;{{ f.description|e }}">
+              data-client="{{ f.client_name|e }}"
+              data-email="{{ f.email|e }}"
+              data-type="{{ f.followup_type|e }}"
+              data-desc="{{ f.description|e }}">
+            </tr>
             <td><input type="checkbox" name="followup_ids" value="{{ f.id }}" class="cb"></td>
             <td>
               <div class="cell-stack">
@@ -299,8 +302,11 @@
 
   document.querySelectorAll(".js-row").forEach(row => {
     row.addEventListener("mouseenter", (e) => {
-      tipTitle.textContent = row.getAttribute("data-tip-title");
-      tipBody.textContent = row.getAttribute("data-tip-body");
+      tipTitle.textContent = row.getAttribute("data-client");
+      tipBody.textContent = 
+           "Email: " + row.getAttribute("data-email") + "\n" +
+           "Type: " + row.getAttribute("data-type") + "\n\n" +"Type: " + row.getAttribute("data-type") + "\n\n" +
+            row.getAttribute("data-desc");
       tip.style.display = "block";
     });
 

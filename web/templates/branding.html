@@ -119,7 +119,7 @@
 <div class="brand-grid">
   
   <div class="card">
-    <form method="POST" id="brandForm">
+    <form method="POST" id="brandForm" enctype="multipart/form-data">
       
       <div class="form-group">
         <div class="label-flex">
@@ -135,9 +135,9 @@
       </div>
 
       <div class="form-group">
-        <label for="logo">Logo Direct URL</label>
-        <input name="logo" id="logo" value="{{ branding.logo }}" placeholder="https://yourdomain.com/logo.png">
-        <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Must be a direct link to a .png or .jpg file.</p>
+        <label for="logo">Logo</label>
+        <input type="file" name="logo" id="logo" accept=".png,.jpg,.jpeg">
+        <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Must be a .png or .jpg file.</p>
       </div>
 
       <div class="form-group">

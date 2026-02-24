@@ -269,12 +269,12 @@ app.config["SESSION_COOKIE_SECURE"] = False  # local http
 app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "uploads")
 app.config["MAX_IMPORT_PREVIEW_ROWS"] = 5
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["SESSION_COOKIE_SECURE"] = False  # local http
+
+
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "")
 STRIPE_PRICE_ID = os.getenv("STRIPE_PRICE_ID")
-APP_BASE_URL = os.getenv("APP_BASE_URL", "http://127.0.0.1:5001")
+APP_BASE_URL = os.getenv("APP_BASE_URL", "https://follow-up-tracker.onrender.com")
 ADMIN_EMAIL = (os.getenv("ADMIN_EMAIL") or "admin@me.com").strip().lower()
 
 SCOPES = [
@@ -364,12 +364,64 @@ import os, tempfile
 from flask import request, render_template, redirect, url_for, flash
 from import_csv import import_followups_from_csv
 from models_saas import looks_like_text_file
-
+from models_saas import allowed_file
 def _get_user_id():
     from flask import session
     return int(session.get("user_id"))
 
 import csv
+
+# @app.route("/import-csv", methods=["GET", "POST"])
+# def import_csv():
+#     user_id = _get_user_id()
+
+#     if request.method == "GET":
+#         return render_template("import.html")  # simple upload page
+
+#     # POST: upload -> read headers -> show mapping page
+#     up = request.files.get("file")
+
+#     if not up or up.filename == "":
+#         flash("Pick a CSV file first.", "danger")
+#         return redirect(url_for("import_csv"))
+
+#     if not allowed_file(up.filename):
+#         flash(
+#             "Only CSV files are supported. Export your Excel file as CSV and try again.",
+#             "danger",
+#         )
+#         return redirect(url_for("import_csv"))
+#     from werkzeug.utils import secure_filename
+#     import uuid
+#     tmpdir = tempfile.gettempdir()
+#     safe = secure_filename(up.filename)
+#     tmp_path = os.path.join(tmpdir, f"fu_{uuid.uuid4().hex}_{safe}")
+#     up.save(tmp_path)
+    
+#     if not looks_like_text_file(tmp_path):
+#         flash("That file doesn’t look like a CSV. If it’s an Excel file (.xlsx), please export it as CSV and upload again.", "danger")
+#         try:
+#             os.remove(tmp_path)
+#         except Exception:
+#             pass
+#         return redirect(url_for("import_csv"))
+
+#     # read headers
+#     with open(tmp_path, "r", newline="", encoding="utf-8-sig") as f:
+#         reader = csv.reader(f)
+#         headers = next(reader, [])
+
+#     if not headers:
+#         flash("CSV file has no header row.", "danger")
+#         return redirect(url_for("import_csv"))
+
+#     return render_template(
+#         "import_map.html",
+#         tmp_path=tmp_path,
+#         headers=headers,
+#     )
+
+
 
 @app.route("/import-csv", methods=["GET", "POST"])
 def import_csv():
@@ -391,13 +443,21 @@ def import_csv():
             "danger",
         )
         return redirect(url_for("import_csv"))
+
+    # --- UPDATED: save to persistent UPLOAD_FOLDER ---
     from werkzeug.utils import secure_filename
     import uuid
-    tmpdir = tempfile.gettempdir()
-    safe = secure_filename(up.filename)
-    tmp_path = os.path.join(tmpdir, f"fu_{uuid.uuid4().hex}_{safe}")
-    up.save(tmp_path)
-    
+    import os
+
+    if up and up.filename != "":
+        safe = secure_filename(up.filename)
+        tmp_path = os.path.join(app.config["UPLOAD_FOLDER"], f"fu_{uuid.uuid4().hex}_{safe}")
+        up.save(tmp_path)
+    else:
+        flash("Pick a CSV file first.", "danger")
+        return redirect(url_for("import_csv"))
+    # --- END UPDATED ---
+
     if not looks_like_text_file(tmp_path):
         flash("That file doesn’t look like a CSV. If it’s an Excel file (.xlsx), please export it as CSV and upload again.", "danger")
         try:
@@ -421,50 +481,6 @@ def import_csv():
         headers=headers,
     )
 
-from models_saas import allowed_file
-# @app.route("/preview/<int:fid>/edit-all", methods=["POST"])
-# def preview_edit_all(fid):
-#     user, block = require_user()
-#     if block:
-#         return block
-
-#     f = get_followup(fid, user["id"])
-#     if not f:
-#         flash("Follow-up not found.", "danger")
-#         return redirect(url_for("dashboard"))
-
-#     # pull fields
-#     client_name = (request.form.get("client_name") or "").strip()
-#     email = (request.form.get("email") or "").strip()
-#     preferred_channel = (request.form.get("preferred_channel") or "whatsapp").strip().lower()
-#     followup_type = (request.form.get("followup_type") or "other").strip()
-#     description = (request.form.get("description") or "").strip()
-#     if err:
-#         flash(err, "danger")
-#         return redirect(url_for("preview", fid=fid))
-
-#     # update followup row
-#     ok = update_followup(
-#         fid=fid,
-#         user_id=user["id"],
-#         client_name=client_name,
-#         email=email,
-#         followup_type=followup_type,
-#         description=description,
-#         due_date=due_date,
-#         preferred_channel=preferred_channel,
-#         # recurring_interval=f.get("recurring_interval", 0),  # keep same
-#     )
-#     if not ok:
-#         flash("Update failed (not found / not yours).", "danger")
-#         return redirect(url_for("preview", fid=fid))
-
-#     # update message override
-#     msg_override = (request.form.get("message_override") or "").strip()
-#     update_followup_message_override(fid, user["id"], msg_override if msg_override else None)
-
-#     flash("Saved ✅", "success")
-#     return redirect(url_for("preview", fid=fid))
 
 
 from datetime import datetime
@@ -2667,6 +2683,38 @@ def settings():
     )
 
 
+# @app.route("/branding", methods=["GET", "POST"])
+# def branding():
+#     user, block = require_user()
+#     if block:
+#         return block
+
+#     from models_saas import get_branding, set_branding
+
+#     uid = user["id"]
+
+#     if request.method == "POST":
+#         logo = request.form.get("logo", "")
+#         color = request.form.get("color", "#111827")
+#         company_name = request.form.get("company_name", "")
+#         support_email = request.form.get("support_email", "")
+#         footer = request.form.get("footer", "")
+
+#         set_branding(
+#             user_id=uid,
+#             logo_url=logo,
+#             color=color,
+#             company_name=company_name,
+#             support_email=support_email,
+#             footer=footer,
+#         )
+#         flash("Branding saved ✅", "success")
+#         return redirect(url_for("branding"))
+
+#     b = get_branding(uid)
+#     return render_template("branding.html", branding=b)
+
+
 @app.route("/branding", methods=["GET", "POST"])
 def branding():
     user, block = require_user()
@@ -2678,7 +2726,21 @@ def branding():
     uid = user["id"]
 
     if request.method == "POST":
-        logo = request.form.get("logo", "")
+        from werkzeug.utils import secure_filename
+        import os, uuid
+
+        # Handle logo upload
+        up = request.files.get("logo")
+        if up and up.filename != "":
+            safe_name = secure_filename(up.filename)
+            logo_path = os.path.join(app.config["UPLOAD_FOLDER"], f"logo_{uuid.uuid4().hex}_{safe_name}")
+            up.save(logo_path)
+            logo_url = logo_path  # store this path in your DB or config
+        else:
+            # fallback to existing form input if user didn't upload a file
+            logo_url = request.form.get("logo", "")
+
+        # Other fields
         color = request.form.get("color", "#111827")
         company_name = request.form.get("company_name", "")
         support_email = request.form.get("support_email", "")
@@ -2686,7 +2748,7 @@ def branding():
 
         set_branding(
             user_id=uid,
-            logo_url=logo,
+            logo_url=logo_url,
             color=color,
             company_name=company_name,
             support_email=support_email,
@@ -2697,7 +2759,6 @@ def branding():
 
     b = get_branding(uid)
     return render_template("branding.html", branding=b)
-
 
 @app.route("/email-templates")
 def email_templates():
