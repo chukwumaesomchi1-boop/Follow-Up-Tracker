@@ -1448,9 +1448,7 @@ def login():
 
     return render_template("login.html")
 
-# @app.route("/login")
-# def login():
-#     return redirect(url_for("auth_google"))
+
 
 from functools import wraps
 from flask import session, redirect, url_for, flash
@@ -1487,7 +1485,7 @@ def logout():
 # -----------------------------
 # DASHBOARD
 # -----------------------------
-@app.route("/")
+@app.route("/dashboard")
 def dashboard():
     user, block = require_user()
     if block:
