@@ -1029,7 +1029,7 @@ from werkzeug.security import generate_password_hash
 def _utc_iso():
     return datetime.utcnow().replace(microsecond=0).isoformat()
 
-@app.route("/register", methods=["GET", "POST"])
+@app.route("/google9d0db175634d2a6b", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         name = (request.form.get("name") or "").strip()
@@ -1081,7 +1081,7 @@ def register():
         flash("Verification code sent. Check your email.", "success")
         return redirect(url_for("verify_email"))
 
-    return render_template("register.html")
+    return render_template("public/google9d0db175634d2a6b.html")
 
 
 
