@@ -176,7 +176,7 @@
             <td>
               <div class="cell-stack">
                 <span class="client-name">{{ f.client_name or 'Unknown' }}</span>
-                <span class="muted">{{ f.email }}</span>
+                <span class="muted">{{ f.email.strip()}}</span>
               </div>
             </td>
             <td><span class="pill pill-failed">Failed</span></td>
@@ -233,14 +233,14 @@
           {% for f in due_soon %}
           <tr class="js-row" 
               data-client="{{ f.client_name|e }}"
-              data-email="{{ f.email|e }}"
+              data-email="{{ f.email.strip() if f.email else ''|e }}"
               data-type="{{ f.followup_type|e }}"
               data-desc="{{ f.description|e }}">
             <td><input type="checkbox" name="followup_ids" value="{{ f.id }}" class="cb"></td>
             <td>
               <div class="cell-stack">
                 <span class="client-name">{{ f.client_name or 'Unknown' }}</span>
-                <span class="muted">{{ f.email or 'No Email' }}</span>
+                <span class="muted">{{ f.email.strip() if f.email and f.email.strip() else 'No Email' }}</span>
               </div>
             </td>
             <td><span class="muted" style="font-weight: 600;">{{ f.followup_type }}</span></td>
