@@ -1630,6 +1630,24 @@ def add():
 #     flash("Scheduled ✅" if ok else "Schedule failed.", "success" if ok else "danger")
 #     return redirect(url_for("schedule"))
 
+
+from markupsafe import Markup, escape
+
+@app.template_filter("format_message")
+def format_message(value):
+    if not value:
+        return ""
+
+    paragraphs = value.split("\n\n")
+
+    html_paragraphs = []
+    for p in paragraphs:
+        p = escape(p).replace("\n", "<br>")
+        html_paragraphs.append(f"<p>{p}</p>")
+
+    return Markup("".join(html_paragraphs))
+
+
 @app.route("/forgot-password", methods=["GET", "POST"])
 @app.route("/forgot_password", methods=["GET", "POST"]) 
 def forgot_password():

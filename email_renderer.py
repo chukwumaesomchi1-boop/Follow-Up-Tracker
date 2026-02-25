@@ -98,10 +98,22 @@ def render_followup_email_html(
 """
 
 
+import html
+
 def plain_to_html(text: str) -> str:
-    """
-    Converts plain text to safe HTML with line breaks.
-    """
-    safe = html.escape(text or "")
-    safe = safe.replace("\n", "<br>")
-    return f"<div>{safe}</div>"
+    if not text:
+        return ""
+
+    # Normalize line endings
+    text = text.replace("\r\n", "\n").strip()
+
+    paragraphs = text.split("\n\n")
+
+    html_parts = []
+    for p in paragraphs:
+        safe = html.escape(p).replace("\n", "<br>")
+        html_parts.append(
+            f"<p style='margin:0 0 16px 0; line-height:1.6; font-size:14px; color:#334155;'>{safe}</p>"
+        )
+
+    return "".join(html_parts)

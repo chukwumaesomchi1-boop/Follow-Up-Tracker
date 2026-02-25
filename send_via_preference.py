@@ -44,6 +44,28 @@ def is_valid_phone_e164(phone: str) -> bool:
     p = normalize_phone(phone)
     return bool(_E164_RE.fullmatch(p))
 
+from markupsafe import escape
+
+import html
+
+def plain_to_html(text: str) -> str:
+    if not text:
+        return ""
+
+    # Normalize line endings
+    text = text.replace("\r\n", "\n").strip()
+
+    paragraphs = text.split("\n\n")
+
+    html_parts = []
+    for p in paragraphs:
+        safe = html.escape(p).replace("\n", "<br>")
+        html_parts.append(
+            f"<p style='margin:0 0 16px 0; line-height:1.6; font-size:14px; color:#334155;'>{safe}</p>"
+        )
+
+    return "".join(html_parts)
+
 
 # -----------------------------
 # Email sender wrapper

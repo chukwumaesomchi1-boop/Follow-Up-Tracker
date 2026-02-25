@@ -236,7 +236,6 @@
               data-email="{{ f.email|e }}"
               data-type="{{ f.followup_type|e }}"
               data-desc="{{ f.description|e }}">
-            </tr>
             <td><input type="checkbox" name="followup_ids" value="{{ f.id }}" class="cb"></td>
             <td>
               <div class="cell-stack">
@@ -305,7 +304,7 @@
       tipTitle.textContent = row.getAttribute("data-client");
       tipBody.textContent = 
            "Email: " + row.getAttribute("data-email") + "\n" +
-           "Type: " + row.getAttribute("data-type") + "\n\n" +"Type: " + row.getAttribute("data-type") + "\n\n" +
+           "Type: " + row.getAttribute("data-type") + "\n\n" +
             row.getAttribute("data-desc");
       tip.style.display = "block";
     });
