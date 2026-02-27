@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  :root {
+    --bg-app: #f8fafc;
+    --card-bg: #ffffff;
+    --border-color: #e2e8f0;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --accent-default: #6366f1;
+  }
+
+  /* --- Layout Architecture --- */
+  .page-header { margin-bottom: 32px; }
+  .page-title { font-size: 26px; font-weight: 850; color: var(--text-dark); letter-spacing: -0.02em; }
+  .page-sub { color: var(--text-muted); font-size: 15px; margin-top: 4px; max-width: 600px; }
+
+  .brand-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 450px; 
+    gap: 32px; 
+    align-items: start; 
+  }
+  @media (max-width: 1024px) { .brand-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  }
+
+  /* --- Form Styling --- */
+  .form-group { margin-bottom: 24px; }
+  .label-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  label { font-size: 13px; font-weight: 750; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.03em; }
+  
+  input, textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    font-size: 14px;
+    transition: all 0.2s;
+    background: #fdfdfd;
+  }
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent-default);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    background: #fff;
+  }
+
+  .color-input-wrapper { display: flex; gap: 12px; align-items: center; }
+  .color-swatch { width: 42px; height: 42px; border-radius: 10px; border: 1px solid var(--border-color); flex-shrink: 0; }
+
+  /* --- Live Preview (Mock Email) --- */
+  .preview-container { position: sticky; top: 24px; }
+  .preview-label { font-size: 12px; font-weight: 800; color: var(--text-muted); margin-bottom: 12px; text-align: center; }
+  
+  .mock-email {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+  .email-header { padding: 20px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px; }
+  .email-logo { width: 40px; height: 40px; border-radius: 8px; object-fit: contain; background: #f8fafc; }
+  .email-body { padding: 32px 24px; font-family: -apple-system, sans-serif; color: #334155; }
+  .email-btn { 
+    display: inline-block; 
+    padding: 10px 20px; 
+    border-radius: 8px; 
+    color: #fff; 
+    text-decoration: none; 
+    font-weight: 600; 
+    font-size: 13px; 
+    margin-top: 16px;
+  }
+  .email-footer { padding: 24px; background: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+  /* --- UI Elements --- */
+  .btn {
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  .btn-primary { background: var(--text-dark); color: #fff; border-color: var(--text-dark); }
+  .btn-primary:hover { background: #1e293b; transform: translateY(-1px); }
+  .btn-ghost { background: transparent; color: var(--text-muted); border-color: var(--border-color); }
+  .btn-ghost:hover { background: #f1f5f9; color: var(--text-dark); }
+
+  .doc-note {
+    background: #fffbeb;
+    border: 1px solid #fef3c7;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 24px;
+  }
+  .doc-note h4 { font-size: 13px; font-weight: 800; color: #92400e; margin-bottom: 4px; }
+  .doc-note p { font-size: 12px; color: #b45309; line-height: 1.5; margin: 0; }
+</style>
+
+<div class="page-header">
+  <h1 class="page-title">🎨 Brand Studio</h1>
+  <p class="page-sub">Define how your automated outreach looks to your clients. These variables are injected into your email templates.</p>
+</div>
+
+<div class="brand-grid">
+  
+  <div class="card">
+    <form method="POST" id="brandForm" enctype="multipart/form-data">
+      
+      <div class="form-group">
+        <div class="label-flex">
+          <label for="company_name">Company Name</label>
+          <span style="font-size: 11px; color: #ef4444; font-weight: 700;">Required</span>
+        </div>
+        <input name="company_name" id="company_name" value="{{ branding.company_name }}" placeholder="Acme Consulting Group" required>
+      </div>
+
+      <div class="form-group">
+        <label for="support_email">Support Email</label>
+        <input name="support_email" id="support_email" value="{{ branding.support_email }}" placeholder="hello@acme.com">
+      </div>
+
+      <div class="form-group">
+        <label for="logo">Logo</label>
+        <input type="file" name="logo" id="logo" accept=".png,.jpg,.jpeg">
+        <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Must be a .png or .jpg file.</p>
+      </div>
+
+      <div class="form-group">
+        <label for="color">Brand Identity Color</label>
+        <div class="color-input-wrapper">
+          <div class="color-swatch" id="colorSwatch"></div>
+          <input name="color" id="color" value="{{ branding.color or '#6366f1' }}" placeholder="#6366f1">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="footer">Custom Email Footer</label>
+        <textarea name="footer" id="footer" placeholder="123 Business Way, Suite 100">{{ branding.footer }}</textarea>
+      </div>
+
+      <div class="doc-note">
+        <h4>System Logic</h4>
+        <p>If you leave the footer blank but provide a support email, we'll automatically add a "Need help? Reply to..." line to protect your sender reputation.</p>
+      </div>
+
+      <div style="display: flex; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border-color);">
+        <button class="btn btn-primary" type="submit">💾 Save Changes</button>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-ghost">Cancel</a>
+        <a href="{{ url_for('template_scheduler') }}" class="btn btn-ghost" style="margin-left: auto;">🧩 Edit HTML Template</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="preview-container">
+    <div class="preview-label">LIVE INBOX PREVIEW</div>
+    
+    <div class="mock-email">
+      <div class="email-header">
+        <img class="email-logo" id="pvLogo" src="{{ branding.logo }}" alt="" onerror="this.style.opacity='0'">
+        <div>
+          <div style="font-size: 14px; font-weight: 800;" id="pvCompany">{{ branding.company_name or "Your Company" }}</div>
+          <div style="font-size: 11px; color: var(--text-muted);" id="pvSupport">{{ branding.support_email or "support@company.com" }}</div>
+        </div>
+      </div>
+
+      <div class="email-body">
+        <p style="margin: 0; font-size: 15px; font-weight: 700;">Hi Nelly,</p>
+        <p style="margin: 12px 0 0; font-size: 14px; line-height: 1.6;">
+          Just a quick note following up on our proposal. Looking forward to hearing your thoughts on the timeline.
+        </p>
+        <a href="#" class="email-btn" id="pvBtn">View Proposal</a>
+        
+        <p style="margin: 24px 0 0; font-size: 14px;">
+          Best regards,<br>
+          <strong id="pvSender">{{ branding.company_name or "Your Company" }}</strong>
+        </p>
+      </div>
+
+      <div class="email-footer" id="pvFooter">
+        </div>
+    </div>
+
+    <div style="margin-top: 20px; text-align: center;">
+      <p style="font-size: 12px; color: var(--text-muted);">
+        Actual layout may vary based on your <br><strong>Scheduler Template</strong> settings.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const inputs = ["company_name", "support_email", "logo", "footer", "color"];
+  
+  function updatePreview() {
+    const data = {};
+    inputs.forEach(id => {
+      data[id] = document.getElementById(id).value.trim();
+    });
+
+    // Text Updates
+    document.getElementById('pvCompany').textContent = data.company_name || "Your Company";
+    document.getElementById('pvSender').textContent = data.company_name || "Your Company";
+    document.getElementById('pvSupport').textContent = data.support_email || "support@company.com";
+
+    // Logo Update
+    const logoEl = document.getElementById('pvLogo');
+    if(data.logo) {
+      logoEl.src = data.logo;
+      logoEl.style.opacity = '1';
+    } else {
+      logoEl.style.opacity = '0';
+    }
+
+    // Color Update
+    const hex = /^#([0-9a-fA-F]{3}){1,2}$/.test(data.color) ? data.color : '#6366f1';
+    document.getElementById('colorSwatch').style.backgroundColor = hex;
+    document.getElementById('pvBtn').style.backgroundColor = hex;
+
+    // Footer Update
+    const footerEl = document.getElementById('pvFooter');
+    if(data.footer) {
+      footerEl.textContent = data.footer;
+    } else if (data.support_email) {
+      footerEl.innerHTML = `Need help? Reach out at <strong>${data.support_email}</strong>`;
+    } else {
+      footerEl.textContent = "Your business address or contact info here.";
+    }
+  }
+
+  inputs.forEach(id => {
+    document.getElementById(id).addEventListener('input', updatePreview);
+  });
+
+  // Init
+  updatePreview();
+</script>
+
+{% endblock %}

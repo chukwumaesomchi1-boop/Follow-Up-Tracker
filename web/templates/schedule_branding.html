@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Branding</h2>
+<p style="color:#64748b; font-size:13px; margin-top:-6px;">
+  Used inside scheduler emails (logo, sender name, footer/help line).
+</p>
+
+<style>
+  .box { border:1px solid #e5e7eb; border-radius:14px; padding:14px; background:#fff; max-width:820px; }
+  label { display:grid; gap:6px; margin:12px 0; }
+  input, textarea {
+    padding:10px 12px; border-radius:12px; border:1px solid #d1d5db; width:100%;
+  }
+  textarea { min-height:120px; }
+  .row { display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+  .btn { border:1px solid #d1d5db; background:#fff; padding:8px 12px; border-radius:12px; cursor:pointer; text-decoration:none; display:inline-flex; gap:8px; align-items:center; }
+  .btn-primary { border-color:#111827; background:#111827; color:#fff; }
+</style>
+
+<div class="box">
+  <form method="POST">
+    <div class="row">
+      <label>
+        <span style="font-weight:800;">Company name</span>
+        <input name="company_name" value="{{ branding.company_name }}" placeholder="Your Company Ltd" required>
+      </label>
+
+      <label>
+        <span style="font-weight:800;">Support email</span>
+        <input name="support_email" value="{{ branding.support_email }}" placeholder="support@yourcompany.com">
+      </label>
+    </div>
+
+    <div class="row">
+      <label>
+        <span style="font-weight:800;">Logo URL</span>
+        <input name="logo" value="{{ branding.logo }}" placeholder="https://.../logo.png">
+      </label>
+
+      <label>
+        <span style="font-weight:800;">Brand color</span>
+        <input name="color" value="{{ branding.color }}" placeholder="#111827">
+      </label>
+    </div>
+
+    <label>
+      <span style="font-weight:800;">Footer (optional)</span>
+      <textarea name="footer" placeholder="Short footer shown under the email...">{{ branding.footer }}</textarea>
+      <small style="color:#64748b;">
+        If footer is empty and support email exists, we auto-generate: “Need help? Contact support@...”
+      </small>
+    </label>
+
+    <div style="display:flex; gap:10px; margin-top:12px;">
+      <button class="btn btn-primary" type="submit">💾 Save</button>
+      <a class="btn" href="{{ url_for('dashboard') }}">← Back</a>
+      <a class="btn" href="{{ url_for('template_scheduler') }}">🧩 Scheduler Template</a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

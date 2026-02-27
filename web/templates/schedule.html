@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  /* --- Layout & Typography --- */
+  .wrap { max-width: 1100px; margin: 0 auto; padding-bottom: 60px; }
+  .page-header { margin-bottom: 24px; }
+  .page-title { font-size: 28px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 12px; }
+  .page-sub { color: #64748b; font-size: 15px; max-width: 600px; line-height: 1.6; }
+
+  /* --- Safety Banner --- */
+  .alert-banner {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 32px;
+    display: flex;
+    gap: 16px;
+  }
+  .alert-icon { font-size: 24px; }
+  .alert-content h4 { margin: 0 0 6px; font-size: 16px; font-weight: 800; color: #9a3412; }
+  .alert-content p { margin: 0; font-size: 14px; color: #7c2d12; line-height: 1.5; }
+  .alert-list { margin: 10px 0 0; padding-left: 20px; font-size: 13px; color: #7c2d12; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; }
+
+  /* --- Grid System --- */
+  .schedule-grid { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 1024px) { .schedule-grid { grid-template-columns: 1fr; } }
+
+  /* --- Bulk Control Panel --- */
+  .control-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 24px;
+    position: sticky;
+    top: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  }
+  .card-label { display: block; font-size: 13px; font-weight: 800; color: #475569; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .form-stack { display: flex; flex-direction: column; gap: 16px; }
+  
+  label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: #1e293b; }
+  input, select {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  input:focus, select:focus { border-color: #6366f1; outline: none; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+
+  /* --- Table/List Styling --- */
+  .list-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #f8fafc; padding: 14px 20px; text-align: left; font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
+  td { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  
+  .tr-active:hover { background: #f8fafc; }
+  .tr-sent { opacity: 0.6; background: #fafafa; }
+
+  /* --- Badges & Buttons --- */
+  .badge { padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; background: #f1f5f9; color: #475569; }
+  .badge-blue { background: #e0e7ff; color: #4338ca; }
+  
+  .btn {
+    padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px; border: 1px solid transparent; transition: all 0.2s;
+  }
+  .btn-primary { background: #0f172a; color: #fff; width: 100%; justify-content: center; }
+  .btn-primary:hover { background: #1e293b; transform: translateY(-1px); }
+  .btn-ghost-danger { background: transparent; color: #be123c; padding: 6px 10px; }
+  .btn-ghost-danger:hover { background: #fff1f2; }
+</style>
+
+<div class="wrap">
+  <div class="page-header">
+    <a href="{{ url_for('dashboard') }}" style="color: #6366f1; font-weight: 700; text-decoration: none; font-size: 14px; display: block; margin-bottom: 8px;">← Back to Dashboard</a>
+    <h1 class="page-title">🗓 Delivery Schedule</h1>
+    <p class="page-sub">Orchestrate your outreach. Define when and how often your messages reach your clients.</p>
+  </div>
+
+  <div class="alert-banner">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-content">
+      <h4>Manual Stop Required</h4>
+      <p>This system sends via Gmail but <strong>cannot read incoming replies</strong>. To stop a thread once a client responds:</p>
+      <ul class="alert-list">
+        <li>Mark the follow-up as "Done"</li>
+        <li>Clear the active schedule</li>
+        <li>Set a strict "Stop Date" for recurring sequences</li>
+        <li>Past timestamps may trigger instant delivery</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="schedule-grid">
+    
+    <div class="control-card">
+      <div class="card-label">Bulk Scheduler</div>
+      <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Apply a timing rule to all selected items in the list.</p>
+      
+      <form method="POST" action="{{ url_for('bulk_schedule') }}" id="bulkForm" class="form-stack">
+        <input type="hidden" name="allow_past" value="0">
+
+        <label>
+          Start Sending From
+          <input type="date" name="start_date" id="start_date" required>
+        </label>
+
+        <label>
+          Preferred Time
+          <input type="time" name="send_time" value="09:00" required>
+        </label>
+
+        <label>
+          Cadence / Repeat
+          <select name="repeat">
+            <option value="once">Send Once</option>
+            <option value="daily">Every Day</option>
+            <option value="weekly">Once a Week</option>
+            <option value="every_n_days">Every N Days</option>
+            <option value="weekday">Weekdays Only</option>
+            <option value="relative">Relative to Now</option>
+          </select>
+        </label>
+
+        <label>
+          Auto-Stop Date (Optional)
+          <input type="date" name="end_date" id="end_date">
+        </label>
+
+        <div style="height: 12px;"></div>
+        
+        <button class="btn btn-primary" type="submit">
+          Apply to Selected
+        </button>
+      </form>
+
+      <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #f1f5f9;">
+        <div class="card-label" style="font-size: 11px;">Quick Guide</div>
+        <ul style="padding: 0; list-style: none; font-size: 12px; color: #64748b;">
+          <li style="margin-bottom: 8px;"><strong>Scheduled:</strong> Message is queued for the future.</li>
+          <li><strong>Relative:</strong> Sends immediately based on current offset.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="list-card">
+      <div style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0; font-size: 16px; font-weight: 800;">Pending Follow-ups</h3>
+        <span class="badge" id="selection-count">0 Selected</span>
+      </div>
+
+      {% if followups %}
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 40px;"><input type="checkbox" id="master-cb"></th>
+            <th>Recipient</th>
+            <th>Due Date</th>
+            <th>Next Send</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in followups %}
+          <tr class="{% if f.status == 'sent' %}tr-sent{% else %}tr-active{% endif %}">
+            <td>
+              <input type="checkbox" class="cb" value="{{ f.id }}" {% if f.status == 'sent' %}disabled{% endif %}>
+            </td>
+            <td>
+              <div style="font-weight: 700; color: #1e293b;">{{ f.client_name }}</div>
+              <div style="font-size: 12px; color: #64748b;">{{ f.followup_type|capitalize }}</div>
+            </td>
+            <td>
+              <span class="badge">{{ f.due_date or '—' }}</span>
+            </td>
+            <td>
+              {% if f.next_send_at %}
+                <span class="badge badge-blue">{{ f.next_send_at }}</span>
+              {% else %}
+                <span style="color: #cbd5e1; font-size: 12px;">Not Queued</span>
+              {% endif %}
+            </td>
+            <td style="text-align: right;">
+              {% if f.status != 'sent' and f.schedule_enabled %}
+              <form method="POST" action="{{ url_for('schedule_clear', fid=f.id) }}">
+                <button class="btn btn-ghost-danger" title="Stop Schedule">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  Clear
+                </button>
+              </form>
+              {% else %}
+              <span style="color: #cbd5e1;">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div style="padding: 60px; text-align: center; color: #94a3b8;">
+        <div style="font-size: 40px; margin-bottom: 10px;">📭</div>
+        <p>No follow-ups found. Create one from the dashboard first.</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Bulk selection logic
+  const masterCb = document.getElementById("master-cb");
+  const cbs = document.querySelectorAll(".cb");
+  const countLabel = document.getElementById("selection-count");
+
+  function updateCount() {
+    const checked = Array.from(cbs).filter(c => c.checked).length;
+    countLabel.textContent = `${checked} Selected`;
+    countLabel.className = checked > 0 ? 'badge badge-blue' : 'badge';
+  }
+
+  masterCb?.addEventListener("change", () => {
+    cbs.forEach(cb => { if(!cb.disabled) cb.checked = masterCb.checked });
+    updateCount();
+  });
+
+  cbs.forEach(cb => cb.addEventListener("change", updateCount));
+
+  // Form Submission
+  const bulkForm = document.getElementById("bulkForm");
+  bulkForm.addEventListener("submit", function (e) {
+    const checked = Array.from(cbs).filter(cb => cb.checked && !cb.disabled);
+    
+    if (!checked.length) {
+      e.preventDefault();
+      alert("Please select at least one follow-up from the list.");
+      return;
+    }
+
+    checked.forEach(cb => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "followup_ids";
+      input.value = cb.value;
+      bulkForm.appendChild(input);
+    });
+  });
+
+  // Date clamping
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  const d = new Date();
+  const TODAY = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+
+  const startDate = document.getElementById("start_date");
+  const endDate = document.getElementById("end_date");
+
+  if (startDate) {
+    startDate.min = TODAY;
+    startDate.value = TODAY;
+  }
+  if (endDate) endDate.min = TODAY;
+
+  startDate?.addEventListener("input", () => {
+    if (endDate && endDate.value && endDate.value < startDate.value) {
+      endDate.value = startDate.value;
+    }
+    if (endDate) endDate.min = startDate.value;
+  });
+</script>
+
+{% endblock %}
