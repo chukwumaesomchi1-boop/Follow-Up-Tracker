@@ -262,10 +262,10 @@ def send_followup_email(user: dict, f: dict, message: str) -> bool:
 def send_via_preference(user: dict, f: dict, message: str):
     """
     Sends a message via the user's preferred channel.
-    
+
     Returns:
         (channel_used: str|None, error: str|None)
-    
+
     Notes:
     - message is plain text for WhatsApp/SMS
     - for Email, supports:
@@ -273,7 +273,6 @@ def send_via_preference(user: dict, f: dict, message: str):
         2. Branded HTML template (default)
         3. Raw HTML (email_format='raw')
     """
-
     print("MESSAGE BEFORE DISPATCH:", repr(message))
 
     channel = (f.get("preferred_channel") or "whatsapp").strip().lower()
@@ -291,14 +290,20 @@ def send_via_preference(user: dict, f: dict, message: str):
 
         # Raw HTML mode (send exactly what user wrote)
         if format_type == "raw":
+            print("[DEBUG] Sending as RAW HTML")
             send_email(user, email, subject, message, is_html=True)
 
         # Plain text (smart formatting)
         elif format_type == "text":
+            print("[DEBUG] Sending as PLAIN TEXT email")
+            print("[DEBUG] To:", email)
+            print("[DEBUG] Subject:", subject)
+            print("[DEBUG] Body repr:", repr(message))
             send_plain_text_email(user, email, subject, message)
 
         # Default: HTML template
         else:
+            print("[DEBUG] Sending as BRANDED HTML")
             html_body = render_followup_email_html(
                 brand_name="FollowUp Tracker",
                 brand_color=branding.get("brand_color") or "#36A2EB",
@@ -313,6 +318,7 @@ def send_via_preference(user: dict, f: dict, message: str):
 
     # -------- WhatsApp / SMS fallback --------
     elif channel in ("whatsapp", "sms"):
+        print(f"[DEBUG] Sending via {channel.upper()}")
         # send_whatsapp(user, f, message)  # placeholder
         return channel.capitalize(), None
 
