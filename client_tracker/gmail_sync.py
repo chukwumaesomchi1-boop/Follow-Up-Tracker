@@ -41,7 +41,7 @@ import base64
 from email.mime.text import MIMEText
 from gmail_oauth import build_gmail_service
 
-def send_email_gmail(user, to_email, subject, body):
+def send_email_gmail(user, to_email, subject, body, is_html=False):
     token = user["gmail_token"]
     if not token:
         raise Exception("Gmail not connected")

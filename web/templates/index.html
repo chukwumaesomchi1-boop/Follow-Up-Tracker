@@ -4,324 +4,363 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Follow-Up Tracker | Recover Lost Revenue Automatically</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
 :root {
-  --bg: #030712;
-  --card-bg: #111827;
+  --bg: #000000;
+  --card-bg: #0a0a0a;
   --accent: #6366f1;
-  --accent-hover: #4f46e5;
-  --text-main: #f9fafb;
-  --text-muted: #9ca3af;
-  --border: #1f2937;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --accent-soft: rgba(99, 102, 241, 0.15);
+  --text-main: #ffffff;
+  --text-muted: #a1a1aa;
+  --border: #27272a;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
 }
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background-color: var(--bg);color: var(--text-main);font-family: var(--font-sans);line-height: 1.6;-webkit-font-smoothing: antialiased;overflow-x:hidden;}
-.container{max-width:1100px;margin:0 auto;padding:0 24px;}
-.section-padding{padding:100px 0;}
-.text-center{text-align:center;}
-.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 28px;border-radius:12px;font-weight:600;text-decoration:none;transition:all 0.2s ease;cursor:pointer;border:none;font-size:16px;}
-.btn-primary{background: var(--accent); color:white;}
-.btn-primary:hover{background: var(--accent-hover); transform: translateY(-1px);}
-.btn-outline{background: transparent; border:1px solid var(--border); color: var(--text-main);}
-.btn-outline:hover{background: var(--card-bg);}
+
+/* Base Reset */
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+/* Utility */
+.gradient-text {
+  background: linear-gradient(to bottom right, #fff 30%, #52525b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  font-size: 15px;
+}
+.btn-primary { background: var(--text-main); color: var(--bg); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(255,255,255,0.2); }
+
+.btn-secondary { background: var(--accent); color: white; }
+.btn-secondary:hover { background: var(--accent-hover); transform: translateY(-2px); }
 
 /* Navigation */
-nav{height:80px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background: rgba(3,7,18,0.8);backdrop-filter: blur(12px); z-index:1000;}
-.nav-inner{display:flex;align-items:center;justify-content:space-between;width:100%;}
-.logo{font-weight:800;font-size:20px;letter-spacing:-1px;}
-.nav-links{display:flex;gap:32px;align-items:center;}
-.nav-links a{text-decoration:none;color: var(--text-muted);font-size:14px;font-weight:500;}
-.nav-links a:hover{color: var(--text-main);}
+nav {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(20px);
+  z-index: 1000;
+}
+.nav-inner { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+.nav-links { display: flex; gap: 32px; }
+.nav-links a { text-decoration: none; color: var(--text-muted); font-size: 14px; font-weight: 500; transition: color 0.2s; }
+.nav-links a:hover { color: var(--text-main); }
 
-/* Hero */
-.hero{padding:120px 0 80px;text-align:center;position:relative;overflow:hidden;}
-.hero .badge{background: rgba(99,102,241,0.1); color: var(--accent); padding:6px 16px; border-radius:99px; font-size:13px; font-weight:700; margin-bottom:24px; display:inline-block; border:1px solid rgba(99,102,241,0.2);}
-.hero h1{font-size:64px;font-weight:800;line-height:1.1;letter-spacing:-0.04em;margin-bottom:24px;background:linear-gradient(180deg,#fff 0%,#94a3b8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.hero p{font-size:20px;color: var(--text-muted);max-width:600px;margin:0 auto 40px;}
-.hero-btns{display:flex;gap:16px;justify-content:center;}
+/* Hero Section */
+.hero { padding: 100px 0 60px; text-align: center; position: relative; }
+.hero::before {
+  content: ''; position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+  width: 600px; height: 400px; background: radial-gradient(circle, var(--accent-soft) 0%, transparent 70%);
+  z-index: -1; pointer-events: none;
+}
+.hero .badge {
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(99,102,241,0.3);
+  margin-bottom: 32px;
+  display: inline-block;
+}
+.hero h1 { font-size: 72px; font-weight: 800; line-height: 1.05; letter-spacing: -0.04em; margin-bottom: 24px; }
+.hero p { font-size: 20px; color: var(--text-muted); max-width: 600px; margin: 0 auto 40px; }
 
-/* Carousel */
-.carousel{position:relative;max-width:800px;margin:40px auto 0;}
-.carousel img{width:100%;border-radius:24px;box-shadow:0 12px 40px rgba(0,0,0,0.6);}
-.carousel-buttons{position:absolute;top:50%;width:100%;display:flex;justify-content:space-between;transform:translateY(-50%);}
-.carousel-buttons button{background: rgba(0,0,0,0.5); color:white; border:none; padding:12px 16px; border-radius:50%; cursor:pointer; transition:0.2s;}
-.carousel-buttons button:hover{background: rgba(0,0,0,0.8);}
+/* Carousel / Browser Mockup */
+.mockup {
+  max-width: 900px; margin: 60px auto 0;
+  background: #18181b;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: 0 40px 100px -20px rgba(0,0,0,0.8);
+  position: relative;
+}
+.mockup-header { display: flex; gap: 6px; padding: 8px 12px; margin-bottom: 4px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #3f3f46; }
+.carousel-container { position: relative; border-radius: 10px; overflow: hidden; aspect-ratio: 16/10; }
+.carousel-container img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.5s ease-in-out; }
 
-/* Benefits */
-.benefits-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:60px;}
-.card{background:var(--card-bg);border:1px solid var(--border);padding:32px;border-radius:24px;transition:border-color 0.3s ease, transform 0.6s ease, opacity 0.6s ease;opacity:0; transform: translateY(50px);}
-.card.visible{opacity:1; transform: translateY(0);}
-.card:hover{border-color: var(--accent);}
-.card-icon{width:48px;height:48px;background: rgba(99,102,241,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:24px;color: var(--accent);font-size:24px;}
-.card h3{font-size:20px;margin-bottom:12px;}
-.card p{color: var(--text-muted); font-size:15px;}
+.carousel-nav {
+  position: absolute; bottom: 20px; right: 20px; display: flex; gap: 8px;
+}
+.nav-btn {
+  background: rgba(0,0,0,0.6); color: white; border: 1px solid var(--border);
+  width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: 0.2s;
+}
+.nav-btn:hover { background: var(--accent); border-color: var(--accent); }
 
-/* Product Screenshot */
-.screenshot-section{text-align:center;padding:80px 0;}
-.screenshot-section img{max-width:90%;border-radius:24px;box-shadow:0 12px 40px rgba(0,0,0,0.6);}
+/* Grid Features */
+.features { padding: 100px 0; }
+.features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 60px; }
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  padding: 40px;
+  border-radius: 24px;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.card:hover { border-color: var(--accent); transform: translateY(-5px); }
+.card h3 { font-size: 18px; margin-bottom: 12px; }
+.card p { color: var(--text-muted); font-size: 14px; line-height: 1.6; }
+.card-icon { 
+  font-size: 28px; margin-bottom: 20px; display: block;
+}
 
-/* Trust Section */
-.trust{padding:60px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
-.logo-cloud{display:flex;justify-content:space-around;align-items:center;opacity:0.5;filter:grayscale(1);flex-wrap:wrap;gap:30px;}
-.logo-cloud span{font-weight:700;font-size:20px;color: var(--text-muted);}
+/* CSV Section */
+.csv-feature {
+  background: linear-gradient(180deg, #0a0a0a 0%, #000 100%);
+  border: 1px solid var(--border);
+  border-radius: 32px;
+  padding: 80px 40px;
+  margin: 100px 0;
+  text-align: center;
+}
+.workflow { display: flex; justify-content: center; gap: 20px; margin-top: 48px; flex-wrap: wrap; }
+.step { 
+  background: #18181b; padding: 24px; border-radius: 16px; border: 1px solid var(--border); 
+  width: 260px; text-align: left;
+}
+.step-num { color: var(--accent); font-weight: 800; font-size: 12px; margin-bottom: 8px; display: block; }
 
 /* Pricing */
-.pricing-wrap{display:grid;grid-template-columns:repeat(2,1fr);gap:32px;max-width:800px;margin:60px auto 0;}
-.pricing-card{border:1px solid var(--border);padding:48px;border-radius:32px;display:flex;flex-direction:column;}
-.pricing-card.pro{background:var(--card-bg);border-color:var(--accent);position:relative;}
-.pricing-card .badge{position:absolute;top:20px;right:20px;margin:0;}
-.price{font-size:48px;font-weight:800;margin:16px 0;}
-.price span{font-size:16px;font-weight:500;color:var(--text-muted);}
-.features-list{list-style:none;margin:32px 0;flex-grow:1;}
-.features-list li{margin-bottom:12px;font-size:15px;color:var(--text-muted);display:flex;align-items:center;gap:10px;}
-.features-list li::before{content:"✓";color:var(--accent);font-weight:bold;}
-
-/* FAQ */
-.faq{max-width:700px;margin:0 auto;}
-.faq-item{border-bottom:1px solid var(--border);padding:24px 0;}
-.faq-item h4{margin-bottom:8px;font-size:18px;}
-.faq-item p{color:var(--text-muted);font-size:15px;}
+.pricing { padding: 100px 0; }
+.pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; max-width: 900px; margin: 60px auto 0; }
+.price-card {
+  padding: 48px; border-radius: 32px; border: 1px solid var(--border);
+  display: flex; flex-direction: column; position: relative;
+}
+.price-card.popular { 
+  border-color: var(--accent); 
+  background: radial-gradient(circle at top right, rgba(99,102,241,0.1), transparent);
+}
+.price-val { font-size: 48px; font-weight: 800; margin: 24px 0; }
+.price-features { list-style: none; margin-bottom: 40px; flex-grow: 1; }
+.price-features li { color: var(--text-muted); margin-bottom: 16px; font-size: 15px; display: flex; gap: 10px; }
+.price-features li::before { content: '→'; color: var(--accent); }
 
 /* Footer */
-footer{padding:80px 0 40px;border-top:1px solid var(--border);margin-top:100px;}
-.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:40px;margin-bottom:60px;}
-.footer-col h4{margin-bottom:20px;font-size:14px;text-transform:uppercase;color: var(--text-muted);}
-.footer-col a{display:block;text-decoration:none;color: var(--text-muted);margin-bottom:12px;font-size:14px;}
-.copyright{text-align:center;font-size:13px;color: var(--text-muted);padding-top:40px;border-top:1px solid var(--border);}
+footer { padding: 80px 0; border-top: 1px solid var(--border); text-align: center; }
+.footer-logo { font-weight: 800; letter-spacing: -0.02em; font-size: 20px; }
+.copy { color: var(--text-muted); font-size: 13px; margin-top: 20px; }
 
-/* Mid-page CTA */
-.mid-cta{text-align:center;padding:60px 20px;background:rgba(99,102,241,0.05);border-radius:24px;margin:80px auto;max-width:800px;}
-.mid-cta h2{font-size:28px;margin-bottom:16px;}
-.mid-cta p{color:var(--text-muted);margin-bottom:24px;font-size:16px;}
-
-/* Sticky Email CTA */
-.sticky-cta{position:fixed;bottom:20px;right:20px;background: var(--card-bg);padding:20px 24px;border-radius:24px;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:10000;}
-.sticky-cta h4{margin-bottom:8px;font-size:16px;}
-.sticky-cta input[type="email"]{padding:10px 14px;border-radius:8px;border:1px solid var(--border);background: var(--bg);color: var(--text-main);margin-right:8px;}
-.sticky-cta button{padding:10px 16px;border-radius:12px;background: var(--accent);color:white;border:none;cursor:pointer;transition:0.2s;}
-.sticky-cta button:hover{background: var(--accent-hover);}
-
-/* Responsive */
-@media(max-width:768px){
-  h1{font-size:42px;}
-  .benefits-grid,.pricing-wrap,.footer-grid{grid-template-columns:1fr;}
-  .nav-links{display:none;}
-  .hero-btns{flex-direction:column;}
-  .carousel-buttons{display:none;}
-  .sticky-cta{width:90%;right:5%;bottom:10px;}
+@media (max-width: 900px) {
+  .hero h1 { font-size: 48px; }
+  .features-grid, .pricing-grid { grid-template-columns: 1fr; }
+  .workflow { flex-direction: column; align-items: center; }
+  .step { width: 100%; }
 }
 </style>
 </head>
+
 <body>
 
 <nav>
   <div class="container nav-inner">
-    <div style="display: flex; align-items: center; gap: 12px;">
-      <img src="/static/logo.png" alt="Follow-Up Tracker" style="height:40px;">
-      <span style="font-weight: 700; font-size: 18px; color: #0f172a;">Client Follow-Up Tracker</span>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div style="width:32px; height:32px; background:var(--accent); border-radius:8px;"></div>
+      <strong class="footer-logo">FollowUp</strong>
     </div>
     <div class="nav-links">
       <a href="#benefits">Benefits</a>
       <a href="#pricing">Pricing</a>
-      <a href="#faq">FAQ</a>
     </div>
-    <a href="/login" class="btn btn-primary" style="padding:8px 20px;font-size:14px;">Start Free Trial</a>
+    <a href="/login" class="btn btn-primary" style="padding: 8px 18px; font-size: 13px;">Free Trial</a>
   </div>
 </nav>
 
 <header class="hero container">
-  <div class="badge">Trusted by 2,000+ Freelancers & Agencies</div>
-  <h1>The deal didn’t die. You just forgot to follow up.</h1>
-  <p>Most sales are lost because the follow-up never happens. Automate reminders, send smart emails, and close deals while you sleep.</p>
-  <div class="hero-btns">
-    <a href="/login" class="btn btn-primary">Start Free Trial</a>
+  <div class="badge">Trusted by 2,000+ Teams</div>
+  <h1 class="gradient-text">The deal didn’t die.<br>You just forgot.</h1>
+  <p>Stop losing revenue to quiet inboxes. Automate your follow-ups with smart sequences and bulk CSV tools.</p>
+  
+  <div style="display: flex; gap: 16px; justify-content: center;">
+    <a href="/login" class="btn btn-primary">Get Started — It's Free</a>
+    <a href="#benefits" class="btn btn-outline" style="border: 1px solid var(--border); color: white;">Watch Demo</a>
   </div>
 
-  <!-- Carousel -->
-  <div class="carousel">
-    <img id="carousel-img" src="/static/dashboard1.png" alt="Dashboard Screenshot">
-    <div class="carousel-buttons">
-      <button id="prev">&#10094;</button>
-      <button id="next">&#10095;</button>
+  <div class="mockup">
+    <div class="mockup-header">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+    <div class="carousel-container">
+      <img id="carousel-img" src="/static/dashboard1.png" alt="Dashboard Preview">
+      <div class="carousel-nav">
+        <button class="nav-btn" id="prev">←</button>
+        <button class="nav-btn" id="next">→</button>
+      </div>
     </div>
   </div>
 </header>
 
-<section class="trust text-center">
-  <div class="container">
-    <div class="logo-cloud">
-      <span>STRIPE</span>
-      <span>NOTION</span>
-      <span>SHOPIFY</span>
-      <span>WEBFLOW</span>
-      <span>AIRTABLE</span>
-    </div>
+<section id="benefits" class="features container">
+  <div style="text-align: center;">
+    <h2 class="gradient-text" style="font-size: 40px; letter-spacing: -0.02em;">Stop letting revenue leak</h2>
+    <p style="color: var(--text-muted); margin-top: 12px;">The complete toolkit for freelancers and sales teams.</p>
   </div>
-</section>
 
-<section id="benefits" class="section-padding container">
-  <div class="text-center" style="margin-bottom:60px;">
-    <h2 style="font-size:36px;">Stop letting revenue leak</h2>
-    <p style="color: var(--text-muted);">Built for freelancers, agencies, and sales teams who value time and ROI.</p>
-  </div>
-  <div class="benefits-grid">
+  <div class="features-grid">
     <div class="card">
-      <div class="card-icon">⚡</div>
+      <span class="card-icon">⚡</span>
       <h3>Set & Forget</h3>
-      <p>Queue follow-ups once. If the client doesn’t reply, our system sends it automatically. Close more deals without thinking.</p>
+      <p>Queue reminders once. Our system automatically stops sending the moment they reply.</p>
     </div>
     <div class="card">
-      <div class="card-icon">🎯</div>
+      <span class="card-icon">🎯</span>
       <h3>Gmail Native</h3>
-      <p>Works inside your Gmail. Same inbox, same workflow, but now it’s your secret weapon for revenue.</p>
+      <p>Sends directly through your work email. No "via third-party" headers. Pure deliverability.</p>
     </div>
     <div class="card">
-      <div class="card-icon">📈</div>
+      <span class="card-icon">📈</span>
       <h3>Revenue Analytics</h3>
-      <p>See exactly which emails generate money. Stop guessing. Scale what works.</p>
-    </div>
-    <div class="card">
-      <div class="card-icon">🤝</div>
-      <h3>Team Sync</h3>
-      <p>Share templates, track team performance, and never double-email a client again.</p>
-    </div>
-    <div class="card">
-      <div class="card-icon">🛡️</div>
-      <h3>SOC2 Secure</h3>
-      <p>We never store your email content—only the metadata to trigger automated follow-ups safely.</p>
-    </div>
-    <div class="card">
-      <div class="card-icon">💎</div>
-      <h3>Personalized Outreach</h3>
-      <p>Use custom variables so every automated email feels hand-written. No "bot vibes" here.</p>
+      <p>Track which templates are converting and exactly how much revenue you've recovered.</p>
     </div>
   </div>
 </section>
 
-<section class="screenshot-section">
- <img id="carousel-img" src="/static/dashboard1.png" alt="Follow-Up Tracker Dashboard Screenshot">
+
+
+<section class="container">
+  <div class="csv-feature">
+    <h2 class="gradient-text" style="font-size: 48px;">CSV to Scheduled in seconds.</h2>
+    <p style="color: var(--text-muted); max-width: 600px; margin: 20px auto;">Upload your lead list and instantly trigger hundreds of personalized follow-up sequences. Zero manual entry.</p>
+    
+    <div class="workflow">
+      <div class="step">
+        <span class="step-num">STEP 01</span>
+        <h3>Upload CSV</h3>
+        <p>Drop your spreadsheet. We'll map the names and emails automatically.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">STEP 02</span>
+        <h3>Pick Sequence</h3>
+        <p>Choose a proven template or craft a custom multi-day cadence.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">STEP 03</span>
+        <h3>Watch Deals Close</h3>
+        <p>Sit back while we do the nagging for you. Replies go to your inbox.</p>
+      </div>
+    </div>
+  </div>
 </section>
 
-<div class="mid-cta">
-  <h2>Every missed follow-up is lost revenue.</h2>
-  <p>Start automating today and reclaim hours while increasing your close rate.</p>
-  <a href="/login" class="btn btn-primary">Start Free Trial</a>
-</div>
-
-<section id="pricing" class="section-padding container">
-  <div class="text-center">
-    <h2 style="font-size:36px;">Simple, transparent pricing</h2>
-    <p style="color: var(--text-muted);">Scale your follow-ups as you grow.</p>
+<section id="pricing" class="pricing container">
+  <div style="text-align: center; margin-bottom: 60px;">
+    <h2 class="gradient-text" style="font-size: 40px;">Simple, fair pricing</h2>
   </div>
-  <div class="pricing-wrap">
-    <div class="pricing-card">
+
+  <div class="pricing-grid">
+    <div class="price-card">
       <h3>Starter</h3>
-      <p style="color: var(--text-muted);">Solo freelancers</p>
-      <div class="price">$9<span>/month</span></div>
-      <ul class="features-list">
-        <li>Up to 5000 active follow-ups</li>
-        <li>Basic Gmail integration</li>
-        <li>Standard templates</li>
-        <li>Mobile access</li>
+      <p style="color: var(--text-muted);">For solo freelancers</p>
+      <div class="price-val">$9<span style="font-size: 16px; color: var(--text-muted);">/mo</span></div>
+      <ul class="price-features">
+        <li>5,000 active follow-ups</li>
+        <li>Gmail Integration</li>
+        <li>Unlimited Templates</li>
       </ul>
-      <a href="/login" class="btn btn-outline">Get Started</a>
+      <a href="#" class="btn" style="border: 1px solid var(--border); color: white;">Get Started</a>
     </div>
-    <div class="pricing-card pro">
-      <div class="badge">MOST POPULAR</div>
+
+    <div class="price-card popular">
+      <div style="position: absolute; top: 20px; right: 20px; background: var(--accent); font-size: 10px; padding: 4px 10px; border-radius: 20px; font-weight: 800;">MOST POPULAR</div>
       <h3>Pro</h3>
-      <p style="color: var(--text-muted);">Growing teams & agencies</p>
-      <div class="price">$90<span>/yearly</span></div>
-      <ul class="features-list">
-        <li>Unlimited active follow-ups</li>
-        <li>Smart sequence logic</li>
-        <li>Advanced analytics & revenue tracking</li>
-        <li>Team collaboration & sync</li>
-        <li>Priority support</li>
+      <p style="color: var(--text-muted);">For growing agencies</p>
+      <div class="price-val">$90<span style="font-size: 16px; color: var(--text-muted);">/year</span></div>
+      <ul class="price-features">
+        <li>Unlimited follow-ups</li>
+        <li>Bulk CSV Import</li>
+        <li>Advanced Analytics</li>
+        <li>Priority Support</li>
       </ul>
-      <a href="/login" class="btn btn-primary">Start 7-Day Trial</a>
+      <a href="#" class="btn btn-secondary">Start 7-Day Free Trial</a>
     </div>
   </div>
 </section>
 
-<section id="faq" class="section-padding container">
-  <h2 class="text-center" style="margin-bottom:40px;">Common Questions</h2>
-  <div class="faq">
-    <div class="faq-item">
-      <h4>Does this read my private emails?</h4>
-      <p>Absolutely not. Only the threads you explicitly automate are used, and we never sell your data.</p>
-    </div>
-    <div class="faq-item">
-      <h4>What happens if a client replies?</h4>
-      <p>The sequence stops immediately. You take over manually so you always look human.</p>
-    </div>
-    <div class="faq-item">
-      <h4>Can I cancel anytime?</h4>
-      <p>Yes. No contracts, no hoops. Downgrade at any time.</p>
-    </div>
-  </div>
-</section>
-
-<footer class="container">
-  <div class="footer-grid">
-    <div class="footer-col">
-      <div class="logo" style="margin-bottom:20px;">Client Follow-Up Tracker.</div>
-      <p style="color: var(--text-muted); font-size:14px; max-width:300px;">Helping freelancers and agencies reclaim time and grow revenue automatically.</p>
-    </div>
-    <div class="footer-col">
-      <h4>Product</h4>
-      <a href="#benefits">Features</a>
-      <a href="#security">Security</a>
-      <a href="#pricing">Pricing</a>
-    </div>
-    <div class="footer-col">
-      <h4>Company</h4>
-      <a href="https://chukwumaesomchi1-boop.github.io/privacy.html">Privacy Policy</a>
-      <a href="https://chukwumaesomchi1-boop.github.io/terms.html">Terms of Service</a>
-      <a href="mailto:followuptracker.mail@gmail.com">Contact Us</a>
-    </div>
-  </div>
-  <div class="copyright">
-    © 2026 Follow-Up Tracker Inc. All rights reserved.
+<footer>
+  <div class="container">
+    <div class="footer-logo">FollowUp</div>
+    <p class="copy">© 2026 Follow-Up Tracker Inc. Built for the modern closer.</p>
   </div>
 </footer>
 
-<!-- Sticky Email CTA -->
-<div class="sticky-cta">
-  <h4>Join 5,000+ pros growing revenue</h4>
-  <a href="{{ url_for('auth_google') }}" class="btn btn-primary">Start Free Trial</a>
-</div>
-
 <script>
-// Scroll-trigger animation
-const cards = document.querySelectorAll('.card');
-function checkCards(){
-  const triggerBottom = window.innerHeight*0.85;
-  cards.forEach(card=>{
-    const cardTop = card.getBoundingClientRect().top;
-    if(cardTop < triggerBottom){
-      card.classList.add('visible');
-    }
-  });
-}
-window.addEventListener('scroll', checkCards);
-checkCards();
-
-// Carousel logic
-const images = [
-  "/static/dashboard1.png",
-  "/static/dashboard2.png",
-  "/static/dashboard3.png"
-];
+// Smooth Image Swap
+const images = ["/static/dashboard1.png", "/static/dashboard2.png", "/static/dashboard3.png"];
 let currentIndex = 0;
 const carouselImg = document.getElementById('carousel-img');
-document.getElementById('prev').addEventListener('click', ()=>{
-  currentIndex = (currentIndex-1+images.length)%images.length;
-  carouselImg.src = images[currentIndex];
-});
-document.getElementById('next').addEventListener('click', ()=>{
-  currentIndex = (currentIndex+1)%images.length;
-  carouselImg.src = images[currentIndex];
+
+function updateImage(newIndex) {
+  carouselImg.style.opacity = '0';
+  setTimeout(() => {
+    currentIndex = newIndex;
+    carouselImg.src = images[currentIndex];
+    carouselImg.style.opacity = '1';
+  }, 200);
+}
+
+document.getElementById('prev').onclick = () => {
+  const index = (currentIndex - 1 + images.length) % images.length;
+  updateImage(index);
+};
+
+document.getElementById('next').onclick = () => {
+  const index = (currentIndex + 1) % images.length;
+  updateImage(index);
+};
+
+// Reveal Animation
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.opacity = '1';
+      entry.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.card, .step, .price-card').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(20px)';
+  el.style.transition = 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)';
+  observer.observe(el);
 });
 </script>
 
