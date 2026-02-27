@@ -288,18 +288,33 @@ def send_followup_email(user: dict, f: dict, message: str) -> bool:
 #     return None, f"Unknown preferred channel: {channel}"
 
 import logging
-import sys  # <- this is required
+import sys
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+logger.propagate = True  # make sure it bubbles up to root
 
 if not logger.handlers:
-    handler = logging.StreamHandler(sys.stdout)  # use stdout
+    handler = logging.StreamHandler(sys.stdout)
     formatter = logging.Formatter(
         "[%(asctime)s] [%(levelname)s] %(name)s: %(message)s"
     )
     handler.setFormatter(formatter)
     logger.addHandler(handler)
+
+
+import logging
+import sys
+
+# --- Core logger setup ---
+logging.basicConfig(
+    level=logging.DEBUG,                 # capture debug/info/warnings/errors
+    format='[%(asctime)s] [%(levelname)s] %(name)s: %(message)s',
+    stream=sys.stdout                    # force output to console (Render sees it)
+)
+
+logger = logging.getLogger(__name__)  
+
 
 def send_via_preference(user: dict, f: dict, message: str):
     """
