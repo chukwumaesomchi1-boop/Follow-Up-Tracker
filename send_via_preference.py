@@ -77,42 +77,6 @@ def send_plain_text_email(user: dict, to_email: str, subject: str, body: str):
     _save_refreshed_token(user["id"], creds)
 
     return sent.get("id")
-# def smart_format_plain_text(raw_message: str, wrap_width: int = 72) -> str:
-#     """
-#     Formats raw text for professional plain-text emails.
-#     - Adds paragraph breaks
-#     - Converts lists starting with '-' or '*' to bullets
-#     - Wraps lines to `wrap_width`
-#     """
-#     if not raw_message:
-#         return ""
-
-#     lines = raw_message.splitlines()
-#     formatted_lines = []
-
-#     for line in lines:
-#         stripped = line.strip()
-#         if not stripped:
-#             # blank line = paragraph break
-#             formatted_lines.append("")
-#         elif stripped.startswith(("-", "*")):
-#             # convert hyphen/asterisk to bullet point and wrap
-#             bullet_text = stripped[1:].strip()
-#             wrapped = textwrap.fill(bullet_text, width=wrap_width - 2)
-#             # prepend bullet with indentation
-#             wrapped_bullet = "• " + wrapped.replace("\n", "\n  ")
-#             formatted_lines.append(wrapped_bullet)
-#         else:
-#             # Wrap normal paragraph text
-#             wrapped = textwrap.fill(stripped, width=wrap_width)
-#             formatted_lines.append(wrapped)
-
-#     # Ensure at least one blank line between paragraphs
-#     final_message = "\n".join(formatted_lines)
-#     # Collapse multiple blank lines to max 2
-#     final_message = re.sub(r"\n{3,}", "\n\n", final_message)
-#     return final_message
-
 
 
 from email.mime.text import MIMEText
@@ -322,7 +286,6 @@ def send_via_preference(user: dict, f: dict, message: str):
 
         subject = f"Follow-up: {f.get('followup_type', 'follow-up')}"
         format_type = (f.get("email_format") or "html").strip().lower()
-        format_type = (f.get("email_format") or "").strip().lower()
 
         branding = get_branding(user.get("id"))
 
