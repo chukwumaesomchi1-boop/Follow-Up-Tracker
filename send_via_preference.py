@@ -361,7 +361,7 @@ def send_via_preference(user: dict, f: dict, message: str):
     - for Email, supports:
         1. Plain text (email_format='text')
         2. Branded HTML template (default)
-        3. Raw HTML (email_mode='raw')
+        3. Raw HTML (email_format='raw')
     """
     channel = (f.get("preferred_channel") or "whatsapp").strip().lower()
 
@@ -373,17 +373,18 @@ def send_via_preference(user: dict, f: dict, message: str):
 
         subject = f"Follow-up: {f.get('followup_type', 'follow-up')}"
         format_type = (f.get("email_format") or "html").strip().lower()
-        email_mode  = (f.get("email_mode") or "").strip().lower()
+        format_type = (f.get("email_format") or "").strip().lower()
 
         branding = get_branding(user.get("id"))
 
         # Raw HTML mode (send exactly what user wrote)
-        if email_mode == "raw":
+        if format_type == "raw":
             send_email(user, email, subject, message, is_html=True)
 
-        # Plain text
+        # Plain text (smart formatting)
         elif format_type == "text":
-             send_plain_text_email(user, email, subject, message, is_html=False)
+            from smart_plain_text import send_plain_text_email  # import your smart sender
+            send_plain_text_email(user, email, subject, message)
 
         # Default: HTML template
         else:
@@ -400,7 +401,6 @@ def send_via_preference(user: dict, f: dict, message: str):
         return "Email", None
 
     # -------- WhatsApp / SMS fallback --------
-    # (you can expand this with your actual sending logic)
     elif channel in ("whatsapp", "sms"):
         # send_whatsapp(user, f, message)  # placeholder
         return channel.capitalize(), None
