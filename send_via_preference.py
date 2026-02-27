@@ -287,14 +287,14 @@ def send_followup_email(user: dict, f: dict, message: str) -> bool:
 
 #     return None, f"Unknown preferred channel: {channel}"
 
-
 import logging
+import sys  # <- this is required
 
-# ---- Setup logger ----
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)  # DEBUG messages will be captured
+logger.setLevel(logging.DEBUG)
+
 if not logger.handlers:
-    handler = logging.StreamHandler()
+    handler = logging.StreamHandler(sys.stdout)  # use stdout
     formatter = logging.Formatter(
         "[%(asctime)s] [%(levelname)s] %(name)s: %(message)s"
     )
