@@ -15,6 +15,92 @@ from models_saas import get_branding
 _E164_RE = re.compile(r"^\+\d{8,15}$")
 
 
+from email.mime.text import MIMEText
+import base64
+from googleapiclient.discovery import build
+
+# ---------- Placeholder helpers ----------
+def _creds_from_user(user):
+    """
+    Return Gmail credentials for the user.
+    Replace this with your actual OAuth credentials logic.
+    """
+    return user.get("creds")  # Example: user dict has 'creds'
+
+def _save_refreshed_token(user_id, creds):
+    """
+    Save refreshed OAuth token if needed.
+    Replace with your token persistence logic.
+    """
+    pass
+
+# ---------- True plain-text sender ----------
+def send_plain_text_email(user: dict, to_email: str, subject: str, body: str):
+    """
+    Sends a true plain-text email via Gmail API.
+    Preserves line breaks.
+    """
+    to_email = (to_email or "").strip()
+    if not to_email:
+        raise ValueError("Missing recipient email")
+
+    # Normalize line endings
+    body = body.replace("\r\n", "\n").replace("\n", "\r\n")
+
+    # Create plain-text MIME message (NOT multipart)
+    msg = MIMEText(body or "", "plain", "utf-8")
+    msg["to"] = to_email
+    msg["subject"] = subject or "(no subject)"
+
+    # Encode and send
+    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode("utf-8")
+    creds = _creds_from_user(user)
+
+    service = build("gmail", "v1", credentials=creds)
+    sent = service.users().messages().send(
+        userId="me",
+        body={"raw": raw}
+    ).execute()
+
+    _save_refreshed_token(user["id"], creds)
+    return sent.get("id")
+
+
+from email.mime.text import MIMEText
+import base64
+from googleapiclient.discovery import build
+
+def send_plain_text_email(user: dict, to_email: str, subject: str, body: str):
+    """
+    Sends a true plain-text email via Gmail API.
+    Preserves all line breaks.
+    """
+    to_email = (to_email or "").strip()
+    if not to_email:
+        raise ValueError("Missing recipient email")
+
+    # Normalize line endings
+    body = body.replace("\r\n", "\n").replace("\n", "\r\n")
+
+    # Create plain-text MIME message (NOT multipart)
+    msg = MIMEText(body or "", "plain", "utf-8")
+    msg["to"] = to_email
+    msg["subject"] = subject or "(no subject)"
+
+    # Encode and send
+    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode("utf-8")
+    creds = _creds_from_user(user)  # Your existing credentials function
+
+    service = build("gmail", "v1", credentials=creds)
+    sent = service.users().messages().send(
+        userId="me",
+        body={"raw": raw}
+    ).execute()
+
+    _save_refreshed_token(user["id"], creds)  # Save refreshed token if needed
+    return sent.get("id")
+
+
 def normalize_phone(phone: str) -> str:
     p = (phone or "").strip()
 
@@ -194,7 +280,7 @@ def send_via_preference(user: dict, f: dict, message: str):
 
         # Plain text
         elif format_type == "text":
-            send_email(user, email, subject, message, is_html=False)
+             send_plain_text_email(user, email, subject, message, is_html=False)
 
         # Default: HTML template
         else:
