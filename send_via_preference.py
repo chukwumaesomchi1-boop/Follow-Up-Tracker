@@ -36,9 +36,11 @@ def _save_refreshed_token(user_id, creds):
     pass
 
 # ---------- True plain-text sender ----------
-from email.mime.text import MIMEText
+
 import base64
+from email.mime.text import MIMEText
 from googleapiclient.discovery import build
+
 
 def send_plain_text_email(user: dict, to_email: str, subject: str, body: str):
     """
@@ -53,6 +55,10 @@ def send_plain_text_email(user: dict, to_email: str, subject: str, body: str):
     # Normalize line endings ONLY (do not modify content)
     body = body.replace("\r\n", "\n").replace("\r", "\n")
     body = body.replace("\n", "\r\n")
+
+    # 🔎 DEBUG: See EXACT raw body being sent
+    print("RAW BODY BEING SENT:")
+    print(repr(body))
 
     msg = MIMEText(body or "", "plain", "utf-8")
     msg["to"] = to_email
@@ -71,8 +77,6 @@ def send_plain_text_email(user: dict, to_email: str, subject: str, body: str):
     _save_refreshed_token(user["id"], creds)
 
     return sent.get("id")
-
-
 # def smart_format_plain_text(raw_message: str, wrap_width: int = 72) -> str:
 #     """
 #     Formats raw text for professional plain-text emails.
@@ -305,6 +309,9 @@ def send_via_preference(user: dict, f: dict, message: str):
         2. Branded HTML template (default)
         3. Raw HTML (email_format='raw')
     """
+
+    print("MESSAGE BEFORE DISPATCH:", repr(message))
+
     channel = (f.get("preferred_channel") or "whatsapp").strip().lower()
 
     # -------- Email --------
