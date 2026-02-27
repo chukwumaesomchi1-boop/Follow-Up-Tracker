@@ -121,7 +121,6 @@
     box-shadow: 0 50px 100px -20px rgba(0,0,0,0.3);
     border: 4px solid #334155;
   }
-  /* The "Dynamic Island" notch */
   .device-mockup::before {
     content: '';
     position: absolute;
@@ -318,27 +317,29 @@
   const pvSubject = document.getElementById('pvSubject');
   const pvBody = document.getElementById('pvBody');
 
+  // Email format radios
+  const fmtText = document.getElementById('fmt_text');
+  const fmtHtml = document.getElementById('fmt_html');
+  const fmtRaw  = document.getElementById('fmt_raw');
+
   function updatePreview() {
-    // Update Recipient
     pvTarget.textContent = elName.value || "Recipient";
 
-    // Update Subject
     const typeText = elType.options[elType.selectedIndex].text;
     pvSubject.textContent = typeText;
 
-    // Logic Priority Highlighting
     const step1 = document.getElementById('step1');
     const step2 = document.getElementById('step2');
     const step3 = document.getElementById('step3');
 
     let finalBody = "";
 
-    if (elOverride.value.trim()) {
+    if (elOverride.value.trim() && !fmtHtml.checked) {
       finalBody = elOverride.value;
       step1.classList.add('active');
       step2.classList.remove('active');
       step3.classList.remove('active');
-    } else if (elDesc.value.trim()) {
+    } else if (elDesc.value.trim() && !fmtHtml.checked) {
       finalBody = elDesc.value;
       step1.classList.remove('active');
       step2.classList.add('active');
@@ -350,22 +351,39 @@
       step3.classList.add('active');
     }
 
-    // Apply to Body
     pvBody.innerHTML = `<p style="white-space: pre-wrap; margin:0;">${finalBody}</p>`;
+  }
+
+  function toggleOverrideFields() {
+    if (fmtHtml.checked) {
+      elOverride.disabled = true;
+      elDesc.disabled = true;
+      elOverride.placeholder = "Disabled for Branded HTML format";
+      elDesc.placeholder = "Disabled for Branded HTML format";
+    } else {
+      elOverride.disabled = false;
+      elDesc.disabled = false;
+      elOverride.placeholder = "Write a custom message here to bypass the automated template...";
+      elDesc.placeholder = "Private notes for your team...";
+    }
   }
 
   // Real-time Listeners
   [elName, elType, elDesc, elOverride].forEach(el => {
     el.addEventListener('input', updatePreview);
   });
+  [fmtText, fmtHtml, fmtRaw].forEach(el => el.addEventListener('change', () => {
+    toggleOverrideFields();
+    updatePreview();
+  }));
 
-  // Time Sync
   function syncTime() {
     const now = new Date();
     document.getElementById('pvTime').textContent = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
   }
   
   syncTime();
+  toggleOverrideFields();
   updatePreview();
 </script>
 

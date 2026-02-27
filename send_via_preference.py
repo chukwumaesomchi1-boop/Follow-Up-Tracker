@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from flask import current_app
+import textwrap
 
 from email_renderer import render_followup_email_html, plain_to_html
 from gmail_sync import send_email_gmail  # your Gmail sender
@@ -66,39 +67,141 @@ def send_plain_text_email(user: dict, to_email: str, subject: str, body: str):
     return sent.get("id")
 
 
+
+
+def smart_format_plain_text(raw_message: str, wrap_width: int = 72) -> str:
+    """
+    Formats raw text for professional plain-text emails.
+    - Adds paragraph breaks
+    - Converts lists starting with '-' or '*' to bullets
+    - Wraps lines to `wrap_width`
+    """
+    if not raw_message:
+        return ""
+
+    lines = raw_message.splitlines()
+    formatted_lines = []
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            # blank line = paragraph break
+            formatted_lines.append("")
+        elif stripped.startswith(("-", "*")):
+            # convert hyphen/asterisk to bullet point and wrap
+            bullet_text = stripped[1:].strip()
+            wrapped = textwrap.fill(bullet_text, width=wrap_width - 2)
+            # prepend bullet with indentation
+            wrapped_bullet = "• " + wrapped.replace("\n", "\n  ")
+            formatted_lines.append(wrapped_bullet)
+        else:
+            # Wrap normal paragraph text
+            wrapped = textwrap.fill(stripped, width=wrap_width)
+            formatted_lines.append(wrapped)
+
+    # Ensure at least one blank line between paragraphs
+    final_message = "\n".join(formatted_lines)
+    # Collapse multiple blank lines to max 2
+    final_message = re.sub(r"\n{3,}", "\n\n", final_message)
+    return final_message
+
+
+
 from email.mime.text import MIMEText
 import base64
 from googleapiclient.discovery import build
 
+def format_plain_text_message(raw_message: str) -> str:
+    """
+    Takes a raw string and formats it for plain-text email:
+    - Adds paragraph breaks
+    - Converts list items starting with '-' or '*' into bullet points
+    - Ensures spacing between sections
+    """
+    if not raw_message:
+        return ""
+
+    lines = raw_message.splitlines()
+    formatted_lines = []
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            # preserve blank lines for paragraph breaks
+            formatted_lines.append("")
+        elif stripped.startswith(("-", "*")):
+            # convert hyphen/asterisk to bullet point
+            formatted_lines.append(f"• {stripped[1:].strip()}")
+        else:
+            formatted_lines.append(stripped)
+
+    # Combine lines and ensure double line breaks between paragraphs
+    final_message = "\n".join(formatted_lines)
+    return final_message
+
+
+# def send_plain_text_email(user: dict, to_email: str, subject: str, body: str):
+#     """
+#     Sends a true plain-text email via Gmail API.
+#     Preserves all line breaks.
+#     """
+#     to_email = (to_email or "").strip()
+#     if not to_email:
+#         raise ValueError("Missing recipient email")
+
+#     # Normalize line endings
+#     body = body.replace("\r\n", "\n").replace("\n", "\r\n")
+
+#     # Create plain-text MIME message (NOT multipart)
+#     msg = MIMEText(body or "", "plain", "utf-8")
+#     msg["to"] = to_email
+#     msg["subject"] = subject or "(no subject)"
+
+#     # Encode and send
+#     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode("utf-8")
+#     creds = _creds_from_user(user)  # Your existing credentials function
+
+#     service = build("gmail", "v1", credentials=creds)
+#     sent = service.users().messages().send(
+#         userId="me",
+#         body={"raw": raw}
+#     ).execute()
+
+#     _save_refreshed_token(user["id"], creds)  # Save refreshed token if needed
+#     return sent.get("id")
+
+
 def send_plain_text_email(user: dict, to_email: str, subject: str, body: str):
     """
-    Sends a true plain-text email via Gmail API.
-    Preserves all line breaks.
+    Sends true plain-text email via Gmail API.
+    Automatically formats message professionally.
     """
     to_email = (to_email or "").strip()
     if not to_email:
         raise ValueError("Missing recipient email")
 
+    # Use smart formatting
+    body = smart_format_plain_text(body)
+
     # Normalize line endings
     body = body.replace("\r\n", "\n").replace("\n", "\r\n")
 
-    # Create plain-text MIME message (NOT multipart)
+    # Create plain-text MIME message
     msg = MIMEText(body or "", "plain", "utf-8")
     msg["to"] = to_email
     msg["subject"] = subject or "(no subject)"
 
-    # Encode and send
     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode("utf-8")
-    creds = _creds_from_user(user)  # Your existing credentials function
-
+    creds = _creds_from_user(user)
     service = build("gmail", "v1", credentials=creds)
     sent = service.users().messages().send(
         userId="me",
         body={"raw": raw}
     ).execute()
 
-    _save_refreshed_token(user["id"], creds)  # Save refreshed token if needed
+    _save_refreshed_token(user["id"], creds)
     return sent.get("id")
+
 
 
 def normalize_phone(phone: str) -> str:
