@@ -696,10 +696,90 @@ def import_csv_mapped_start():
     return jsonify({"ok": True, "job_id": job_id})
 
 
-
+from send_via_preference import send_via_preference
 from flask import request, redirect, url_for, flash
 from models_saas import mark_followup_done_by_id
 from chase import build_message_preview
+# @app.post("/bulk-action")
+# def bulk_action():
+#     from flask import session
+
+#     user_id = int(session.get("user_id") or 0)
+#     if not user_id:
+#         flash("Please log in again.", "warning")
+#         return redirect(url_for("login"))
+
+#     ids = request.form.getlist("followup_ids")
+#     ids = [int(x) for x in ids if str(x).isdigit()]
+
+#     if not ids:
+#         flash("No followups selected.", "warning")
+#         return redirect(url_for("dashboard"))
+
+#     action = (request.form.get("action") or "").strip().lower()
+
+#     if action == "done":
+#         n = bulk_mark_done(user_id, ids)
+#         flash(f"Marked {n} as done.", "success")
+#         return redirect(url_for("dashboard"))
+
+#     if action == "delete":
+#         n = bulk_delete_followups(user_id, ids)
+#         flash(f"Deleted {n} followups.", "success")
+#         return redirect(url_for("dashboard"))
+
+#     if action == "send":
+#         user = get_user_by_id(user_id)
+#         if not user:
+#             flash("User not found. Please log in again.", "danger")
+#             return redirect(url_for("login"))
+
+#         if not (user.get("gmail_token") or "").strip():
+#             flash("Gmail not connected. Go to Settings and connect Gmail first.", "danger")
+#             return redirect(url_for("dashboard"))
+
+#         sent = 0
+#         failed = 0
+
+#         for fid in ids:
+#             f = get_followup(fid, user_id)
+#             if not f:
+#                 failed += 1
+#                 continue
+
+#             if f.get("status") in ("done", "replied"):
+#                 # already handled; skip silently
+#                 continue
+
+#             to_email = (f.get("email") or "").strip()
+#             if not to_email:
+#                 failed += 1
+#                 mark_send_failed(fid, user_id, "Missing email")
+#                 continue
+
+#             subject = f"Follow-up: {f.get('followup_type') or 'follow-up'}"
+#             message = (f.get("message_override") or "").strip() or build_message_preview(f, user_id)
+
+#             mark_send_attempt(fid, user_id)
+#             try:
+#                 send_email(user, to_email, subject, message)
+#                 mark_send_success(fid, user_id)
+#                 update_chase_stage(fid, user_id)
+#                 add_notification(user_id, f"Sent email to {f.get('client_name', '')}")
+#                 sent += 1
+#             except Exception as e:
+#                 mark_send_failed(fid, user_id, str(e))
+#                 failed += 1
+
+#         flash(
+#             f"Bulk send complete ✅ Sent {sent}, Failed {failed}.",
+#             "success" if sent else "warning",
+#         )
+#         return redirect(url_for("dashboard"))
+
+#     flash("Unknown bulk action.", "danger")
+#     return redirect(url_for("dashboard"))
+
 @app.post("/bulk-action")
 def bulk_action():
     from flask import session
@@ -748,25 +828,25 @@ def bulk_action():
                 continue
 
             if f.get("status") in ("done", "replied"):
-                # already handled; skip silently
                 continue
-
-            to_email = (f.get("email") or "").strip()
-            if not to_email:
-                failed += 1
-                mark_send_failed(fid, user_id, "Missing email")
-                continue
-
-            subject = f"Follow-up: {f.get('followup_type') or 'follow-up'}"
-            message = (f.get("message_override") or "").strip() or build_message_preview(f, user_id)
 
             mark_send_attempt(fid, user_id)
+
             try:
-                send_email(user, to_email, subject, message)
+                channel_used, error = send_via_preference(
+                    user,
+                    f,
+                    (f.get("message_override") or "").strip()
+                )
+
+                if error:
+                    raise RuntimeError(error)
+
                 mark_send_success(fid, user_id)
                 update_chase_stage(fid, user_id)
                 add_notification(user_id, f"Sent email to {f.get('client_name', '')}")
                 sent += 1
+
             except Exception as e:
                 mark_send_failed(fid, user_id, str(e))
                 failed += 1
@@ -779,8 +859,6 @@ def bulk_action():
 
     flash("Unknown bulk action.", "danger")
     return redirect(url_for("dashboard"))
-
-
 
 
 from models_saas import add_followup_draft
@@ -1964,6 +2042,60 @@ def preview(fid):
     return render_template("preview.html", followup=followup, message=message)
 
 
+# @app.route("/send/<int:fid>", methods=["POST"])
+# def send_followup(fid):
+#     user, block = require_user()
+#     if block:
+#         return block
+
+#     f = get_followup(fid, user["id"])
+#     if not f:
+#         flash("Follow-up not found.", "danger")
+#         return redirect(url_for("dashboard"))
+
+#     # 🔒 prevent manual send if scheduled
+#     if int(f.get("schedule_enabled") or 0) == 1 and (f.get("next_send_at") or "").strip():
+#         flash(
+#             "This follow-up is scheduled. Clear the schedule before sending manually.",
+#             "warning",
+#         )
+#         return redirect(url_for("schedule"))
+
+#     if f.get("status") in ("done", "replied"):
+#         flash(f"Not sent. This follow-up is already {f['status']}.", "warning")
+#         return redirect(url_for("dashboard"))
+
+#     message = (f.get("message_override") or "").strip() or build_message_preview(
+#         f, user["id"]
+#     )
+#     subject = f"Follow-up: {f.get('followup_type') or 'follow-up'}"
+
+#     mark_send_attempt(fid, user["id"])
+
+#     try:
+#         if not (user.get("gmail_token") or "").strip():
+#             raise RuntimeError("Gmail not connected")
+
+#         send_email(
+#             user,
+#             (f.get("email") or "").strip(),
+#             subject,
+#             message,
+#         )
+
+#         mark_send_success(fid, user["id"])
+#         update_chase_stage(fid, user["id"])
+#         add_notification(user["id"], f"Sent email to {f.get('client_name','')}")
+#         flash("Email sent ✅", "success")
+#         return redirect(url_for("dashboard"))
+
+#     except Exception as e:
+#         mark_send_failed(fid, user["id"], str(e))
+#         current_app.logger.exception("Send failed")
+#         flash(f"Send failed: {str(e)}", "danger")
+#         return redirect(url_for("dashboard"))
+
+
 @app.route("/send/<int:fid>", methods=["POST"])
 def send_followup(fid):
     user, block = require_user()
@@ -1975,7 +2107,7 @@ def send_followup(fid):
         flash("Follow-up not found.", "danger")
         return redirect(url_for("dashboard"))
 
-    # 🔒 prevent manual send if scheduled
+    # Prevent manual send if scheduled
     if int(f.get("schedule_enabled") or 0) == 1 and (f.get("next_send_at") or "").strip():
         flash(
             "This follow-up is scheduled. Clear the schedule before sending manually.",
@@ -1987,23 +2119,20 @@ def send_followup(fid):
         flash(f"Not sent. This follow-up is already {f['status']}.", "warning")
         return redirect(url_for("dashboard"))
 
-    message = (f.get("message_override") or "").strip() or build_message_preview(
-        f, user["id"]
-    )
-    subject = f"Follow-up: {f.get('followup_type') or 'follow-up'}"
-
     mark_send_attempt(fid, user["id"])
 
     try:
         if not (user.get("gmail_token") or "").strip():
             raise RuntimeError("Gmail not connected")
 
-        send_email(
+        channel_used, error = send_via_preference(
             user,
-            (f.get("email") or "").strip(),
-            subject,
-            message,
+            f,
+            (f.get("message_override") or "").strip()
         )
+
+        if error:
+            raise RuntimeError(error)
 
         mark_send_success(fid, user["id"])
         update_chase_stage(fid, user["id"])
@@ -2016,6 +2145,9 @@ def send_followup(fid):
         current_app.logger.exception("Send failed")
         flash(f"Send failed: {str(e)}", "danger")
         return redirect(url_for("dashboard"))
+
+
+
 
 # -----------------------------
 # SCHEDULE (RULE-BASED)
