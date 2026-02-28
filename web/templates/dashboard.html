@@ -147,8 +147,6 @@
       • <b>Scheduled:</b> Automation is active.<br>
       • <b>Failed:</b> Requires manual fix.<br>
     </div>
-    <span class="help-text">💡 Hover rows to see email content.</span>
-  </div>
 </div>
 
 {# ========= FAILED SECTION ========= #}
@@ -176,7 +174,7 @@
             <td>
               <div class="cell-stack">
                 <span class="client-name">{{ f.client_name or 'Unknown' }}</span>
-                <span class="muted">{{ f.email.strip()}}</span>
+                <span class="muted">{{ (f.get('email') or '') }}</span>
               </div>
             </td>
             <td><span class="pill pill-failed">Failed</span></td>
@@ -238,10 +236,6 @@
               data-desc="{{ f.description|e }}">
             <td><input type="checkbox" name="followup_ids" value="{{ f.id }}" class="cb"></td>
             <td>
-              <div class="cell-stack">
-                <span class="client-name">{{ f.client_name or 'Unknown' }}</span>
-                <span class="muted">{{ f.email.strip() if f.email and f.email.strip() else 'No Email' }}</span>
-              </div>
             </td>
             <td><span class="muted" style="font-weight: 600;">{{ f.followup_type }}</span></td>
             <td><span class="muted">{{ f.due_date }}</span></td>
