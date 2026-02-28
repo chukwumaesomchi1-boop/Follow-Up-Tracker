@@ -780,6 +780,54 @@ from chase import build_message_preview
 #     flash("Unknown bulk action.", "danger")
 #     return redirect(url_for("dashboard"))
 
+@app.route("/send/<int:fid>", methods=["POST"])
+def send_followup(fid):
+    user, block = require_user()
+    if block:
+        return block
+
+    f = get_followup(fid, user["id"])
+    if not f:
+        flash("Follow-up not found.", "danger")
+        return redirect(url_for("dashboard"))
+
+    # Prevent sending if scheduled
+    if int(f.get("schedule_enabled") or 0) == 1 and (f.get("next_send_at") or "").strip():
+        flash(
+            "This follow-up is scheduled. Clear the schedule before sending manually.",
+            "warning",
+        )
+        return redirect(url_for("schedule"))
+
+    if f.get("status") in ("done", "replied"):
+        flash(f"Not sent. This follow-up is already {f['status']}.", "warning")
+        return redirect(url_for("dashboard"))
+
+    # Determine message
+    message = (f.get("message_override") or "").strip() or build_message_preview(f, user["id"])
+
+    mark_send_attempt(fid, user["id"])
+
+    try:
+        channel_used, error = send_via_preference(user, f, message)
+        current_app.logger.info(f"[SEND] channel_used={channel_used} for followup={fid}")
+
+        if error:
+            raise RuntimeError(error)
+
+        mark_send_success(fid, user["id"])
+        update_chase_stage(fid, user["id"])
+        add_notification(user["id"], f"Sent {channel_used} to {f.get('client_name','')}")
+        flash(f"Message sent via {channel_used} ✅", "success")
+        return redirect(url_for("dashboard"))
+
+    except Exception as e:
+        mark_send_failed(fid, user["id"], str(e))
+        current_app.logger.exception("Send failed")
+        flash(f"Send failed: {str(e)}", "danger")
+        return redirect(url_for("dashboard"))
+
+
 @app.post("/bulk-action")
 def bulk_action():
     from flask import session
@@ -789,9 +837,7 @@ def bulk_action():
         flash("Please log in again.", "warning")
         return redirect(url_for("login"))
 
-    ids = request.form.getlist("followup_ids")
-    ids = [int(x) for x in ids if str(x).isdigit()]
-
+    ids = [int(x) for x in request.form.getlist("followup_ids") if str(x).isdigit()]
     if not ids:
         flash("No followups selected.", "warning")
         return redirect(url_for("dashboard"))
@@ -823,28 +869,23 @@ def bulk_action():
 
         for fid in ids:
             f = get_followup(fid, user_id)
-            if not f:
-                failed += 1
+            if not f or f.get("status") in ("done", "replied"):
+                failed += 1 if not f else 0
                 continue
 
-            if f.get("status") in ("done", "replied"):
-                continue
-
+            message = (f.get("message_override") or "").strip() or build_message_preview(f, user_id)
             mark_send_attempt(fid, user_id)
 
             try:
-                channel_used, error = send_via_preference(
-                    user,
-                    f,
-                    (f.get("message_override") or "").strip()
-                )
+                channel_used, error = send_via_preference(user, f, message)
+                current_app.logger.info(f"[BULK SEND] channel_used={channel_used} for followup={fid}")
 
                 if error:
                     raise RuntimeError(error)
 
                 mark_send_success(fid, user_id)
                 update_chase_stage(fid, user_id)
-                add_notification(user_id, f"Sent email to {f.get('client_name', '')}")
+                add_notification(user_id, f"Sent {channel_used} to {f.get('client_name','')}")
                 sent += 1
 
             except Exception as e:
@@ -1588,16 +1629,41 @@ def logout():
 # -----------------------------
 # DASHBOARD
 # -----------------------------
+# @app.route("/dashboard")
+# def dashboard():
+#     user, block = require_user()
+#     if block:
+#         return block
+
+#     followups = get_user_followups(user["id"])
+#     done = count_done(user["id"])
+#     return render_template("dashboard.html", due_soon=followups, done=done)
 @app.route("/dashboard")
 def dashboard():
     user, block = require_user()
     if block:
         return block
 
-    followups = get_user_followups(user["id"])
+    rows = get_user_followups(user["id"])
     done = count_done(user["id"])
-    return render_template("dashboard.html", due_soon=followups, done=done)
 
+    followups = []
+
+    for r in rows:
+        followups.append({
+            "id": r[0],
+            "client_name": r[1],
+            "email": r[2],
+            "due_date": r[3],
+            "status": r[4] if len(r) > 4 else None,
+            "followup_type": r[5] if len(r) > 5 else None,
+        })
+
+    return render_template(
+        "dashboard.html",
+        due_soon=followups,
+        done=done
+    )
 
 # -----------------------------
 # FOLLOWUPS (EMAIL ONLY)
@@ -2094,59 +2160,6 @@ def preview(fid):
 #         current_app.logger.exception("Send failed")
 #         flash(f"Send failed: {str(e)}", "danger")
 #         return redirect(url_for("dashboard"))
-
-
-@app.route("/send/<int:fid>", methods=["POST"])
-def send_followup(fid):
-    user, block = require_user()
-    if block:
-        return block
-
-    f = get_followup(fid, user["id"])
-    if not f:
-        flash("Follow-up not found.", "danger")
-        return redirect(url_for("dashboard"))
-
-    # Prevent manual send if scheduled
-    if int(f.get("schedule_enabled") or 0) == 1 and (f.get("next_send_at") or "").strip():
-        flash(
-            "This follow-up is scheduled. Clear the schedule before sending manually.",
-            "warning",
-        )
-        return redirect(url_for("schedule"))
-
-    if f.get("status") in ("done", "replied"):
-        flash(f"Not sent. This follow-up is already {f['status']}.", "warning")
-        return redirect(url_for("dashboard"))
-
-    mark_send_attempt(fid, user["id"])
-
-    try:
-        if not (user.get("gmail_token") or "").strip():
-            raise RuntimeError("Gmail not connected")
-
-        channel_used, error = send_via_preference(
-            user,
-            f,
-            (f.get("message_override") or "").strip()
-        )
-
-        if error:
-            raise RuntimeError(error)
-
-        mark_send_success(fid, user["id"])
-        update_chase_stage(fid, user["id"])
-        add_notification(user["id"], f"Sent email to {f.get('client_name','')}")
-        flash("Email sent ✅", "success")
-        return redirect(url_for("dashboard"))
-
-    except Exception as e:
-        mark_send_failed(fid, user["id"], str(e))
-        current_app.logger.exception("Send failed")
-        flash(f"Send failed: {str(e)}", "danger")
-        return redirect(url_for("dashboard"))
-
-
 
 
 # -----------------------------
