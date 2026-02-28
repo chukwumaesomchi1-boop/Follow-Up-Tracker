@@ -352,8 +352,11 @@ def send_via_preference(user: dict, f: dict, message: str):
 
         elif format_type == "text":
             logger.debug("[DEBUG] Sending as PLAIN TEXT email to %s", email)
-            logger.debug("Subject: %s", subject)
-            logger.debug("Body: %r", message)
+
+            formatted = format_plain_text_message(message)
+
+            logger.debug("Formatted Body: %r", formatted)
+            
             send_plain_text_email(user, email, subject, message)
 
         else:  # default: branded HTML
