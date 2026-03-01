@@ -151,7 +151,7 @@ import base64
 from googleapiclient.discovery import build
 from flask import render_template_string
 
-def send_email(user: dict, to_email: str, subject: str, body: str, *, is_html=False):
+def send_email_gmail(user: dict, to_email: str, subject: str, body: str, *, is_html=False):
     """
     Sends an email via Gmail API. Handles plain text, branded HTML, or raw HTML.
     """
