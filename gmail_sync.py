@@ -148,8 +148,12 @@ from email.mime.multipart import MIMEMultipart
 
 from email.mime.text import MIMEText
 import base64
+import json
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from flask import render_template_string
+
+GMAIL_SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 
 def send_email_gmail(user: dict, to_email: str, subject: str, body: str, *, is_html=False):
     """
@@ -177,7 +181,21 @@ def send_email_gmail(user: dict, to_email: str, subject: str, body: str, *, is_h
 
     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode("utf-8")
 
-    creds = _creds_from_user(user)
+    # 🔥 Explicitly build credentials from stored token
+    token_json = user.get("gmail_token")
+    if not token_json:
+        raise Exception("User has no saved Gmail token")
+
+    if isinstance(token_json, str):
+        token_data = json.loads(token_json)
+    else:
+        token_data = token_json
+
+    creds = Credentials.from_authorized_user_info(
+        token_data,
+        GMAIL_SCOPES
+    )
+
     service = build("gmail", "v1", credentials=creds)
 
     sent = service.users().messages().send(
