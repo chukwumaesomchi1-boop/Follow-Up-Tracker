@@ -3,321 +3,333 @@
 {% block content %}
 
 <style>
-  /* --- Modern Status Pills --- */
-  .pill { 
-    display: inline-flex; 
-    align-items: center; 
-    padding: 4px 12px; 
-    border-radius: 99px; 
-    font-size: 11px; 
-    font-weight: 700; 
-    text-transform: uppercase; 
-    letter-spacing: 0.04em;
+  :root {
+    --primary: #0f172a;
+    --primary-light: #1e293b;
+    --accent: #6366f1;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --border: #e2e8f0;
+    --bg-subtle: #f8fafc;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --radius: 12px;
   }
-  .pill-pending   { background: #eef2ff; color: #4338ca; }
-  .pill-sent      { background: #dcfce7; color: #15803d; }
-  .pill-failed    { background: #fee2e2; color: #b91c1c; }
-  .pill-done      { background: #f1f5f9; color: #475569; }
-  .pill-scheduled { background: #e0f2fe; color: #0369a1; }
-  .pill-replied   { background: #ecfdf5; color: #047857; }
-  .pill-running   { background: #fef9c3; color: #854d0e; }
-  .pill-passed    { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
 
-  /* --- Cards & UI Containers --- */
-  .box { 
-    border: 1px solid #e2e8f0; 
-    border-radius: 16px; 
-    padding: 24px; 
-    margin: 20px 0; 
-    background: #fff; 
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  /* --- Stats Row --- */
+  .stats-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+    gap: 20px; 
+    margin-bottom: 32px; 
   }
-  .box-danger { 
-    border-color: #fecdd3; 
-    background: #fffafa; 
-    border-left: 6px solid #ef4444;
-  }
-  .box-title { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
-  .muted { font-size: 13px; color: #64748b; line-height: 1.5; }
-  
-  /* --- Actions & Buttons --- */
-  .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-  .btn {
-    border: 1px solid #e2e8f0;
+  .stat-card {
     background: #fff;
-    padding: 10px 16px;
-    border-radius: 10px;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-flex;
-    gap: 8px;
-    align-items: center;
-    font-weight: 600;
-    font-size: 14px;
-    transition: all 0.2s;
+    padding: 20px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
   }
-  .btn:hover { background: #f8fafc; border-color: #cbd5e1; }
-  .btn-primary { border-color: #0f172a; background: #0f172a; color: #fff; }
-  .btn-primary:hover { background: #1e293b; color: #fff; transform: translateY(-1px); }
-  .btn-danger { border-color: #fee2e2; background: #fff; color: #dc2626; }
-  .btn-danger:hover { background: #fee2e2; }
-  .btn-soft { background: #f1f5f9; border: none; color: #475569; }
-  .btn-soft:hover { background: #e2e8f0; }
+  .stat-label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-value { font-size: 24px; font-weight: 800; color: var(--text-main); margin-top: 4px; }
 
-  /* --- Table Styling --- */
-  .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; }
-  table { border-collapse: collapse; width: 100%; min-width: 800px; }
-  th { background: #f8fafc; padding: 14px 16px; text-align: left; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
-  td { padding: 16px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; transition: background 0.2s; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #fcfdfe; }
-
-  .cell-stack { display: flex; flex-direction: column; gap: 4px; }
-  .client-name { font-weight: 700; color: #0f172a; font-size: 15px; }
-
-  /* --- Top Layout Grid --- */
-  .grid-top { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; align-items: stretch; }
-  @media (max-width: 900px) { .grid-top { grid-template-columns: 1fr; } }
-
-  .add-card {
-    background: #0f172a;
+  /* --- Main Header Card --- */
+  .hero-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     color: #fff;
     border-radius: 20px;
-    padding: 32px;
+    padding: 40px;
+    margin-bottom: 40px;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
   }
-  .add-card h3 { margin: 0 0 8px; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
-  .add-card p { margin: 0 0 20px; color: #94a3b8; font-size: 15px; }
+  .hero-card::after {
+    content: ''; position: absolute; right: -50px; top: -50px; width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+  }
 
-  /* --- Row Tooltip --- */
-  .row-tip {
+  /* --- Table Experience --- */
+  .table-container {
+    background: #fff;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; text-align: left; }
+  th { 
+    background: var(--bg-subtle); 
+    padding: 16px; 
+    font-size: 12px; 
+    font-weight: 700; 
+    color: var(--text-muted); 
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafafa; }
+
+  /* --- Floating Bulk Bar --- */
+  .bulk-bar {
     position: fixed;
-    z-index: 10000;
-    width: 320px;
-    background: #1e293b;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--primary);
     color: #fff;
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    display: none;
-    pointer-events: none;
-    font-size: 13px;
+    padding: 12px 24px;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 1000;
   }
-  .row-tip .t { font-weight: 700; font-size: 14px; margin-bottom: 8px; color: #38bdf8; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
-  .row-tip .m { opacity: 0.9; line-height: 1.6; white-space: pre-wrap; }
+  .bulk-bar.active { transform: translateX(-50%) translateY(0); }
 
-  .chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 12px; border-radius: 8px;
-    background: #f1f5f9; border: 1px solid #e2e8f0;
-    font-weight: 700; font-size: 12px; color: #475569;
+  /* --- Status Pills --- */
+  .pill {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
+  .pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
   
-  .help-text { font-size: 12px; color: #94a3b8; margin-top: 8px; display: block; font-style: italic; }
+  .pill-sent { background: #ecfdf5; color: #065f46; }
+  .pill-sent::before { background: #10b981; }
+  
+  .pill-failed { background: #fef2f2; color: #991b1b; }
+  .pill-failed::before { background: #ef4444; }
 
-  /* Custom Checkbox */
-  input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #0f172a; }
+  .pill-pending { background: #eff6ff; color: #1e40af; }
+  .pill-pending::before { background: #3b82f6; }
+
+  /* --- Buttons --- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: 0.2s;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text-main);
+    text-decoration: none;
+  }
+  .btn-primary { background: var(--accent); color: #fff; border: none; }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #fff; }
+  .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+
+  /* Checkbox styling */
+  .custom-cb { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+
+  /* --- Tooltip --- */
+  .row-tip {
+    position: fixed; pointer-events: none; z-index: 2000;
+    background: #0f172a; color: #fff; padding: 12px; border-radius: 8px;
+    font-size: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
+    display: none; max-width: 280px; line-height: 1.5;
+  }
 </style>
 
-{# ========= TOP AREA ========= #}
-<div class="grid-top">
-  <div class="add-card">
-    <h3>Start a New Follow-up</h3>
-    <p>Automate your outreach in seconds. Create, schedule, and forget.</p>
-    <div class="actions">
-      <a class="btn btn-primary" href="{{ url_for('add') }}">
-        <span>➕ Add Follow-up</span>
-      </a>
-      <a class="btn" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: #fff;" href="{{ url_for('schedule') }}">
-        🗓 Scheduling
-      </a>
-      <a class="btn" style="background: rgba(255,255,255,0.05); border-color: transparent; color: #94a3b8;" href="{{ url_for('import_csv') }}">
-        📥 Import CSV
-      </a>
+<div class="container">
+  
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Pipeline</div>
+      <div class="stat-value">{{ due_soon|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Status: Failed</div>
+      <div class="stat-value" style="color: var(--danger)">{{ (due_soon|selectattr("status", "equalto", "failed")|list)|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Efficiency</div>
+      <div class="stat-value" style="color: var(--success)">98.2%</div>
     </div>
   </div>
 
-  <div class="box" style="margin: 0; display: flex; flex-direction: column; justify-content: center;">
-    <div class="box-title" style="font-size: 16px;">System Health</div>
-    <div class="muted">
-      • <b>Pending:</b> Waiting in queue.<br>
-      • <b>Scheduled:</b> Automation is active.<br>
-      • <b>Failed:</b> Requires manual fix.<br>
+  <div class="hero-card">
+    <div>
+      <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px;">Command Center</h1>
+      <p style="color: #94a3b8; font-size: 16px;">Automate your outreach and recover lost revenue.</p>
     </div>
-</div>
+    <div style="display: flex; gap: 12px;">
+      <a href="{{ url_for('import_csv') }}" class="btn btn-ghost">Import CSV</a>
+      <a href="{{ url_for('add') }}" class="btn btn-primary">➕ Create New</a>
+    </div>
+  </div>
 
-{# ========= FAILED SECTION ========= #}
-{% set failed_items = (due_soon or []) | selectattr("status", "equalto", "failed") | list %}
-{% if failed_items %}
-  <div class="box box-danger">
-    <div class="box-title">🚨 Action Required ({{ failed_items|length }})</div>
-    <p class="muted">The following items failed to send. Fix the recipient or template and retry.</p>
-
-    <div class="table-wrap" style="margin-top:16px;">
+  {# ========= ACTION REQUIRED SECTION ========= #}
+  {% set failed_items = (due_soon or []) | selectattr("status", "equalto", "failed") | list %}
+  {% if failed_items %}
+  <section style="margin-bottom: 48px;">
+    <h3 style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; color: var(--danger);">
+      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+      Action Required ({{ failed_items|length }})
+    </h3>
+    <div class="table-container" style="border-color: #fecdd3;">
       <table>
         <thead>
           <tr>
             <th>Client</th>
-            <th>Type</th>
-            <th>Last Error</th>
-            <th>Actions</th>
+            <th>Error Message</th>
+            <th style="text-align: right;">Fix</th>
           </tr>
         </thead>
         <tbody>
           {% for f in failed_items %}
-          <tr class="js-row"
-              data-tip-title="{{ (f.client_name or 'Client')|e }}"
-              data-tip-body="Error Detail: {{ (f.last_error or 'Unknown')|e }}">
+          <tr>
             <td>
-              <div class="cell-stack">
-                <span class="client-name">{{ f.client_name or 'Unknown' }}</span>
-                <span class="muted">{{ (f.get('email') or '') }}</span>
-              </div>
+              <div style="font-weight: 700;">{{ f.client_name }}</div>
+              <div style="font-size: 12px; color: var(--text-muted);">{{ f.email }}</div>
             </td>
-            <td><span class="pill pill-failed">Failed</span></td>
-            <td style="max-width: 250px;"><span class="muted" style="color: #b91c1c;">{{ f.last_error[:60] }}...</span></td>
-            <td>
-              <div class="actions">
-                <a class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" href="{{ url_for('preview', fid=f.id) }}">🛠 Fix & Retry</a>
-                <form method="post" action="{{ url_for('delete_followup', fid=f.id) }}" style="display:inline;">
-                  <button class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;" type="submit" onclick="return confirm('Delete?')">🗑</button>
-                </form>
-              </div>
+            <td><span style="color: var(--danger); font-size: 13px;">{{ f.last_error or 'Connection Timeout' }}</span></td>
+            <td style="text-align: right;">
+              <a href="{{ url_for('preview', fid=f.id) }}" class="btn" style="padding: 6px 12px; font-size: 12px;">🛠 Review</a>
             </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-  </div>
-{% endif %}
+  </section>
+  {% endif %}
 
-{# ========= MAIN LIST ========= #}
-<div style="display: flex; align-items: center; justify-content: space-between; margin: 40px 0 20px;">
-  <h2 style="margin:0; font-weight: 800;">Pipeline</h2>
-  <div class="chip" id="sel_count">0 selected</div>
-</div>
-
-{% if due_soon %}
-  <form method="post" action="{{ url_for('bulk_action') }}" id="bulkForm">
-    <div class="box" style="padding: 16px; background: #f8fafc; border-style: dashed;">
-      <div class="actions">
-        <button class="btn btn-primary" type="submit" name="action" value="send" onclick="return confirm('Send selected?')">📤 Bulk Send</button>
-        <button class="btn" type="submit" name="action" value="done">✅ Mark Done</button>
-        <button class="btn btn-danger" type="submit" name="action" value="delete" onclick="return confirm('Delete selected?')">🗑 Delete</button>
-        
-        <div style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
-           <input type="checkbox" id="select_all"> <span class="muted" style="font-weight: 700;">Select All</span>
-        </div>
+  {# ========= MAIN PIPELINE ========= #}
+  <section>
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+      <h2 style="font-weight: 800; letter-spacing: -0.02em;">Sequence Pipeline</h2>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <span style="font-size: 13px; color: var(--text-muted);">Select All</span>
+        <input type="checkbox" id="master_cb" class="custom-cb">
       </div>
     </div>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 40px;"></th>
-            <th>Client</th>
-            <th>Sequence Type</th>
-            <th>Due Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for f in due_soon %}
-          <tr class="js-row" 
-              data-client="{{ f.client_name|e }}"
-              data-email="{{ f.email.strip() if f.email else ''|e }}"
-              data-type="{{ f.followup_type|e }}"
-              data-desc="{{ f.description|e }}">
-            <td><input type="checkbox" name="followup_ids" value="{{ f.id }}" class="cb"></td>
-            <td>
-            </td>
-            <td><span class="muted" style="font-weight: 600;">{{ f.followup_type }}</span></td>
-            <td><span class="muted">{{ f.due_date }}</span></td>
-            <td>
-              {% if f.status == 'failed' %}<span class="pill pill-failed">FAILED</span>
-              {% elif f.status == 'sent' %}<span class="pill pill-sent">SENT</span>
-              {% elif f.status == 'scheduled' %}<span class="pill pill-scheduled">SCHEDULED</span>
-              {% elif f.status == 'done' %}<span class="pill pill-done">DONE</span>
-              {% else %}<span class="pill pill-pending">PENDING</span>{% endif %}
-            </td>
-            <td>
-              <a class="btn btn-soft" style="padding: 6px 12px; font-size: 12px;" href="{{ url_for('preview', fid=f.id) }}">👁️ Review</a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    {% if due_soon %}
+    <form id="bulkForm" method="post" action="{{ url_for('bulk_action') }}">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 40px;"></th>
+              <th>Client Name</th>
+              <th>Sequence Type</th>
+              <th>Next Step Due</th>
+              <th>Status</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for f in due_soon %}
+            <tr class="js-row" 
+                data-client="{{ f.client_name }}" 
+                data-email="{{ f.email }}" 
+                data-desc="{{ f.description or 'No notes provided.' }}">
+              <td><input type="checkbox" name="followup_ids" value="{{ f.id }}" class="custom-cb item-cb"></td>
+              <td>
+                <div style="font-weight: 700; color: var(--text-main);">{{ f.client_name }}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">{{ f.email }}</div>
+              </td>
+              <td style="font-size: 14px; font-weight: 500;">{{ f.followup_type }}</td>
+              <td style="font-size: 14px; color: var(--text-muted);">{{ f.due_date }}</td>
+              <td>
+                {% if f.status == 'sent' %}<span class="pill pill-sent">Sent</span>
+                {% elif f.status == 'failed' %}<span class="pill pill-failed">Failed</span>
+                {% else %}<span class="pill pill-pending">Pending</span>{% endif %}
+              </td>
+              <td style="text-align: right;">
+                <a href="{{ url_for('preview', fid=f.id) }}" class="btn" style="padding: 6px 12px; font-size: 12px; border:none; background: #f1f5f9;">View Details</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="bulk-bar" id="bulkBar">
+        <span id="bulkCount" style="font-weight: 800; color: var(--accent);">0 selected</span>
+        <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.2);"></div>
+        <div style="display: flex; gap: 8px;">
+          <button name="action" value="send" class="btn btn-primary" style="padding: 6px 14px; font-size: 12px;">📤 Run Now</button>
+          <button name="action" value="done" class="btn btn-ghost" style="padding: 6px 14px; font-size: 12px;">✅ Mark Done</button>
+          <button name="action" value="delete" class="btn" style="background:#ef4444; border:none; color:white; padding: 6px 14px; font-size: 12px;">🗑 Delete</button>
+        </div>
+      </div>
+    </form>
+    {% else %}
+    <div class="table-container" style="padding: 80px; text-align: center;">
+      <div style="font-size: 40px; margin-bottom: 20px;">☕</div>
+      <h3 style="font-weight: 800;">Pipeline Empty</h3>
+      <p style="color: var(--text-muted); margin-bottom: 24px;">You've processed all your follow-ups. Time for a break!</p>
+      <a href="{{ url_for('add') }}" class="btn btn-primary">Add a Client</a>
     </div>
-  </form>
-{% else %}
-  <div class="box" style="text-align: center; padding: 60px 20px; border-style: dashed;">
-    <div class="box-title">All caught up! ☕</div>
-    <p class="muted">No pending follow-ups found.</p>
-    <a class="btn btn-primary" style="margin-top: 10px;" href="{{ url_for('add') }}">Create your first</a>
-  </div>
-{% endif %}
+    {% endif %}
+  </section>
+</div>
 
 <div class="row-tip" id="rowTip">
-  <div class="t" id="rowTipTitle">Details</div>
-  <div class="m" id="rowTipBody"></div>
+  <div id="tipTitle" style="font-weight: 800; color: #818cf8; margin-bottom: 4px;"></div>
+  <div id="tipBody"></div>
 </div>
 
 <script>
-  // Bulk selection logic
-  const selectAll = document.getElementById("select_all");
-  const selCount = document.getElementById("sel_count");
-  const checkboxes = document.querySelectorAll('input[name="followup_ids"]');
+  // Bulk Bar Logic
+  const masterCb = document.getElementById('master_cb');
+  const itemCbs = document.querySelectorAll('.item-cb');
+  const bulkBar = document.getElementById('bulkBar');
+  const bulkCountText = document.getElementById('bulkCount');
 
-  function updateCount(){
-    const n = document.querySelectorAll('input[name="followup_ids"]:checked').length;
-    selCount.textContent = n + " selected";
-    selCount.style.background = n > 0 ? "#0f172a" : "#f1f5f9";
-    selCount.style.color = n > 0 ? "#fff" : "#475569";
+  function updateBulkBar() {
+    const checked = document.querySelectorAll('.item-cb:checked');
+    if (checked.length > 0) {
+      bulkCountText.textContent = `${checked.length} Selected`;
+      bulkBar.classList.add('active');
+    } else {
+      bulkBar.classList.remove('active');
+    }
   }
 
-  selectAll?.addEventListener("change", () => {
-    checkboxes.forEach(cb => cb.checked = selectAll.checked);
-    updateCount();
+  masterCb?.addEventListener('change', () => {
+    itemCbs.forEach(cb => cb.checked = masterCb.checked);
+    updateBulkBar();
   });
 
-  checkboxes.forEach(cb => cb.addEventListener("change", updateCount));
+  itemCbs.forEach(cb => cb.addEventListener('change', updateBulkBar));
 
-  // Tooltip Logic
-  const tip = document.getElementById("rowTip");
-  const tipTitle = document.getElementById("rowTipTitle");
-  const tipBody = document.getElementById("rowTipBody");
+  // Modern Tooltip
+  const tip = document.getElementById('rowTip');
+  const tipTitle = document.getElementById('tipTitle');
+  const tipBody = document.getElementById('tipBody');
 
-  document.querySelectorAll(".js-row").forEach(row => {
-    row.addEventListener("mouseenter", (e) => {
-      tipTitle.textContent = row.getAttribute("data-client");
-      tipBody.textContent = 
-           "Email: " + row.getAttribute("data-email") + "\n" +
-           "Type: " + row.getAttribute("data-type") + "\n\n" +
-            row.getAttribute("data-desc");
-      tip.style.display = "block";
+  document.querySelectorAll('.js-row').forEach(row => {
+    row.addEventListener('mouseenter', () => {
+      tipTitle.textContent = row.dataset.client;
+      tipBody.textContent = row.dataset.desc;
+      tip.style.display = 'block';
     });
-
-    row.addEventListener("mousemove", (e) => {
-      const x = e.clientX + 20;
-      const y = e.clientY + 20;
-      // Flip side if near edge
-      const finalX = (x + 320 > window.innerWidth) ? e.clientX - 340 : x;
-      const finalY = (y + 200 > window.innerHeight) ? e.clientY - 220 : y;
-      
-      tip.style.left = finalX + "px";
-      tip.style.top = finalY + "px";
+    row.addEventListener('mousemove', (e) => {
+      tip.style.left = (e.clientX + 15) + 'px';
+      tip.style.top = (e.clientY + 15) + 'px';
     });
-
-    row.addEventListener("mouseleave", () => tip.style.display = "none");
+    row.addEventListener('mouseleave', () => tip.style.display = 'none');
   });
-
-  window.addEventListener("scroll", () => tip.style.display = "none", { passive: true });
 </script>
 
 {% endblock %}

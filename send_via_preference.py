@@ -194,27 +194,18 @@ def send_email(user: dict, to_email: str, subject: str, body: str, is_html=False
 
 
 def send_followup_email(user: dict, f: dict, message: str) -> bool:
-    """
-    Sends a followup email using Gmail.
-    Returns True on success. Raises on failure.
-    """
     to_email = (f.get("email") or "").strip()
     if not to_email:
         raise RuntimeError("Missing recipient email")
 
     subject = f"Follow-up: {f.get('followup_type') or 'follow-up'}"
+    email_format = (f.get("email_format") or "html").lower()
 
-    # If send_email_gmail throws -> we fail (good)
-    result = send_email_gmail(
-        user=user,
-        to_email=to_email,
-        subject=subject,
-        html_body=message,
-    )
-
-    # If your send_email_gmail returns something meaningful, enforce it:
-    if result is False:
-        raise RuntimeError("send_email_gmail returned False")
+    if email_format == "text":
+        send_plain_text_email(user, to_email, subject, message)
+    else:
+        # raw HTML or branded HTML, just use the send_email wrapper
+        send_email(user, to_email, subject, message, is_html=True)
 
     return True
 
