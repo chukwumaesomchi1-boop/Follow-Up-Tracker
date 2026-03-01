@@ -1638,6 +1638,8 @@ def logout():
 #     followups = get_user_followups(user["id"])
 #     done = count_done(user["id"])
 #     return render_template("dashboard.html", due_soon=followups, done=done)
+
+
 @app.route("/dashboard")
 def dashboard():
     user, block = require_user()
@@ -1647,17 +1649,16 @@ def dashboard():
     rows = get_user_followups(user["id"])
     done = count_done(user["id"])
 
-    followups = []
-
-    for r in rows:
-        followups.append({
-            "id": r[0],
-            "client_name": r[1],
-            "email": r[2],
-            "due_date": r[3],
-            "status": r[4] if len(r) > 4 else None,
-            "followup_type": r[5] if len(r) > 5 else None,
-        })
+    followups = [
+        {
+            "id": r["id"],
+            "client_name": r["client_name"],
+            "due_date": r["due_date"],
+            "status": r["status"],
+            "followup_type": r["followup_type"],
+        }
+        for r in rows
+    ]
 
     return render_template(
         "dashboard.html",
