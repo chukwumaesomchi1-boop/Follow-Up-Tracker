@@ -57,21 +57,76 @@ def _save_refreshed_token(user_id: int, creds: Credentials):
     update_gmail_token(user_id, creds.to_json())
 
 
-def send_email_gmail(user: dict, to_email: str, subject: str, html_body: str):
+# def send_email_gmail(user: dict, to_email: str, subject: str, html_body: str):
+#     """
+#     Sends HTML email via Gmail API using the connected user's Gmail.
+#     Returns Gmail message id.
+#     """
+#     to_email = (to_email or "").strip()
+#     if not to_email:
+#         raise ValueError("Missing recipient email")
+
+#     creds = _creds_from_user(user)
+
+#     # Build MIME
+#     msg = MIMEText(html_body or "", "html", "utf-8")
+#     msg["to"] = to_email
+#     msg["subject"] = subject or "(no subject)"
+
+#     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode("utf-8")
+
+#     try:
+#         service = build("gmail", "v1", credentials=creds)
+#         sent = service.users().messages().send(
+#             userId="me",
+#             body={"raw": raw}
+#         ).execute()
+
+#         # Save refreshed token if it changed after refresh
+#         # (creds.to_json() always serializes latest access token)
+#         _save_refreshed_token(user["id"], creds)
+
+#         return sent.get("id")
+
+#     except HttpError as e:
+#         # revoked / unauthorized etc.
+#         # Common revoke: 401 invalid_grant
+#         raise Exception(f"Gmail API error: {e}")
+
+from email.mime.multipart import MIMEMultipart
+def send_email_gmail(user: dict, to_email: str, subject: str, body: str, is_html=False):
     """
-    Sends HTML email via Gmail API using the connected user's Gmail.
+    Sends email via Gmail API.
+    Supports plain text OR HTML.
     Returns Gmail message id.
     """
+
+    # 🔎 DEBUG — identify which function file + signature is actually running
+    try:
+        from flask import current_app
+        current_app.logger.warning(f"[GMAIL DEBUG] Function file: {__file__}")
+        current_app.logger.warning(
+            f"[GMAIL DEBUG] Signature vars: {send_email_gmail.__code__.co_varnames}"
+        )
+    except Exception:
+        print("GMAIL DEBUG file:", __file__)
+        print("GMAIL DEBUG vars:", send_email_gmail.__code__.co_varnames)
+
     to_email = (to_email or "").strip()
     if not to_email:
         raise ValueError("Missing recipient email")
 
     creds = _creds_from_user(user)
 
-    # Build MIME
-    msg = MIMEText(html_body or "", "html", "utf-8")
+    # Create message container
+    msg = MIMEMultipart("alternative")
     msg["to"] = to_email
     msg["subject"] = subject or "(no subject)"
+
+    if is_html:
+        msg.attach(MIMEText(body or "", "html", "utf-8"))
+    else:
+        msg.attach(MIMEText(body or "", "plain", "utf-8"))
 
     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode("utf-8")
 
@@ -82,20 +137,16 @@ def send_email_gmail(user: dict, to_email: str, subject: str, html_body: str):
             body={"raw": raw}
         ).execute()
 
-        # Save refreshed token if it changed after refresh
-        # (creds.to_json() always serializes latest access token)
         _save_refreshed_token(user["id"], creds)
 
+        current_app.logger.warning(f"[GMAIL DEBUG] Sent message id={sent.get('id')}")
         return sent.get("id")
 
     except HttpError as e:
-        # revoked / unauthorized etc.
-        # Common revoke: 401 invalid_grant
+        current_app.logger.exception("[GMAIL DEBUG] Gmail API failure")
         raise Exception(f"Gmail API error: {e}")
 
-
-# gmail_service.py or followups.py
-
+        
 def check_replies_for_user(user: dict, email: str = None):
     service = _service_for_user(user)
     ...
