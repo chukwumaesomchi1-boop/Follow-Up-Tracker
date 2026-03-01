@@ -7,7 +7,12 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+import warnings
 
+warnings.filterwarnings(
+    "ignore",
+    message="Your default credentials were not found"
+)
 # If you also want to connect accounts from the web app:
 from google_auth_oauthlib.flow import Flow
 
