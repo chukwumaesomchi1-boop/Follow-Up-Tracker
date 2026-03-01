@@ -1629,42 +1629,18 @@ def logout():
 # -----------------------------
 # DASHBOARD
 # -----------------------------
-# @app.route("/dashboard")
-# def dashboard():
-#     user, block = require_user()
-#     if block:
-#         return block
-
-#     followups = get_user_followups(user["id"])
-#     done = count_done(user["id"])
-#     return render_template("dashboard.html", due_soon=followups, done=done)
-
-
 @app.route("/dashboard")
 def dashboard():
     user, block = require_user()
     if block:
         return block
 
-    rows = get_user_followups(user["id"])
+    followups = get_user_followups(user["id"])
     done = count_done(user["id"])
+    return render_template("dashboard.html", due_soon=followups, done=done)
 
-    followups = [
-        {
-            "id": r["id"],
-            "client_name": r["client_name"],
-            "due_date": r["due_date"],
-            "status": r["status"],
-            "followup_type": r["followup_type"],
-        }
-        for r in rows
-    ]
 
-    return render_template(
-        "dashboard.html",
-        due_soon=followups,
-        done=done
-    )
+
 
 # -----------------------------
 # FOLLOWUPS (EMAIL ONLY)
