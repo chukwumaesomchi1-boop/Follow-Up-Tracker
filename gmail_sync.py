@@ -253,7 +253,7 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from flask import render_template_string
-fresh_user = get_user_by_id(user["id"]) 
+# fresh_user = get_user_by_id(user["id"]) 
 def _creds_from_user(user: dict) -> Credentials:
     """
     Reconstruct a Credentials object from the saved Gmail token in the database.
