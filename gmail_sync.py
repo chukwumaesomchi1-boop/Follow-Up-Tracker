@@ -245,7 +245,6 @@ SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 
 
 
-from db_utils import save_gmail_token
 import json
 import base64
 from email.mime.text import MIMEText
@@ -285,10 +284,10 @@ def _creds_from_user(user: dict) -> Credentials:
     return creds
 
 
+
+
 def _save_refreshed_token(user_id: int, creds: Credentials) -> None:
-    """
-    Save refreshed token back to the database.
-    """
+    # Directly call your existing function
     save_gmail_token(user_id, creds.to_json())
 
 
