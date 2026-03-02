@@ -337,9 +337,9 @@ def send_email_gmail(user: dict, to_email: str, subject: str, body: str, *, is_h
 # -------------------------
 # Helper: save refreshed token
 # -------------------------
-def _save_refreshed_token(user_id: int, creds: Credentials):
-    from models_saas import update_gmail_token
-    update_gmail_token(user_id, creds.to_json())
+# def _save_refreshed_token(user_id: int, creds: Credentials):
+#     from models_saas import update_gmail_token
+#     update_gmail_token(user_id, creds.to_json())
 
 # -------------------------
 # Helper: Gmail service for a user
