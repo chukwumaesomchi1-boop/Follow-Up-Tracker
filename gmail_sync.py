@@ -156,6 +156,46 @@
 # from googleapiclient.discovery import build
 # from flask import render_template_string
 
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import base64
+from googleapiclient.discovery import build
+
+def send_email(user: dict, to_email: str, subject: str, body: str, *, is_html=False):
+    to_email = (to_email or "").strip()
+    if not to_email:
+        raise ValueError("Missing recipient email")
+
+    if is_html:
+        # IMPORTANT: send as multipart/alternative with an HTML part
+        msg = MIMEMultipart("alternative")
+        msg["to"] = to_email
+        msg["subject"] = subject or "(no subject)"
+        msg["from"] = "me"
+
+        # Optional plain fallback (doesn't change your 3-mode logic)
+        # Gmail uses HTML part automatically if present
+        msg.attach(MIMEText(" ", "plain", "utf-8"))
+        msg.attach(MIMEText(body or "", "html", "utf-8"))
+
+    else:
+        # True plain text
+        body = (body or "").replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\r\n")
+        msg = MIMEText(body, "plain", "utf-8")
+        msg["to"] = to_email
+        msg["subject"] = subject or "(no subject)"
+        msg["from"] = "me"
+
+    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode("utf-8")
+
+    creds = _creds_from_user(user)
+    service = build("gmail", "v1", credentials=creds)
+
+    sent = service.users().messages().send(userId="me", body={"raw": raw}).execute()
+    _save_refreshed_token(user["id"], creds)
+    return sent.get("id")
+
+
 # def send_email(user: dict, to_email: str, subject: str, body: str, *, is_html=False):
 #     """
 #     Sends an email via Gmail API. Handles plain text, branded HTML, or raw HTML.
