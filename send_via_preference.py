@@ -181,44 +181,127 @@ import base64
 from googleapiclient.discovery import build
 from flask import render_template_string
 
+# def send_email(user: dict, to_email: str, subject: str, body: str, *, is_html=False):
+#     """
+#     Sends an email via Gmail API. Handles plain text, branded HTML, or raw HTML.
+#     """
+#     to_email = (to_email or "").strip()
+#     if not to_email:
+#         raise ValueError("Missing recipient email")
+
+#     # Decide MIME type
+#     mime_type = "html" if is_html else "plain"
+
+#     # If HTML, render any template variables
+#     if is_html:
+#         body = render_template_string(body, user=user)
+
+#     # Normalize line endings for plain text only
+#     if not is_html:
+#         body = body.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\r\n")
+
+#     # Debug logging for body inspection
+#     logger.debug("HTML startswith: %r", body[:120])
+#     logger.debug("Contains &lt; ? %s", "&lt;" in body)
+#     logger.debug("Contains real < ? %s", "<" in body)
+
+#     msg = MIMEText(body or "", mime_type, "utf-8")
+#     msg["to"] = to_email
+#     msg["subject"] = subject or "(no subject)"
+#     msg["from"] = user.get("email") or "me"
+
+#     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode("utf-8")
+
+#     creds = _creds_from_user(user)
+#     service = build("gmail", "v1", credentials=creds)
+
+#     sent = service.users().messages().send(
+#         userId="me",
+#         body={"raw": raw}
+#     ).execute()
+
+#     _save_refreshed_token(user["id"], creds)
+
+#     return sent.get("id")
+
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import base64
+from googleapiclient.discovery import build
+
+# def send_email(user: dict, to_email: str, subject: str, body: str, *, is_html=False):
+#     to_email = (to_email or "").strip()
+#     if not to_email:
+#         raise ValueError("Missing recipient email")
+
+#     if is_html:
+#         # IMPORTANT: send as multipart/alternative with an HTML part
+#         msg = MIMEMultipart("alternative")
+#         msg["to"] = to_email
+#         msg["subject"] = subject or "(no subject)"
+#         msg["from"] = "me"
+
+#         # Optional plain fallback (doesn't change your 3-mode logic)
+#         # Gmail uses HTML part automatically if present
+#         msg.attach(MIMEText(" ", "plain", "utf-8"))
+#         msg.attach(MIMEText(body or "", "html", "utf-8"))
+
+#     else:
+#         # True plain text
+#         body = (body or "").replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\r\n")
+#         msg = MIMEText(body, "plain", "utf-8")
+#         msg["to"] = to_email
+#         msg["subject"] = subject or "(no subject)"
+#         msg["from"] = "me"
+
+#     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode("utf-8")
+
+#     creds = _creds_from_user(user)
+#     service = build("gmail", "v1", credentials=creds)
+
+#     sent = service.users().messages().send(userId="me", body={"raw": raw}).execute()
+#     _save_refreshed_token(user["id"], creds)
+#     return sent.get("id")
+
+
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import base64
+from googleapiclient.discovery import build
+
 def send_email(user: dict, to_email: str, subject: str, body: str, *, is_html=False):
-    """
-    Sends an email via Gmail API. Handles plain text, branded HTML, or raw HTML.
-    """
     to_email = (to_email or "").strip()
     if not to_email:
         raise ValueError("Missing recipient email")
 
-    # Decide MIME type
-    mime_type = "html" if is_html else "plain"
-
-    # If HTML, render any template variables
     if is_html:
-        body = render_template_string(body, user=user)
+        # IMPORTANT: send as multipart/alternative with an HTML part
+        msg = MIMEMultipart("alternative")
+        msg["to"] = to_email
+        msg["subject"] = subject or "(no subject)"
+        msg["from"] = "me"
 
-    # Normalize line endings for plain text only
-    if not is_html:
-        body = body.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\r\n")
+        # Optional plain fallback (doesn't change your 3-mode logic)
+        # Gmail uses HTML part automatically if present
+        msg.attach(MIMEText(" ", "plain", "utf-8"))
+        msg.attach(MIMEText(body or "", "html", "utf-8"))
 
-    msg = MIMEText(body or "", mime_type, "utf-8")
-    msg["to"] = to_email
-    msg["subject"] = subject or "(no subject)"
-    msg["from"] = user.get("email") or "me"
+    else:
+        # True plain text
+        body = (body or "").replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\r\n")
+        msg = MIMEText(body, "plain", "utf-8")
+        msg["to"] = to_email
+        msg["subject"] = subject or "(no subject)"
+        msg["from"] = "me"
 
     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode("utf-8")
 
     creds = _creds_from_user(user)
     service = build("gmail", "v1", credentials=creds)
 
-    sent = service.users().messages().send(
-        userId="me",
-        body={"raw": raw}
-    ).execute()
-
+    sent = service.users().messages().send(userId="me", body={"raw": raw}).execute()
     _save_refreshed_token(user["id"], creds)
-
     return sent.get("id")
-
 
 def send_followup_email(user: dict, f: dict, message: str) -> bool:
     to_email = (f.get("email") or "").strip()
@@ -236,74 +319,6 @@ def send_followup_email(user: dict, f: dict, message: str) -> bool:
 
     return True
 
-# -----------------------------
-# Main dispatcher
-# -----------------------------
-
-# def send_via_preference(user: dict, f: dict, message: str):
-#     """
-#     Sends a message via the user's preferred channel.
-
-#     Returns:
-#         (channel_used: str|None, error: str|None)
-
-#     Notes:
-#     - message is plain text for WhatsApp/SMS
-#     - for Email, supports:
-#         1. Plain text (email_format='text')
-#         2. Branded HTML template (default)
-#         3. Raw HTML (email_format='raw')
-#     """
-#     print("MESSAGE BEFORE DISPATCH:", repr(message))
-
-#     channel = (f.get("preferred_channel") or "whatsapp").strip().lower()
-
-#     # -------- Email --------
-#     if channel == "email":
-#         email = (f.get("email") or "").strip()
-#         if not email:
-#             return None, "Preferred channel is Email but email is missing."
-
-#         subject = f"Follow-up: {f.get('followup_type', 'follow-up')}"
-#         format_type = (f.get("email_format") or "html").strip().lower()
-
-#         branding = get_branding(user.get("id"))
-
-#         # Raw HTML mode (send exactly what user wrote)
-#         if format_type == "raw":
-#             print("[DEBUG] Sending as RAW HTML")
-#             send_email(user, email, subject, message, is_html=True)
-
-#         # Plain text (smart formatting)
-#         elif format_type == "text":
-#             print("[DEBUG] Sending as PLAIN TEXT email")
-#             print("[DEBUG] To:", email)
-#             print("[DEBUG] Subject:", subject)
-#             print("[DEBUG] Body repr:", repr(message))
-#             send_plain_text_email(user, email, subject, message)
-
-#         # Default: HTML template
-#         else:
-#             print("[DEBUG] Sending as BRANDED HTML")
-#             html_body = render_followup_email_html(
-#                 brand_name="FollowUp Tracker",
-#                 brand_color=branding.get("brand_color") or "#36A2EB",
-#                 logo_url=branding.get("brand_logo") or "",
-#                 headline="Quick follow-up",
-#                 message_html=plain_to_html(message),
-#                 client_name=f.get("client_name") or "",
-#             )
-#             send_email(user, email, subject, html_body, is_html=True)
-
-#         return "Email", None
-
-#     # -------- WhatsApp / SMS fallback --------
-#     elif channel in ("whatsapp", "sms"):
-#         print(f"[DEBUG] Sending via {channel.upper()}")
-#         # send_whatsapp(user, f, message)  # placeholder
-#         return channel.capitalize(), None
-
-#     return None, f"Unknown preferred channel: {channel}"
 
 import logging
 import sys
@@ -332,7 +347,77 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)  
+import html as _html
 
+# def send_via_preference(user: dict, f: dict, message: str):
+#     """
+#     Sends a message via the user's preferred channel.
+
+#     Returns:
+#         (channel_used: str|None, error: str|None)
+
+#     Notes:
+#     - message is plain text for WhatsApp/SMS
+#     - for Email, supports:
+#         1. Plain text (email_format='text')
+#         2. Branded HTML template (default)
+#         3. Raw HTML (email_format='raw')
+#     """
+#     logger.debug("MESSAGE BEFORE DISPATCH: %r", message)
+
+#     channel = (f.get("preferred_channel") or "whatsapp").strip().lower()
+#     logger.debug("Resolved channel: %s", channel)
+
+#     # -------- Email --------
+#     if channel == "email":
+#         email = (f.get("email") or "").strip()
+#         if not email:
+#             logger.warning("Preferred channel is Email but email is missing.")
+#             return None, "Preferred channel is Email but email is missing."
+
+#         subject = f"Follow-up: {f.get('followup_type', 'follow-up')}"
+#         format_type = (f.get("email_format") or "html").strip().lower()
+#         branding = get_branding(user.get("id"))
+
+#         if format_type == "raw":
+#             raw_html = _html.unescape(message) 
+#             logger.debug("[DEBUG] Sending as RAW HTML to %s", email)
+#             send_email(user, email, subject, message, is_html=True)
+
+#         elif format_type == "text":
+#             logger.debug("[DEBUG] Sending as PLAIN TEXT email to %s", email)
+
+#             formatted = format_plain_text_message(message)
+
+#             logger.debug("Formatted Body: %r", formatted)
+            
+#             send_plain_text_email(user, email, subject, formatted)
+
+#         else:  # default: branded HTML
+#             logger.debug("[DEBUG] Sending as BRANDED HTML to %s", email)
+#             html_body = render_followup_email_html(
+#                 brand_name="FollowUp Tracker",
+#                 brand_color=branding.get("brand_color") or "#36A2EB",
+#                 logo_url=branding.get("brand_logo") or "",
+#                 headline="Quick follow-up",
+#                 message_html=plain_to_html(message),
+#                 client_name=f.get("client_name") or "",
+#             )
+#             send_email(user, email, subject, html_body, is_html=True)
+
+#         return "Email", None
+
+#     # -------- WhatsApp / SMS fallback --------
+#     elif channel in ("whatsapp", "sms"):
+#         logger.debug("Sending via %s", channel.upper())
+#         # send_whatsapp(user, f, message)  # placeholder
+#         return channel.capitalize(), None
+
+#     logger.error("Unknown preferred channel: %s", channel)
+#     return None, f"Unknown preferred channel: {channel}"
+import html as _html
+
+import html as _html
 
 def send_via_preference(user: dict, f: dict, message: str):
     """
@@ -365,8 +450,19 @@ def send_via_preference(user: dict, f: dict, message: str):
         branding = get_branding(user.get("id"))
 
         if format_type == "raw":
+            raw_html = _html.unescape(message)  # converts &lt;div&gt; back to <div>
             logger.debug("[DEBUG] Sending as RAW HTML to %s", email)
-            send_email(user, email, subject, message, is_html=True)
+
+            logger.warning(
+                "[SEND_EMAIL] CALLED is_html=%s to=%s subject=%s",
+                True, email, subject
+            )
+            logger.warning(
+                "[SEND_EMAIL] First 80 chars: %r",
+                (raw_html or "")[:80]
+            )
+
+            send_email(user, email, subject, raw_html, is_html=True)
 
         elif format_type == "text":
             logger.debug("[DEBUG] Sending as PLAIN TEXT email to %s", email)
@@ -374,11 +470,12 @@ def send_via_preference(user: dict, f: dict, message: str):
             formatted = format_plain_text_message(message)
 
             logger.debug("Formatted Body: %r", formatted)
-            
-            send_plain_text_email(user, email, subject, message)
+
+            send_plain_text_email(user, email, subject, formatted)
 
         else:  # default: branded HTML
             logger.debug("[DEBUG] Sending as BRANDED HTML to %s", email)
+
             html_body = render_followup_email_html(
                 brand_name="FollowUp Tracker",
                 brand_color=branding.get("brand_color") or "#36A2EB",
@@ -387,6 +484,16 @@ def send_via_preference(user: dict, f: dict, message: str):
                 message_html=plain_to_html(message),
                 client_name=f.get("client_name") or "",
             )
+
+            logger.warning(
+                "[SEND_EMAIL] CALLED is_html=%s to=%s subject=%s",
+                True, email, subject
+            )
+            logger.warning(
+                "[SEND_EMAIL] First 80 chars: %r",
+                (html_body or "")[:80]
+            )
+
             send_email(user, email, subject, html_body, is_html=True)
 
         return "Email", None
