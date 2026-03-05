@@ -1,0 +1,624 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% set fc = f if f else {} %}
+{% set mode = mode if mode is defined else ('edit' if fc.get('id') else 'add') %}
+
+<style>
+  :root {
+    --bg-app: #f8fafc;
+    --card-bg: #ffffff;
+    --border: #e2e8f0;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --accent: #6366f1;
+    --accent-soft: rgba(99, 102, 241, 0.1);
+    --radius: 16px;
+  }
+
+  /* --- Header --- */
+  .page-header { margin-bottom: 32px; border-bottom: 1px solid var(--border); padding-bottom: 24px; }
+  .page-title { font-size: 28px; font-weight: 850; color: var(--text-main); letter-spacing: -0.03em; margin: 0; }
+  .page-sub { color: var(--text-muted); font-size: 15px; margin-top: 6px; }
+
+  .layout-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 400px; 
+    gap: 40px; 
+    align-items: start; 
+  }
+  @media (max-width: 1100px) { .layout-grid { grid-template-columns: 1fr; } }
+
+  /* --- Form Architecture --- */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05);
+  }
+
+  .form-section { margin-bottom: 32px; }
+  .section-label { 
+    font-size: 12px; 
+    font-weight: 800; 
+    text-transform: uppercase; 
+    letter-spacing: 0.05em; 
+    color: var(--accent);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .form-group { margin-bottom: 20px; }
+  label { display: block; font-weight: 700; font-size: 14px; color: var(--text-main); margin-bottom: 8px; }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 15px;
+    background: #fdfdfd;
+    transition: all 0.2s;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+    background: #fff;
+  }
+
+  /* --- Segmented Control (Radio Replacement) --- */
+  .segmented-control {
+    display: flex;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 12px;
+    gap: 4px;
+  }
+  .segment { flex: 1; text-align: center; }
+  .segment input { display: none; }
+  .segment label {
+    margin: 0;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    display: block;
+  }
+  .segment input:checked + label {
+    background: #fff;
+    color: var(--accent);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+
+  /* --- Priority Flow Indicator --- */
+  .logic-map {
+    background: var(--bg-app);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px dashed var(--border);
+  }
+  .logic-step { font-size: 13px; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .logic-step.active { color: var(--accent); }
+  .logic-step svg { width: 14px; }
+
+  /* --- iPhone Pro Mockup --- */
+  .preview-column { position: sticky; top: 24px; text-align: center; }
+  .device-mockup {
+    width: 320px;
+    height: 650px;
+    background: #000;
+    border-radius: 44px;
+    padding: 12px;
+    margin: 0 auto;
+    position: relative;
+    box-shadow: 0 50px 100px -20px rgba(0,0,0,0.3);
+    border: 4px solid #334155;
+  }
+  .device-mockup::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 25px;
+    background: #000;
+    border-radius: 20px;
+    z-index: 10;
+  }
+  .device-screen {
+    background: #fff;
+    width: 100%;
+    height: 100%;
+    border-radius: 32px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+  }
+  .inbox-header {
+    padding: 50px 20px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #fff;
+  }
+  .email-content { padding: 20px; flex-grow: 1; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+  .email-bubble { font-size: 15px; line-height: 1.6; color: #334155; }
+
+  /* --- Buttons --- */
+  .btn {
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+    font-size: 15px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; border: none; }
+  .btn-primary:hover { background: #4f46e5; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+  .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: #f1f5f9; color: var(--text-main); }
+</style>
+
+<div class="page-header">
+  <h1 class="page-title">{{ "Refine Follow-Up" if mode == "edit" else "New Follow-Up" }}</h1>
+  <p class="page-sub">Configure your recipient and craft a message that converts.</p>
+</div>
+
+<form method="post" id="followupForm">
+  <input type="hidden" name="preferred_channel" value="email">
+
+  <div class="layout-grid">
+    <div class="card">
+      
+      <div class="form-section">
+        <div class="section-label">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2m15-14a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"></path></svg>
+          Recipient Details
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label>Name</label>
+            <input name="client_name" placeholder="E.g. Jane Cooper" value="{{ fc.get('client_name','') }}" required>
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input name="email" type="email" placeholder="jane@company.com" value="{{ fc.get('email','') }}" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select name="followup_type" id="followup_type" required>
+            <option value="general">General Follow-up</option>
+            <option value="invoice" {% if fc.get('followup_type') == 'invoice' %}selected{% endif %}>Invoice Reminder</option>
+            <option value="proposal" {% if fc.get('followup_type') == 'proposal' %}selected{% endif %}>Proposal Update</option>
+            <option value="payment" {% if fc.get('followup_type') == 'payment' %}selected{% endif %}>Payment Confirmation</option>
+            <option value="meeting" {% if fc.get('followup_type') == 'meeting' %}selected{% endif %}>Meeting Summary</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-label">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+          Message Crafting
+        </div>
+        <div class="form-group">
+          <label>Personal Override (Recommended)</label>
+          <textarea id="message_override" name="message_override" rows="6" placeholder="Write a custom message here to bypass the automated template...">{{ fc.get('message_override','') }}</textarea>
+          <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">Personalized messages increase response rates by up to 40%.</p>
+        </div>
+
+        <div class="form-group">
+          <label>Internal Reference Notes</label>
+          <textarea name="description" rows="2" placeholder="Private notes for your team...">{{ fc.get('description','') }}</textarea>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-label">Email Format</div>
+        <div class="segmented-control">
+          <div class="segment">
+            <input type="radio" name="email_format" id="fmt_text" value="text" {% if fc.get('email_format') == 'text' %}checked{% endif %}>
+            <label for="fmt_text">Plain Text</label>
+          </div>
+          <div class="segment">
+            <input type="radio" name="email_format" id="fmt_html" value="html" {% if fc.get('email_format') != 'text' %}checked{% endif %}>
+            <label for="fmt_html">Branded HTML</label>
+          </div>
+          <div class="segment">
+            <input type="radio" name="email_format" id="fmt_raw" value="raw" {% if fc.get('email_format') == 'raw' %}checked{% endif %}>
+            <label for="fmt_raw">Raw Code</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="logic-map">
+        <div class="logic-step active" id="step1">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+          Priority 1: Custom Personal Message
+        </div>
+        <div class="logic-step" id="step2">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+          Priority 2: Reference Notes (Fallback)
+        </div>
+        <div class="logic-step" id="step3">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+          Priority 3: Global Smart Template
+        </div>
+      </div>
+
+      <div class="actions" style="margin-top: 40px; border-top: 1px solid var(--border); padding-top: 32px;">
+        <button class="btn btn-primary" type="submit">
+          {{ "Update Follow-Up" if mode == "edit" else "Launch Follow-Up" }}
+        </button>
+        <a class="btn btn-ghost" href="{{ url_for('dashboard') }}">Discard</a>
+      </div>
+    </div>
+
+    <div class="preview-column">
+      <div style="margin-bottom: 24px;">
+        <span style="font-size: 12px; font-weight: 800; color: var(--accent); background: var(--accent-soft); padding: 6px 12px; border-radius: 99px;">
+          REAL-TIME PREVIEW
+        </span>
+      </div>
+
+      <div class="device-mockup">
+        <div class="device-screen">
+          <div class="inbox-header">
+            <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; margin-bottom: 12px;">
+              <span id="pvTime">9:41</span>
+              <span>📶 🔋</span>
+            </div>
+            <div style="color: var(--text-muted); font-size: 11px; text-transform: uppercase; font-weight: 800;">Subject</div>
+            <div id="pvSubject" style="font-size: 16px; font-weight: 700; color: var(--text-main);">Follow-up</div>
+          </div>
+          
+          <div class="email-content">
+            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 20px;">
+              <div style="width: 32px; height: 32px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 800;">Y</div>
+              <div>
+                <div style="font-size: 13px; font-weight: 700;">Your Company</div>
+                <div style="font-size: 11px; color: var(--text-muted);">To: <span id="pvTarget">Recipient</span></div>
+              </div>
+            </div>
+
+            <div class="email-bubble" id="pvBody">
+              Craft your message on the left to see it appear here in the client's inbox.
+            </div>
+          </div>
+
+          <div style="padding: 20px; background: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 11px; color: var(--text-muted); text-align: center;">
+            This is a high-fidelity client simulation.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+  // Elements
+  const elName = document.querySelector('[name="client_name"]');
+  const elType = document.querySelector('[name="followup_type"]');
+  const elDesc = document.querySelector('[name="description"]');
+  const elOverride = document.querySelector('[name="message_override"]');
+  
+  const pvTarget = document.getElementById('pvTarget');
+  const pvSubject = document.getElementById('pvSubject');
+  const pvBody = document.getElementById('pvBody');
+
+  // Email format radios
+  const fmtText = document.getElementById('fmt_text');
+  const fmtHtml = document.getElementById('fmt_html');
+  const fmtRaw  = document.getElementById('fmt_raw');
+
+  function updatePreview() {
+    pvTarget.textContent = elName.value || "Recipient";
+
+    const typeText = elType.options[elType.selectedIndex].text;
+    pvSubject.textContent = typeText;
+
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const step3 = document.getElementById('step3');
+
+    let finalBody = "";
+
+    if (elOverride.value.trim() && !fmtHtml.checked) {
+      finalBody = elOverride.value;
+      step1.classList.add('active');
+      step2.classList.remove('active');
+      step3.classList.remove('active');
+    } else if (elDesc.value.trim() && !fmtHtml.checked) {
+      finalBody = elDesc.value;
+      step1.classList.remove('active');
+      step2.classList.add('active');
+      step3.classList.remove('active');
+    } else {
+      finalBody = "Hi " + (elName.value || "there") + ",\n\nI'm following up regarding our " + typeText.toLowerCase() + ". Looking forward to your thoughts.";
+      step1.classList.remove('active');
+      step2.classList.remove('active');
+      step3.classList.add('active');
+    }
+
+    pvBody.innerHTML = `<p style="white-space: pre-wrap; margin:0;">${finalBody}</p>`;
+  }
+
+  function toggleOverrideFields() {
+    if (fmtHtml.checked) {
+      elOverride.disabled = true;
+      elDesc.disabled = true;
+      elOverride.placeholder = "Disabled for Branded HTML format";
+      elDesc.placeholder = "Disabled for Branded HTML format";
+    } else {
+      elOverride.disabled = false;
+      elDesc.disabled = false;
+      elOverride.placeholder = "Write a custom message here to bypass the automated template...";
+      elDesc.placeholder = "Private notes for your team...";
+    }
+  }
+
+  // Real-time Listeners
+  [elName, elType, elDesc, elOverride].forEach(el => {
+    el.addEventListener('input', updatePreview);
+  });
+  [fmtText, fmtHtml, fmtRaw].forEach(el => el.addEventListener('change', () => {
+    toggleOverrideFields();
+    updatePreview();
+  }));
+
+  function syncTime() {
+    const now = new Date();
+    document.getElementById('pvTime').textContent = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
+  }
+  
+  syncTime();
+  toggleOverrideFields();
+  updatePreview();
+</script>
+
+{% endblock %}
+
+===============
+
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  :root {
+    --bg-app: #f8fafc;
+    --card-bg: #ffffff;
+    --border: #e2e8f0;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --accent: #6366f1;
+    --editor-bg: #0f172a;
+    --radius-lg: 20px;
+    --radius-md: 12px;
+  }
+
+  .wrap { max-width: 1200px; margin: 0 auto; padding-bottom: 60px; }
+
+  /* --- Header & Status --- */
+  .page-header { 
+    display: flex; justify-content: space-between; align-items: flex-end; 
+    margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border);
+  }
+  .title-area h2 { font-size: 28px; font-weight: 850; color: var(--text-main); letter-spacing: -0.03em; margin: 0; }
+  
+  .status-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .pill { padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; display: inline-flex; align-items: center; gap: 6px; border: 1px solid transparent; }
+  .pill-slate { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+  .pill-blue { background: #e0e7ff; color: #4338ca; border-color: #c7d2fe; }
+  .pill-amber { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+
+  /* --- Layout --- */
+  .editor-grid { display: grid; grid-template-columns: 380px 1fr; gap: 32px; align-items: start; }
+  @media (max-width: 1100px) { .editor-grid { grid-template-columns: 1fr; } }
+
+  .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+  .card-header { padding: 20px 24px; background: #fff; border-bottom: 1px solid var(--border); }
+  .card-header h3 { font-size: 14px; font-weight: 800; text-transform: uppercase; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px; }
+  .card-body { padding: 24px; }
+
+  /* --- Form Styling --- */
+  .form-group { margin-bottom: 20px; }
+  label { display: block; font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
+  input, select, textarea { 
+    width: 100%; padding: 12px 16px; border-radius: var(--radius-md); 
+    border: 1px solid #cbd5e1; font-size: 14px; transition: all 0.2s; background: #fdfdfd;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); background: #fff; }
+  .readonly-input { background: #f8fafc; color: var(--text-muted); cursor: not-allowed; border-style: dashed; }
+
+  /* --- The IDE (Editor) --- */
+  .editor-container { background: var(--editor-bg); border-radius: var(--radius-lg); border: 1px solid #1e293b; overflow: hidden; }
+  .editor-toolbar { 
+    padding: 12px 20px; background: #1e293b; display: flex; justify-content: space-between; align-items: center; 
+    border-bottom: 1px solid #334155;
+  }
+  .code-editor { 
+    font-family: 'JetBrains Mono', 'Fira Code', monospace; background: transparent; color: #e2e8f0; 
+    line-height: 1.7; border: none; padding: 24px; min-height: 500px; resize: vertical; width: 100%;
+  }
+  .code-editor:focus { outline: none; }
+
+  /* --- Segmented Control --- */
+  .segmented-control { display: flex; background: #334155; padding: 3px; border-radius: 10px; gap: 2px; }
+  .segment { flex: 1; }
+  .segment input { display: none; }
+  .segment label { 
+    display: block; padding: 6px 12px; font-size: 11px; font-weight: 700; color: #94a3b8; 
+    text-align: center; cursor: pointer; border-radius: 7px; transition: 0.2s;
+  }
+  .segment input:checked + label { background: #475569; color: #fff; }
+
+  /* --- Variables Bar --- */
+  .var-bar { display: flex; gap: 8px; padding: 8px 20px; background: #0f172a; border-bottom: 1px solid #1e293b; }
+  .var-tag { font-family: monospace; font-size: 11px; background: #1e293b; color: #818cf8; padding: 4px 8px; border-radius: 6px; cursor: help; border: 1px solid #334155; }
+
+  /* --- Action Footer --- */
+  .action-footer { padding: 20px 24px; background: #f8fafc; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+
+  .btn { padding: 12px 20px; border-radius: var(--radius-md); font-size: 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; border: 1px solid transparent; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #4f46e5; transform: translateY(-1px); }
+  .btn-outline { background: #fff; border-color: var(--border); color: var(--text-muted); }
+  .btn-outline:hover { background: #f1f5f9; color: var(--text-main); }
+  .btn-danger { color: #ef4444; border-color: transparent; font-weight: 600; }
+  .btn-danger:hover { background: #fef2f2; }
+
+</style>
+
+<div class="wrap">
+  <form method="POST" action="{{ url_for('preview_edit_all', fid=followup.id) }}">
+    
+    <div class="page-header">
+      <div class="title-area">
+        <div class="status-row">
+          <span class="pill pill-slate">Record #{{ followup.id }}</span>
+          {% if followup.schedule_enabled and followup.next_send_at %}
+            <span class="pill pill-blue">📅 Next Send: {{ followup.next_send_at }}</span>
+          {% else %}
+            <span class="pill pill-amber">Draft Mode</span>
+          {% endif %}
+        </div>
+        <h2>Review Content</h2>
+      </div>
+      <div style="display: flex; gap: 12px;">
+        <a class="btn btn-outline" href="{{ url_for('dashboard') }}">Discard Changes</a>
+        <button class="btn btn-primary" type="submit">💾 Save & Sync</button>
+      </div>
+    </div>
+
+    <div class="editor-grid">
+      
+      <div class="card">
+        <div class="card-header">
+          <h3>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2m15-14a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"></path></svg>
+            Recipient Info
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label>Client Name</label>
+            <input name="client_name" value="{{ followup.client_name or '' }}" placeholder="Jane Cooper">
+          </div>
+
+          <div class="form-group">
+            <label>Email Address</label>
+            <input name="email" value="{{ followup.email or '' }}" placeholder="jane@company.com">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label>Follow-up Type</label>
+              <input name="followup_type" value="{{ followup.followup_type or '' }}" placeholder="Invoice">
+            </div>
+            <div class="form-group">
+              <label>Delivery Method</label>
+              <select class="readonly-input" disabled>
+                <option selected>Email Only</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Next Execution</label>
+            {% set due_display = followup.due_date %}
+            {% if followup.schedule_enabled and followup.next_send_at %}
+              {% set due_display = (followup.next_send_at|string)[:10] %}
+            {% endif %}
+            <input class="readonly-input" type="text" value="{{ due_display or 'Not set' }}" readonly>
+            <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">To change the date, visit the <b>Schedule</b> tab.</p>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>Internal Notes</label>
+            <textarea name="description" rows="4" placeholder="Mention specific project details here...">{{ followup.description or '' }}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-container">
+        <div class="editor-toolbar">
+          <h3 style="color: #fff; font-size: 12px; font-weight: 800; text-transform: uppercase; margin: 0; display: flex; align-items: center; gap: 8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
+            Email Composer
+          </h3>
+
+          <div class="segmented-control">
+            <div class="segment">
+              <input type="radio" name="email_format" id="f_text" value="text" {% if followup.email_format == 'text' %}checked{% endif %}>
+              <label for="f_text">Text</label>
+            </div>
+            <div class="segment">
+              <input type="radio" name="email_format" id="f_html" value="html" {% if followup.email_format != 'text' %}checked{% endif %}>
+              <label for="f_html">Template</label>
+            </div>
+            <div class="segment">
+              <input type="radio" name="email_mode" id="f_raw" value="raw" {% if followup.email_mode == 'raw' %}checked{% endif %}>
+              <label for="f_raw">Raw</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="var-bar">
+          <span class="var-tag" title="Client's first name">{% raw %}{{name}}{% endraw %}</span>
+          <span class="var-tag" title="Company name from branding">{% raw %}{{company_name}}{% endraw %}</span>
+          <span class="var-tag" title="Follow-up type">{% raw %}{{type}}{% endraw %}</span>
+          <div style="flex-grow: 1;"></div>
+          <span style="font-size: 10px; color: #475569; font-weight: 700;">HTML SUPPORTED</span>
+        </div>
+
+        <textarea class="code-editor" name="message_override" id="message_override" placeholder="Dear {{'{{name}}'}},&#10;&#10;I'm writing to follow up on...">{{ message or '' }}</textarea>
+
+        <div class="action-footer">
+          <div style="display: flex; gap: 12px;">
+            <button class="btn btn-primary" type="submit" formaction="{{ url_for('send_followup', fid=followup.id) }}" formmethod="post" onclick="return confirm('Send this email immediately?')">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+              Send Immediately
+            </button>
+          </div>
+          <button class="btn btn-danger" type="submit" formaction="{{ url_for('preview_reset', fid=followup.id) }}" formmethod="post" onclick="return confirm('Revert to the global template? This will delete your current draft.')">
+            Reset to Global Template
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </form>
+</div>
+
+<script>
+  // Simple time-saver: Clicking a variable tag inserts it into the editor
+  document.querySelectorAll('.var-tag').forEach(tag => {
+    tag.addEventListener('click', () => {
+      const editor = document.getElementById('message_override');
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      const text = editor.value;
+      const insert = tag.textContent;
+      editor.value = text.substring(0, start) + insert + text.substring(end);
+      editor.focus();
+    });
+  });
+</script>
+
+{% endblock %}
+
+
+
+
+

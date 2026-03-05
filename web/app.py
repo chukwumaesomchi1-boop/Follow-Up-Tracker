@@ -542,7 +542,38 @@ def preview_edit_all(fid):
     flash("Saved ✅", "success")
     return redirect(url_for("preview", fid=fid))
 
+# routes_preview.py (or wherever your preview routes live)
 
+from flask import request, Response
+from models_saas import get_followup
+from auth import require_user
+from email_scheduler import build_branded_email_html  # wherever you placed it
+
+@app.route("/preview/<int:fid>/render-email", methods=["GET", "POST"])
+def preview_render_email(fid):
+    user, block = require_user()
+    if block:
+        return block
+
+    f = get_followup(fid, user["id"])
+    if not f:
+        return Response("<div>Follow-up not found.</div>", status=404, mimetype="text/html")
+
+    # Merge unsaved edits (POST) into the followup dict for preview
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+        f = dict(f)  # make it mutable
+        f["client_name"] = (data.get("client_name") or f.get("client_name") or "").strip()
+        f["email"] = (data.get("email") or f.get("email") or "").strip()
+        f["followup_type"] = (data.get("followup_type") or f.get("followup_type") or "").strip()
+        f["description"] = (data.get("description") or f.get("description") or "").strip()
+        f["email_format"] = (data.get("email_format") or f.get("email_format") or "html").strip().lower()
+        f["message_override"] = (data.get("message_override") or "").strip()
+
+    # Render the *real* branded email HTML
+    html_doc = build_branded_email_html(user, f)
+
+    return Response(html_doc, mimetype="text/html")
 from flask import jsonify, request
 from scheduler_render import render_scheduler_html, DEFAULT_SCHEDULER_TEMPLATE
 from models_saas import get_branding
