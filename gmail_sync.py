@@ -167,19 +167,17 @@ def send_email(user: dict, to_email: str, subject: str, body: str, *, is_html=Fa
         raise ValueError("Missing recipient email")
 
     if is_html:
-        # IMPORTANT: send as multipart/alternative with an HTML part
+        # IMPORTANT: HTML must be inside multipart/alternative
         msg = MIMEMultipart("alternative")
         msg["to"] = to_email
         msg["subject"] = subject or "(no subject)"
         msg["from"] = "me"
 
-        # Optional plain fallback (doesn't change your 3-mode logic)
-        # Gmail uses HTML part automatically if present
+        # Add a tiny plain fallback (clients won’t choke)
         msg.attach(MIMEText(" ", "plain", "utf-8"))
         msg.attach(MIMEText(body or "", "html", "utf-8"))
 
     else:
-        # True plain text
         body = (body or "").replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\r\n")
         msg = MIMEText(body, "plain", "utf-8")
         msg["to"] = to_email
@@ -193,8 +191,8 @@ def send_email(user: dict, to_email: str, subject: str, body: str, *, is_html=Fa
 
     sent = service.users().messages().send(userId="me", body={"raw": raw}).execute()
     _save_refreshed_token(user["id"], creds)
-    return sent.get("id")
 
+    return sent.get("id")
 
 # def send_email(user: dict, to_email: str, subject: str, body: str, *, is_html=False):
 #     """
