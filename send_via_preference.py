@@ -21,12 +21,10 @@ import base64
 from googleapiclient.discovery import build
 
 # ---------- Placeholder helpers ----------
-def _creds_from_user(user):
-    """
-    Return Gmail credentials for the user.
-    Replace this with your actual OAuth credentials logic.
-    """
-    return user.get("creds")  # Example: user dict has 'creds'
+
+
+from gmail_sync import  _creds_from_user
+
 
 def _save_refreshed_token(user_id, creds):
     """
