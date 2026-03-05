@@ -546,7 +546,7 @@ def preview_edit_all(fid):
 
 from flask import request, Response
 from models_saas import get_followup
-from auth import require_user
+
 from email_scheduler import build_branded_email_html  # wherever you placed it
 
 @app.route("/preview/<int:fid>/render-email", methods=["GET", "POST"])
