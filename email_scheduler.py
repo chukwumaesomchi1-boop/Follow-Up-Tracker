@@ -103,7 +103,7 @@ def build_branded_email_html(user: dict, followup: dict) -> str:
     headline = f"Follow-up: {followup_type}"
 
     return render_followup_email_html(
-        company_name=branding.get("company_name") or "FollowUp Tracker",
+        # company_name=branding.get("company_name") or "FollowUp Tracker",
         brand_color=branding.get("brand_color") or "#36A2EB",
         brand_logo=branding.get("brand_logo") or "",
         support_email=branding.get("support_email") or "",
