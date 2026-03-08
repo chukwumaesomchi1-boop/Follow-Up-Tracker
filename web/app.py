@@ -811,6 +811,55 @@ from chase import build_message_preview
 #     flash("Unknown bulk action.", "danger")
 #     return redirect(url_for("dashboard"))
 
+# @app.route("/send/<int:fid>", methods=["POST"])
+# def send_followup(fid):
+#     user, block = require_user()
+#     if block:
+#         return block
+
+#     f = get_followup(fid, user["id"])
+#     if not f:
+#         flash("Follow-up not found.", "danger")
+#         return redirect(url_for("dashboard"))
+
+#     # Prevent sending if scheduled
+#     if int(f.get("schedule_enabled") or 0) == 1 and (f.get("next_send_at") or "").strip():
+#         flash(
+#             "This follow-up is scheduled. Clear the schedule before sending manually.",
+#             "warning",
+#         )
+#         return redirect(url_for("schedule"))
+
+#     if f.get("status") in ("done", "replied"):
+#         flash(f"Not sent. This follow-up is already {f['status']}.", "warning")
+#         return redirect(url_for("dashboard"))
+
+#     # Determine message
+#     message = (f.get("message_override") or "").strip() or build_message_preview(f, user["id"])
+
+#     mark_send_attempt(fid, user["id"])
+
+#     try:
+#         channel_used, error = send_via_preference(user, f, message)
+#         current_app.logger.info(f"[SEND] channel_used={channel_used} for followup={fid}")
+
+#         if error:
+#             raise RuntimeError(error)
+
+#         mark_send_success(fid, user["id"])
+#         update_chase_stage(fid, user["id"])
+#         add_notification(user["id"], f"Sent {channel_used} to {f.get('client_name','')}")
+#         flash(f"Message sent via {channel_used} ✅", "success")
+#         return redirect(url_for("dashboard"))
+
+#     except Exception as e:
+#         mark_send_failed(fid, user["id"], str(e))
+#         current_app.logger.exception("Send failed")
+#         flash(f"Send failed: {str(e)}", "danger")
+#         return redirect(url_for("dashboard"))
+
+
+
 @app.route("/send/<int:fid>", methods=["POST"])
 def send_followup(fid):
     user, block = require_user()
@@ -830,35 +879,44 @@ def send_followup(fid):
         )
         return redirect(url_for("schedule"))
 
+    # Prevent sending completed followups
     if f.get("status") in ("done", "replied"):
         flash(f"Not sent. This follow-up is already {f['status']}.", "warning")
         return redirect(url_for("dashboard"))
 
-    # Determine message
-    message = (f.get("message_override") or "").strip() or build_message_preview(f, user["id"])
-
-    mark_send_attempt(fid, user["id"])
-
     try:
-        channel_used, error = send_via_preference(user, f, message)
-        current_app.logger.info(f"[SEND] channel_used={channel_used} for followup={fid}")
+        # mark attempt
+        mark_send_attempt(fid, user["id"])
+
+        # send using user's preferred channel
+        channel_used, error = send_via_preference(user, f, None)
+
+        current_app.logger.info(
+            f"[SEND] followup={fid} channel={channel_used} error={error}"
+        )
 
         if error:
             raise RuntimeError(error)
 
+        # mark success
         mark_send_success(fid, user["id"])
-        update_chase_stage(fid, user["id"])
-        add_notification(user["id"], f"Sent {channel_used} to {f.get('client_name','')}")
+
+        add_notification(
+            user["id"],
+            f"Sent {channel_used} to {f.get('client_name','')}"
+        )
+
         flash(f"Message sent via {channel_used} ✅", "success")
-        return redirect(url_for("dashboard"))
 
     except Exception as e:
         mark_send_failed(fid, user["id"], str(e))
         current_app.logger.exception("Send failed")
+
         flash(f"Send failed: {str(e)}", "danger")
-        return redirect(url_for("dashboard"))
 
+    return redirect(url_for("dashboard"))
 
+    
 @app.post("/bulk-action")
 def bulk_action():
     from flask import session
