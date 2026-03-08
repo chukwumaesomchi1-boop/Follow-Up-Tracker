@@ -6,7 +6,7 @@ import re
 from flask import current_app
 import textwrap
 
-from email_renderer import render_followup_email_html, plain_to_html
+
 from gmail_sync import send_email_gmail  # your Gmail sender
 from models_saas import get_branding
 from email_scheduler import send_branded_email_gmail
