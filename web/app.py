@@ -2785,7 +2785,7 @@ def template_scheduler():
 <div style="font-family:Arial,sans-serif; font-size:14px; color:#111;">
   {% if brand_logo %}
     <div style="margin-bottom:10px;">
-      <img src="{{brand_logo}}" alt="{{company_name}}" style="height:36px">
+      "brand_logo": (branding.get("brand_logo") or "").strip(), style="height:36px">
     </div>
   {% endif %}
 

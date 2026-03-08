@@ -32,19 +32,34 @@ def now_iso() -> str:
     # consistent with compute_next_send_at(input_tz="Africa/Lagos")
     return datetime.now(TZ).replace(tzinfo=None).isoformat(timespec="seconds")
 
-def send_followup_email(user: dict, f: dict, message: str) -> None:
+def send_followup_email(user: dict, f: dict, message: str) -> bool:
     to_email = (f.get("email") or "").strip()
     if not to_email:
         raise RuntimeError("Missing recipient email")
 
     subject = f"Follow-up: {f.get('followup_type') or 'follow-up'}"
+    email_format = (f.get("email_format") or "html").lower()
 
-    send_email_gmail(
-        user=user,
-        to_email=to_email,
-        subject=subject,
-        html_body=message,
-    )
+    if email_format == "text":
+        # plain text version
+        send_email_gmail(
+            user=user,
+            to_email=to_email,
+            subject=subject,
+            body=message,
+            is_html=False
+        )
+    else:
+        # raw HTML or branded HTML
+        send_email_gmail(
+            user=user,
+            to_email=to_email,
+            subject=subject,
+            body=message,
+            is_html=True
+        )
+
+    return True
 
 
 def run_scheduled_sends(app) -> None:

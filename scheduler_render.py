@@ -25,33 +25,116 @@ PERSONAL_MESSAGE_WRAPPER = """
 </div>
 """.strip()
 
+# DEFAULT_SCHEDULER_TEMPLATE = """
+# <div style="font-family:Arial,sans-serif; font-size:14px; color:#111;">
+#   {% if brand_logo %}
+#     <div style="margin-bottom:10px;">
+#       "brand_logo": (branding.get("brand_logo") or "").strip(), style="height:36px">
+#     </div>
+#   {% endif %}
+
+#   <p>Hi {{name}},</p>
+#   <p>Just a quick reminder about {{type}}.</p>
+
+#   {% if description %}
+#     <p>{{description}}</p>
+#   {% endif %}
+
+#   {% if due_date %}
+#     <p><b>Due date:</b> {{due_date}}</p>
+#   {% endif %}
+
+#   <p>Thanks,<br>{{sender}}</p>
+
+#   {% if footer %}
+#     <hr>
+#     <small style="color:#64748b;">{{footer}}</small>
+#   {% endif %}
+# </div>
+# """.strip()
+
+
+
 DEFAULT_SCHEDULER_TEMPLATE = """
-<div style="font-family:Arial,sans-serif; font-size:14px; color:#111;">
-  {% if brand_logo %}
-    <div style="margin-bottom:10px;">
-      <img src="{{brand_logo}}" alt="{{company_name}}" style="height:36px">
-    </div>
-  {% endif %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notification</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f8fafc; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
 
-  <p>Hi {{name}},</p>
-  <p>Just a quick reminder about {{type}}.</p>
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#f8fafc; padding: 40px 10px;">
+  <tr>
+    <td align="center">
+      
+      <table width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width:600px; background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid #e2e8f0;">
+        
+        <tr>
+          <td style="padding: 32px 32px 24px 32px; text-align: center;">
+            <img src="{{brand_logo}}" alt="{{company_name}}" style="max-width: 140px; height: auto; outline: none; border: none; text-decoration: none;">
+          </td>
+        </tr>
 
-  {% if description %}
-    <p>{{description}}</p>
-  {% endif %}
+        <tr>
+          <td style="padding: 0 40px 40px 40px;">
+            <h2 style="margin: 0 0 16px 0; color: #1e293b; font-size: 20px; font-weight: 700; line-height: 1.4;">
+              Hi {{name}},
+            </h2>
+            <p style="margin: 0 0 24px 0; color: #475569; font-size: 16px; line-height: 1.6;">
+              This is a friendly reminder regarding your upcoming schedule. Please see the details of your <strong>{{type}}</strong> below:
+            </p>
 
-  {% if due_date %}
-    <p><b>Due date:</b> {{due_date}}</p>
-  {% endif %}
+            <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f1f5f9; border-radius: 8px; margin-bottom: 24px;">
+              <tr>
+                <td style="padding: 20px;">
+                  <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="color: #64748b; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; padding-bottom: 4px;">Event Type</td>
+                    </tr>
+                    <tr>
+                      <td style="color: #0f172a; font-size: 16px; font-weight: 600; padding-bottom: 16px;">{{type}}</td>
+                    </tr>
+                    {% if due_date %}
+                    <tr>
+                      <td style="color: #64748b; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; padding-bottom: 4px;">Due Date</td>
+                    </tr>
+                    <tr>
+                      <td style="color: #0f172a; font-size: 16px; font-weight: 600;">{{due_date}}</td>
+                    </tr>
+                    {% endif %}
+                  </table>
+                </td>
+              </tr>
+            </table>
 
-  <p>Thanks,<br>{{sender}}</p>
+            <p style="margin: 0; color: #475569; font-size: 15px; line-height: 1.6;">
+              Best regards,<br>
+              <span style="color: #1e293b; font-weight: 600;">{{sender}}</span>
+            </p>
+          </td>
+        </tr>
 
-  {% if footer %}
-    <hr>
-    <small style="color:#64748b;">{{footer}}</small>
-  {% endif %}
-</div>
+        <tr>
+          <td style="padding: 24px 40px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+            <p style="margin: 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
+              &copy; {{company_name}} <br>
+              This is an automated notification. Please do not reply directly to this email.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
 """.strip()
+
 
 _ALLOWED_VARS = {
     "name",
@@ -230,7 +313,7 @@ def render_scheduler_html(tmpl: str, user: dict, followup: dict, branding: dict)
         "due_date": (followup.get("due_date") or "").strip(),
         "sender": sender,
         "company_name": sender,
-        "brand_logo": (branding.get("logo") or "").strip(),
+        "brand_logo": (branding.get("brand_logo") or "").strip(),
         "support_email": support_email,
         "footer": footer,
     }

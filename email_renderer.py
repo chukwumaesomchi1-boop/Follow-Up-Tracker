@@ -125,146 +125,146 @@ import html
 from datetime import datetime
 
 
-def render_followup_email_html(
-    *,
-    brand_name: str = "FollowUp Tracker",
-    brand_color: str = "#36A2EB",
-    logo_url: str = "",
-    headline: str = "Quick follow-up",
-    message_html: str = "",
-    client_name: str = "",
-    footer_note: str = "",
-    support_email: str = "",
-) -> str:
-    """
-    Branded HTML shell for Gmail.
+# def render_followup_email_html(
+#     *,
+#     brand_name: str = "FollowUp Tracker",
+#     brand_color: str = "#36A2EB",
+#     logo_url: str = "",
+#     headline: str = "Quick follow-up",
+#     message_html: str = "",
+#     client_name: str = "",
+#     footer_note: str = "",
+#     support_email: str = "",
+# ) -> str:
+#     """
+#     Branded HTML shell for Gmail.
 
-    Matches current logic:
-      - brand_name  <- branding["company_name"]
-      - logo_url    <- branding["brand_logo"]
-      - brand_color <- branding["brand_color"]
-      - footer_note <- branding["custom_footer"] (optional)
-      - support_email (optional, shown in footer if present)
-      - headline is built from followup_type (outside this function)
-      - message_html is already-rendered inner HTML (scheduler template OR override)
+#     Matches current logic:
+#       - brand_name  <- branding["company_name"]
+#       - logo_url    <- branding["brand_logo"]
+#       - brand_color <- branding["brand_color"]
+#       - footer_note <- branding["custom_footer"] (optional)
+#       - support_email (optional, shown in footer if present)
+#       - headline is built from followup_type (outside this function)
+#       - message_html is already-rendered inner HTML (scheduler template OR override)
 
-    NOTE:
-      - message_html is inserted as-is (so it can contain HTML).
-      - all user/branding strings are escaped where appropriate.
-    """
+#     NOTE:
+#       - message_html is inserted as-is (so it can contain HTML).
+#       - all user/branding strings are escaped where appropriate.
+#     """
 
-    safe_brand_name = html.escape(brand_name or "FollowUp Tracker")
-    safe_headline = html.escape(headline or "")
-    safe_client_name = html.escape(client_name or "")
-    safe_footer_note = html.escape(footer_note or "")
-    safe_support_email = html.escape(support_email or "")
+#     safe_brand_name = html.escape(brand_name or "FollowUp Tracker")
+#     safe_headline = html.escape(headline or "")
+#     safe_client_name = html.escape(client_name or "")
+#     safe_footer_note = html.escape(footer_note or "")
+#     safe_support_email = html.escape(support_email or "")
 
-    # Optional logo block
-    logo_block = ""
-    if (logo_url or "").strip():
-        logo_block = f"""
-          <tr>
-            <td style="padding:0 0 12px 0; text-align:left;">
-              <img src="{logo_url}" alt="{safe_brand_name}" height="28"
-                   style="display:block; height:28px; width:auto;">
-            </td>
-          </tr>
-        """
+#     # Optional logo block
+#     logo_block = ""
+#     if (logo_url or "").strip():
+#         logo_block = f"""
+#           <tr>
+#             <td style="padding:0 0 12px 0; text-align:left;">
+#               <img src="{logo_url}" alt="{safe_brand_name}" height="28"
+#                    style="display:block; height:28px; width:auto;">
+#             </td>
+#           </tr>
+#         """
 
-    # Optional footer text block
-    footer_note_block = ""
-    if safe_footer_note:
-        footer_note_block = f"""
-          <tr>
-            <td style="padding:0 22px 20px 22px;">
-              <div style="border:1px solid #eef0f4; border-radius:12px; padding:12px 14px; background:#fbfdff;">
-                <div style="font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:18px; color:#64748b;">
-                  {safe_footer_note}
-                </div>
-              </div>
-            </td>
-          </tr>
-        """
+#     # Optional footer text block
+#     footer_note_block = ""
+#     if safe_footer_note:
+#         footer_note_block = f"""
+#           <tr>
+#             <td style="padding:0 22px 20px 22px;">
+#               <div style="border:1px solid #eef0f4; border-radius:12px; padding:12px 14px; background:#fbfdff;">
+#                 <div style="font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:18px; color:#64748b;">
+#                   {safe_footer_note}
+#                 </div>
+#               </div>
+#             </td>
+#           </tr>
+#         """
 
-    # Optional support email in the final footer line
-    support_email_piece = f" · Support: {safe_support_email}" if safe_support_email else ""
+#     # Optional support email in the final footer line
+#     support_email_piece = f" · Support: {safe_support_email}" if safe_support_email else ""
 
-    return f"""<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{safe_brand_name}</title>
-  </head>
+#     return f"""<!doctype html>
+# <html>
+#   <head>
+#     <meta charset="utf-8">
+#     <meta name="viewport" content="width=device-width, initial-scale=1">
+#     <title>{safe_brand_name}</title>
+#   </head>
 
-  <body style="margin:0; padding:0; background:#f6f7fb;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f6f7fb; padding:24px 0;">
-      <tr>
-        <td align="center" style="padding:0 12px;">
-          <table role="presentation" width="600" cellspacing="0" cellpadding="0"
-            style="max-width:600px; width:100%; background:#ffffff; border-radius:16px; overflow:hidden; border:1px solid #eef0f4;">
+#   <body style="margin:0; padding:0; background:#f6f7fb;">
+#     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f6f7fb; padding:24px 0;">
+#       <tr>
+#         <td align="center" style="padding:0 12px;">
+#           <table role="presentation" width="600" cellspacing="0" cellpadding="0"
+#             style="max-width:600px; width:100%; background:#ffffff; border-radius:16px; overflow:hidden; border:1px solid #eef0f4;">
 
-            <tr>
-              <td style="padding:20px 22px; border-bottom:1px solid #eef0f4;">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                  {logo_block}
-                  <tr>
-                    <td style="font-family:Arial, Helvetica, sans-serif; font-size:18px; line-height:24px; font-weight:700; color:#0f172a;">
-                      {safe_headline}{(" — " + safe_client_name) if safe_client_name else ""}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding-top:10px;">
-                      <div style="height:4px; width:56px; background:{brand_color}; border-radius:999px;"></div>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
+#             <tr>
+#               <td style="padding:20px 22px; border-bottom:1px solid #eef0f4;">
+#                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+#                   {logo_block}
+#                   <tr>
+#                     <td style="font-family:Arial, Helvetica, sans-serif; font-size:18px; line-height:24px; font-weight:700; color:#0f172a;">
+#                       {safe_headline}{(" — " + safe_client_name) if safe_client_name else ""}
+#                     </td>
+#                   </tr>
+#                   <tr>
+#                     <td style="padding-top:10px;">
+#                       <div style="height:4px; width:56px; background:{brand_color}; border-radius:999px;"></div>
+#                     </td>
+#                   </tr>
+#                 </table>
+#               </td>
+#             </tr>
 
-            <tr>
-              <td style="padding:20px 22px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:22px; color:#334155;">
-                {message_html or ""}
-              </td>
-            </tr>
+#             <tr>
+#               <td style="padding:20px 22px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:22px; color:#334155;">
+#                 {message_html or ""}
+#               </td>
+#             </tr>
 
-            {footer_note_block}
+#             {footer_note_block}
 
-            <tr>
-              <td style="padding:14px 22px; background:#f8fafc; border-top:1px solid #eef0f4;">
-                <div style="font-family:Arial, Helvetica, sans-serif; font-size:12px; color:#94a3b8; line-height:18px;">
-                  Sent via <b>{safe_brand_name}</b>{support_email_piece} · {datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")}
-                </div>
-              </td>
-            </tr>
+#             <tr>
+#               <td style="padding:14px 22px; background:#f8fafc; border-top:1px solid #eef0f4;">
+#                 <div style="font-family:Arial, Helvetica, sans-serif; font-size:12px; color:#94a3b8; line-height:18px;">
+#                   Sent via <b>{safe_brand_name}</b>{support_email_piece} · {datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")}
+#                 </div>
+#               </td>
+#             </tr>
 
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>
-"""
+#           </table>
+#         </td>
+#       </tr>
+#     </table>
+#   </body>
+# </html>
+# """
 
 
-def plain_to_html(text: str) -> str:
-    """
-    Converts plain text into safe HTML paragraphs.
-    Use this when message_override is plain text (not HTML).
-    """
-    if not text:
-        return ""
+# def plain_to_html(text: str) -> str:
+#     """
+#     Converts plain text into safe HTML paragraphs.
+#     Use this when message_override is plain text (not HTML).
+#     """
+#     if not text:
+#         return ""
 
-    text = text.replace("\r\n", "\n").strip()
-    paragraphs = text.split("\n\n")
+#     text = text.replace("\r\n", "\n").strip()
+#     paragraphs = text.split("\n\n")
 
-    parts = []
-    for p in paragraphs:
-        safe = html.escape(p).replace("\n", "<br>")
-        parts.append(
-            "<p style='margin:0 0 16px 0; line-height:1.6; font-size:14px; color:#334155;'>"
-            f"{safe}"
-            "</p>"
-        )
+#     parts = []
+#     for p in paragraphs:
+#         safe = html.escape(p).replace("\n", "<br>")
+#         parts.append(
+#             "<p style='margin:0 0 16px 0; line-height:1.6; font-size:14px; color:#334155;'>"
+#             f"{safe}"
+#             "</p>"
+#         )
 
-    return "".join(parts)
+#     return "".join(parts)
