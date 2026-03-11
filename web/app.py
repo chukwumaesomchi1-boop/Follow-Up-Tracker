@@ -730,7 +730,7 @@ def import_csv_mapped_start():
 from send_via_preference import send_via_preference
 from flask import request, redirect, url_for, flash
 from models_saas import mark_followup_done_by_id
-from chase import build_message_preview
+from chaser import build_message_preview
 # @app.post("/bulk-action")
 # def bulk_action():
 #     from flask import session
