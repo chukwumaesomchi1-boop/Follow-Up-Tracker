@@ -1088,24 +1088,26 @@ def preview(fid):
 #         current_app.logger.exception("Draft create failed")
 #         return jsonify({"ok": False, "error": str(e)}), 400
 
-
 def update_followup_email_format(fid: int, user_id: int, email_format: str) -> bool:
     email_format = (email_format or "html").strip().lower()
     if email_format not in ("text", "html", "raw"):
         email_format = "html"
 
-    with get_connection() as conn:
-        cur = conn.cursor()
-        cur.execute(
-            """
-            UPDATE followups
-               SET email_format = %s
-             WHERE id = %s AND user_id = %s
-            """,
-            (email_format, fid, user_id),
-        )
-        conn.commit()
-        return cur.rowcount > 0
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        UPDATE followups
+           SET email_format = ?
+         WHERE id = ? AND user_id = ?
+        """,
+        (email_format, fid, user_id),
+    )
+    conn.commit()
+    return cur.rowcount > 0
+
+
+
 
 from models_saas import add_followup_draft
 
