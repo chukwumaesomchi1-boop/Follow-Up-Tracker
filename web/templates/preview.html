@@ -1,4 +1,3 @@
-{# templates/preview.html #}
 {% extends "base.html" %}
 {% block title %}Review & Edit Follow-Up{% endblock %}
 
@@ -19,7 +18,6 @@
     animation: fadeIn 0.4s ease-out;
   }
 
-  /* --- Top Navigation Bar --- */
   .editor-nav {
     display: flex;
     justify-content: space-between;
@@ -48,7 +46,6 @@
   .pill-id { background: var(--border); color: var(--text-muted); }
   .pill-status { background: var(--accent-soft); color: var(--accent); }
 
-  /* --- Main Grid Layout --- */
   .editor-grid {
     display: grid;
     grid-template-columns: 360px 1fr;
@@ -56,7 +53,6 @@
     align-items: start;
   }
 
-  /* --- Left Sidebar (Metadata) --- */
   .meta-card {
     background: #fff;
     border: 1px solid var(--border-strong);
@@ -79,7 +75,7 @@
   }
 
   .meta-body { padding: 20px; }
-  
+
   .form-label {
     display: block; font-size: 12px; font-weight: 700;
     color: var(--text-muted); text-transform: uppercase;
@@ -94,7 +90,6 @@
   .input-field:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); outline: none; }
   .input-readonly { background: #f9fafb; color: #94a3b8; border-style: dashed; cursor: not-allowed; }
 
-  /* --- Right Column (The IDE) --- */
   .composer-pane { display: flex; flex-direction: column; gap: 24px; }
 
   .ide-container {
@@ -114,7 +109,6 @@
     border-bottom: 1px solid var(--ide-border);
   }
 
-  /* Modern Segmented Control */
   .segmented-control {
     background: #27272a;
     padding: 3px;
@@ -150,7 +144,6 @@
     border: none; resize: vertical; outline: none;
   }
 
-  /* --- Action Bar --- */
   .ide-footer {
     padding: 16px 20px;
     background: var(--ide-header);
@@ -158,7 +151,6 @@
     display: flex; justify-content: space-between;
   }
 
-  /* --- Branded Viewport --- */
   .viewport-container {
     background: #fff;
     border: 1px solid var(--border-strong);
@@ -174,8 +166,17 @@
   }
 
   .preview-frame { width: 100%; height: 500px; border: none; }
+  .preview-text {
+    min-height: 500px;
+    padding: 24px;
+    white-space: pre-wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    background: #fff;
+    color: #1f2937;
+  }
 
-  /* --- Buttons --- */
   .btn-action {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 10px 18px; border-radius: 10px; font-size: 14px;
@@ -195,7 +196,7 @@
 
 <div class="preview-wrapper">
   <form method="POST" action="{{ url_for('preview_edit_all', fid=followup.id) }}" id="previewForm">
-    
+
     <header class="editor-nav">
       <div class="nav-info">
         <div class="nav-pills">
@@ -223,6 +224,9 @@
           <label class="form-label">Email Address</label>
           <input type="email" name="email" id="email" class="input-field" value="{{ followup.email or '' }}">
 
+          <label class="form-label">Follow-Up Type</label>
+          <input type="text" name="followup_type" id="followup_type" class="input-field" value="{{ followup.followup_type or 'general' }}">
+
           <label class="form-label">Next Scheduled Date</label>
           <input type="text" class="input-field input-readonly" readonly value="{{ followup.next_send_at or 'Manual Only' }}">
 
@@ -232,13 +236,13 @@
       </aside>
 
       <div class="composer-pane">
-        
+
         <div class="ide-container">
           <div class="ide-toolbar">
             <div style="color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
               <span style="color: #10b981;">●</span> Message Composer
             </div>
-            
+
             <div class="segmented-control">
               <div class="segment">
                 <input type="radio" name="email_format" id="f_text" value="text" hidden {% if followup.email_format == 'text' %}checked{% endif %}>
@@ -279,6 +283,7 @@
             <div style="font-size: 12px; font-weight: 800; color: var(--text-main);">LIVE BRANDED VIEWPORT</div>
             <div id="previewStatus" style="font-size: 11px; font-weight: 700; color: var(--accent);">READY</div>
           </div>
+          <div id="previewTextBox" class="preview-text" style="display:none;"></div>
           <iframe id="livePreviewFrame" class="preview-frame" sandbox="" srcdoc="<p style='padding:20px; font-family:sans-serif;'>Loading preview...</p>"></iframe>
         </div>
       </div>
@@ -286,11 +291,10 @@
   </form>
 </div>
 
-
-
 <script>
   const editor = document.getElementById('message_override');
   const frame = document.getElementById('livePreviewFrame');
+  const previewTextBox = document.getElementById('previewTextBox');
   const statusEl = document.getElementById('previewStatus');
 
   function insertVar(v) {
@@ -301,30 +305,65 @@
     refreshPreview();
   }
 
+  function formatPlainTextMessage(rawMessage) {
+    if (!rawMessage) return "";
+    const lines = rawMessage.split(/\r?\n/);
+    const formatted = [];
+
+    for (const line of lines) {
+      const stripped = line.trim();
+      if (!stripped) {
+        formatted.push("");
+      } else if (stripped.startsWith("-") || stripped.startsWith("*")) {
+        formatted.push("• " + stripped.slice(1).trim());
+      } else {
+        formatted.push(stripped);
+      }
+    }
+
+    return formatted.join("\n");
+  }
+
   let refreshTimer;
   function scheduleRefresh() {
     clearTimeout(refreshTimer);
-    refreshTimer = setTimeout(refreshPreview, 400);
+    refreshTimer = setTimeout(refreshPreview, 350);
   }
 
   async function refreshPreview() {
     statusEl.textContent = "SYNCHRONIZING...";
-    
+
+    const emailFormat = document.querySelector('input[name="email_format"]:checked').value;
     const payload = {
       client_name: document.getElementById('client_name').value,
       email: document.getElementById('email').value,
-      followup_type: (document.getElementById('followup_type')?.value || "Follow-up"),
+      followup_type: document.getElementById('followup_type').value,
       description: document.getElementById('description').value,
-      email_format: document.querySelector('input[name="email_format"]:checked').value,
-      message_override: editor.value
+      email_format: emailFormat,
+      message_override: editor.value,
+      preferred_channel: "email"
     };
 
     try {
+      if (emailFormat === "text") {
+        frame.style.display = "none";
+        previewTextBox.style.display = "block";
+        previewTextBox.textContent = formatPlainTextMessage(
+          (payload.message_override || "").trim() || (payload.description || "").trim()
+        );
+        statusEl.textContent = "LIVE";
+        return;
+      }
+
+      previewTextBox.style.display = "none";
+      frame.style.display = "block";
+
       const res = await fetch("{{ url_for('preview_render_email', fid=followup.id) }}", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(payload)
       });
+
       const html = await res.text();
       frame.srcdoc = html;
       statusEl.textContent = "LIVE";
@@ -333,12 +372,10 @@
     }
   }
 
-  // Bind Listeners
   editor.addEventListener('input', scheduleRefresh);
   document.querySelectorAll('.input-field').forEach(el => el.addEventListener('input', scheduleRefresh));
   document.querySelectorAll('input[name="email_format"]').forEach(el => el.addEventListener('change', scheduleRefresh));
 
-  // Initial Load
   window.addEventListener('load', refreshPreview);
 </script>
 {% endblock %}

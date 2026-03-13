@@ -20,21 +20,16 @@
     --radius-md: 10px;
   }
 
-  /* --- Global Polish --- */
   body { background-color: var(--bg-main); color: var(--text-primary); font-family: 'Inter', system-ui, sans-serif; }
-  
   .page-container { max-width: 1280px; margin: 0 auto; padding: 40px 20px; }
 
-  /* --- Header --- */
   .page-header { margin-bottom: 40px; }
   .page-title { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
   .page-sub { color: var(--text-secondary); font-size: 16px; }
 
-  /* --- Main Grid --- */
   .editor-grid { display: grid; grid-template-columns: 1fr 480px; gap: 40px; align-items: start; }
   @media (max-width: 1100px) { .editor-grid { grid-template-columns: 1fr; } }
 
-  /* --- Form Cards --- */
   .card {
     background: var(--panel-bg);
     border: 1px solid var(--border-color);
@@ -45,7 +40,7 @@
 
   .form-section { margin-bottom: 40px; }
   .form-section:last-child { margin-bottom: 0; }
-  
+
   .section-label {
     font-size: 12px; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.1em; color: var(--accent);
@@ -65,7 +60,6 @@
   }
   input::placeholder, textarea::placeholder { color: #94a3b8; }
 
-  /* --- Segmented Controls --- */
   .segmented-control {
     display: flex; background: #f1f5f9; padding: 4px; border-radius: 12px; gap: 4px;
   }
@@ -78,7 +72,6 @@
   }
   .segment input:checked + label { background: #fff; color: var(--accent); box-shadow: var(--shadow-sm); }
 
-  /* --- Priority Indicator --- */
   .logic-map {
     background: #f8fafc; border-radius: var(--radius-md); padding: 20px;
     border: 1px solid var(--border-color);
@@ -92,7 +85,6 @@
   .logic-step.active { color: var(--accent); font-weight: 700; }
   .logic-step.active svg { opacity: 1; transform: scale(1.1); }
 
-  /* --- Action Buttons --- */
   .btn {
     padding: 14px 28px; border-radius: var(--radius-md); font-weight: 700;
     cursor: pointer; display: inline-flex; align-items: center; gap: 10px;
@@ -103,7 +95,6 @@
   .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); }
   .btn-ghost:hover { background: #f1f5f9; color: var(--text-primary); }
 
-  /* --- Preview Pane (macOS Email Style) --- */
   .preview-pane {
     position: sticky; top: 40px;
     background: #fff; border-radius: 20px;
@@ -126,8 +117,8 @@
   .badge.desc { background: #dcfce7; color: #15803d; }
   .badge.default { background: #e0e7ff; color: #4338ca; }
 
-  .email-viewport { padding: 32px; }
-  .email-header-info { border-bottom: 1px solid #f1f5f9; margin-bottom: 24px; padding-bottom: 16px; }
+  .email-viewport { padding: 0; }
+  .email-header-info { padding: 24px 32px 16px 32px; border-bottom: 1px solid #f1f5f9; }
   .info-row { display: flex; gap: 12px; margin-bottom: 10px; font-size: 14px; }
   .info-label { color: #94a3b8; width: 60px; font-weight: 500; }
   .info-value { color: var(--text-primary); }
@@ -135,7 +126,15 @@
 
   .email-body-text {
     font-size: 15px; line-height: 1.6; color: #334155; min-height: 250px;
-    white-space: pre-wrap;
+    white-space: pre-wrap; padding: 32px;
+  }
+
+  .preview-frame {
+    width: 100%;
+    min-height: 520px;
+    border: 0;
+    display: block;
+    background: #fff;
   }
 </style>
 
@@ -186,13 +185,13 @@
             </div>
 
             <div class="form-group">
-              <label>Personal Message (Priority 1)</label>
-              <textarea id="message_override" name="message_override" rows="5" placeholder="Custom text typed here will override all templates...">{{ fc.get('message_override','') }}</textarea>
+              <label>Personal Message (Used directly in Text mode, or as override in HTML modes)</label>
+              <textarea id="message_override" name="message_override" rows="5" placeholder="Custom text typed here can override the template for this follow-up...">{{ fc.get('message_override','') }}</textarea>
             </div>
 
             <div class="form-group">
-              <label>Contextual Notes (Priority 2)</label>
-              <textarea id="description" name="description" rows="2" placeholder="Internal context used as a secondary fallback...">{{ fc.get('description','') }}</textarea>
+              <label>Contextual Notes (Used as description/template data)</label>
+              <textarea id="description" name="description" rows="2" placeholder="Context for the follow-up or template rendering...">{{ fc.get('description','') }}</textarea>
             </div>
 
             <div class="form-group">
@@ -221,11 +220,11 @@
             </div>
             <div class="logic-step" id="logic2">
               <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
-              Fallback: Contextual Notes detected
+              Text Fallback: Description used when no override exists
             </div>
             <div class="logic-step" id="logic3">
               <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
-              Default: Smart Template engine
+              HTML Engine: Scheduler template + branding renderer
             </div>
           </div>
 
@@ -258,8 +257,8 @@
             </div>
           </div>
 
-          <div id="pvBody" class="email-body-text">
-            </div>
+          <div id="pvTextWrap" class="email-body-text" style="display:none;"></div>
+          <iframe id="pvHtmlFrame" class="preview-frame" sandbox="" srcdoc="<p style='padding:20px; font-family:sans-serif;'>Loading preview...</p>"></iframe>
         </div>
       </div>
     </div>
@@ -267,67 +266,154 @@
 </div>
 
 <script>
+  const form = document.getElementById('followupForm');
   const elName = document.getElementById('client_name');
+  const elEmail = document.getElementById('email');
   const elType = document.getElementById('followup_type');
   const elDesc = document.getElementById('description');
   const elOverride = document.getElementById('message_override');
   const pvTarget = document.getElementById('pvTarget');
   const pvSubject = document.getElementById('pvSubject');
-  const pvBody = document.getElementById('pvBody');
+  const pvTextWrap = document.getElementById('pvTextWrap');
+  const pvHtmlFrame = document.getElementById('pvHtmlFrame');
   const badge = document.getElementById('step-badge');
+  const fmtText = document.getElementById('fmt_text');
   const fmtHtml = document.getElementById('fmt_html');
   const fmtRaw = document.getElementById('fmt_raw');
 
-  function updatePreview() {
-    pvTarget.textContent = elName.value || "Jane Cooper";
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || "";
+    return div.innerHTML;
+  }
+
+  function formatPlainTextMessage(rawMessage) {
+    if (!rawMessage) return "";
+    const lines = rawMessage.split(/\r?\n/);
+    const formatted = [];
+
+    for (const line of lines) {
+      const stripped = line.trim();
+      if (!stripped) {
+        formatted.push("");
+      } else if (stripped.startsWith("-") || stripped.startsWith("*")) {
+        formatted.push("• " + stripped.slice(1).trim());
+      } else {
+        formatted.push(stripped);
+      }
+    }
+
+    return formatted.join("\n");
+  }
+
+  function getSelectedFormat() {
+    const selected = document.querySelector('input[name="email_format"]:checked');
+    return selected ? selected.value : "html";
+  }
+
+  function updateMeta() {
+    pvTarget.textContent = elName.value || "Recipient";
     const typeLabel = elType.options[elType.selectedIndex]?.text || "Follow-up";
-    pvSubject.textContent = typeLabel;
+    pvSubject.textContent = `Follow-up: ${typeLabel}`;
+  }
 
-    let finalBody = "";
-    let mode = "default";
+  function updateLogicBadge() {
+    const format = getSelectedFormat();
+    const hasOverride = !!elOverride.value.trim();
+    const hasDescription = !!elDesc.value.trim();
 
-    // Logic for active steps
     document.getElementById('logic1').classList.remove('active');
     document.getElementById('logic2').classList.remove('active');
     document.getElementById('logic3').classList.remove('active');
 
-    if (elOverride.value.trim() && !fmtHtml.checked) {
-      finalBody = elOverride.value;
-      mode = "override";
-      document.getElementById('logic1').classList.add('active');
-    } else if (elDesc.value.trim() && !fmtHtml.checked) {
-      finalBody = elDesc.value;
-      mode = "desc";
-      document.getElementById('logic2').classList.add('active');
+    let mode = "default";
+
+    if (format === "text") {
+      if (hasOverride) {
+        mode = "override";
+        document.getElementById('logic1').classList.add('active');
+      } else if (hasDescription) {
+        mode = "desc";
+        document.getElementById('logic2').classList.add('active');
+      } else {
+        mode = "default";
+        document.getElementById('logic3').classList.add('active');
+      }
     } else {
-      finalBody = `Hi ${elName.value || "there"},\n\nI'm checking in regarding our ${typeLabel.toLowerCase()}. Do you have any updates for me?\n\nBest regards,\nYour Team`;
-      mode = "default";
-      document.getElementById('logic3').classList.add('active');
+      mode = hasOverride ? "override" : "default";
+      if (hasOverride) {
+        document.getElementById('logic1').classList.add('active');
+      } else {
+        document.getElementById('logic3').classList.add('active');
+      }
     }
 
     badge.className = `badge ${mode}`;
-    badge.textContent = mode === "override" ? "Manual Override" : (mode === "desc" ? "Contextual" : "Smart Template");
+    badge.textContent =
+      mode === "override" ? "Manual Override" :
+      mode === "desc" ? "Description Fallback" :
+      "Smart Template";
+  }
 
-    if (fmtRaw.checked) {
-      pvBody.innerHTML = finalBody;
-    } else {
-      pvBody.textContent = finalBody;
+  async function renderServerPreview() {
+    const payload = {
+      client_name: elName.value,
+      email: elEmail.value,
+      followup_type: elType.value,
+      description: elDesc.value,
+      email_format: getSelectedFormat(),
+      message_override: elOverride.value,
+      preferred_channel: "email"
+    };
+
+    try {
+      const res = await fetch("{{ url_for('followups_draft_preview') }}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const html = await res.text();
+      pvHtmlFrame.srcdoc = html;
+    } catch (e) {
+      pvHtmlFrame.srcdoc = "<p style='padding:20px; font-family:sans-serif; color:#b91c1c;'>Preview unavailable.</p>";
     }
   }
 
-  function handleFormatChange() {
-    const isHtml = fmtHtml.checked;
-    elOverride.disabled = isHtml;
-    elDesc.disabled = isHtml;
-    elOverride.style.opacity = isHtml ? "0.5" : "1";
-    elDesc.style.opacity = isHtml ? "0.5" : "1";
-    updatePreview();
+  async function updatePreview() {
+    updateMeta();
+    updateLogicBadge();
+
+    const format = getSelectedFormat();
+    const plainMessage = formatPlainTextMessage(elOverride.value.trim() || elDesc.value.trim());
+
+    if (format === "text") {
+      pvHtmlFrame.style.display = "none";
+      pvTextWrap.style.display = "block";
+      pvTextWrap.textContent = plainMessage;
+    } else {
+      pvTextWrap.style.display = "none";
+      pvHtmlFrame.style.display = "block";
+      await renderServerPreview();
+    }
   }
 
-  [elName, elType, elDesc, elOverride].forEach(el => el.addEventListener('input', updatePreview));
-  document.querySelectorAll('input[name="email_format"]').forEach(el => el.addEventListener('change', handleFormatChange));
+  let previewTimer;
+  function schedulePreview() {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(updatePreview, 300);
+  }
 
-  updatePreview();
+  [elName, elEmail, elType, elDesc, elOverride].forEach(el => {
+    el.addEventListener('input', schedulePreview);
+    el.addEventListener('change', schedulePreview);
+  });
+
+  document.querySelectorAll('input[name="email_format"]').forEach(el => {
+    el.addEventListener('change', schedulePreview);
+  });
+
+  window.addEventListener('load', updatePreview);
 </script>
 
 {% endblock %}

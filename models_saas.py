@@ -511,6 +511,8 @@ def add_followup_draft(
     email: str,
     followup_type: str,
     description: str,
+    message_override: str = "",
+    email_format: str = "html",
     preferred_channel: str = "email",
 ) -> int:
     """

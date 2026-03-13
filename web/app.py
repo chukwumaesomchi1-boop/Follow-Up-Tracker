@@ -132,7 +132,7 @@ app.config["SESSION_COOKIE_SECURE"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "None"
 
 # socketio = SocketIO(app)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+# socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 from flask_socketio import join_room
 
 @socketio.on("join_import")
@@ -333,27 +333,27 @@ def require_user():
     return user, None
 
 
-@app.get("/verify-email/resend")
-def resend_verification():
-    uid = session.get("pending_verify_user_id")
-    if not uid:
-        flash("No verification in progress.", "danger")
-        return redirect(url_for("login"))
+# @app.get("/verify-email/resend")
+# def resend_verification():
+#     uid = session.get("pending_verify_user_id")
+#     if not uid:
+#         flash("No verification in progress.", "danger")
+#         return redirect(url_for("login"))
 
-    user = get_user_by_id(int(uid))
-    if not user:
-        flash("User not found.", "danger")
-        return redirect(url_for("login"))
+#     user = get_user_by_id(int(uid))
+#     if not user:
+#         flash("User not found.", "danger")
+#         return redirect(url_for("login"))
 
-    try:
-        start_email_verification(int(uid), user["email"])
-    except Exception:
-        current_app.logger.exception("Resend verification failed")
-        flash("Could not resend code.", "danger")
-        return redirect(url_for("verify_email"))
+#     try:
+#         start_email_verification(int(uid), user["email"])
+#     except Exception:
+#         current_app.logger.exception("Resend verification failed")
+#         flash("Could not resend code.", "danger")
+#         return redirect(url_for("verify_email"))
 
-    flash("New code sent ✅", "success")
-    return redirect(url_for("verify_email"))
+#     flash("New code sent ✅", "success")
+#     return redirect(url_for("verify_email"))
 
 
 def _endpoint_exists(name: str) -> bool:
@@ -958,26 +958,58 @@ def bulk_action():
 
         for fid in ids:
             f = get_followup(fid, user_id)
-            if not f or f.get("status") in ("done", "replied"):
-                failed += 1 if not f else 0
+            if not f:
+                failed += 1
+                current_app.logger.warning("[BULK SEND] followup not found fid=%s user_id=%s", fid, user_id)
                 continue
 
-            message = (f.get("message_override") or "").strip() or build_message_preview(f, user_id)
+            if f.get("status") in ("done", "replied"):
+                current_app.logger.info(
+                    "[BULK SEND] skipping followup=%s status=%s",
+                    fid,
+                    f.get("status"),
+                )
+                continue
+
             mark_send_attempt(fid, user_id)
 
             try:
+                # Message source rules:
+                # - text email: use override if present, else description
+                # - html/raw email: renderer will use followup data + message_override internally
+                email_format = (f.get("email_format") or "html").strip().lower()
+                message_override = (f.get("message_override") or "").strip()
+                description = (f.get("description") or "").strip()
+
+                if email_format == "text":
+                    message = message_override or description
+                else:
+                    # For html/raw, pass override if present so send_via_preference
+                    # can inject it into the builder when needed.
+                    message = message_override or ""
+
                 channel_used, error = send_via_preference(user, f, message)
-                current_app.logger.info(f"[BULK SEND] channel_used={channel_used} for followup={fid}")
+
+                current_app.logger.info(
+                    "[BULK SEND] followup=%s channel_used=%s error=%s",
+                    fid,
+                    channel_used,
+                    error,
+                )
 
                 if error:
                     raise RuntimeError(error)
 
                 mark_send_success(fid, user_id)
                 update_chase_stage(fid, user_id)
-                add_notification(user_id, f"Sent {channel_used} to {f.get('client_name','')}")
+                add_notification(
+                    user_id,
+                    f"Sent {channel_used} to {f.get('client_name', '')}"
+                )
                 sent += 1
 
             except Exception as e:
+                current_app.logger.exception("[BULK SEND] failed followup=%s", fid)
                 mark_send_failed(fid, user_id, str(e))
                 failed += 1
 
@@ -992,6 +1024,91 @@ def bulk_action():
 
 
 from models_saas import add_followup_draft
+
+from send_via_preference import format_plain_text_message
+@app.route("/preview/<int:fid>", methods=["GET"])
+def preview(fid):
+    user, block = require_user()
+    if block:
+        return block
+
+    followup = get_followup(fid, user["id"])
+    if not followup:
+        abort(404)
+
+    email_format = (followup.get("email_format") or "html").strip().lower()
+    override = (followup.get("message_override") or "").strip()
+    description = (followup.get("description") or "").strip()
+
+    if email_format == "text":
+        preview_mode = "text"
+        message = format_plain_text_message(override or description)
+    else:
+        preview_mode = "html"
+        message = build_branded_email_html(user, followup)
+
+    return render_template(
+        "preview.html",
+        followup=followup,
+        message=message,
+        preview_mode=preview_mode,
+    )
+
+
+
+
+# from models_saas import add_followup_draft
+# @app.post("/followups/draft")
+# def add_followup_draft_route():
+#     from flask import session, jsonify
+
+#     user_id = int(session.get("user_id") or 0)
+#     if not user_id:
+#         return jsonify({"ok": False, "error": "not_logged_in"}), 401
+
+#     client_name = (request.form.get("client_name") or "").strip()
+#     email = (request.form.get("email") or "").strip()
+#     followup_type = (request.form.get("followup_type") or "").strip()
+#     description = (request.form.get("description") or "").strip()
+
+#     if not client_name or not email or not followup_type:
+#         return jsonify({"ok": False, "error": "missing_required"}), 400
+
+#     try:
+#         fid = add_followup_draft(
+#             user_id=user_id,
+#             client_name=client_name,
+#             email=email,
+#             followup_type=followup_type,
+#             description=description,
+#             preferred_channel="email",
+#         )
+#         return jsonify({"ok": True, "id": fid})
+#     except Exception as e:
+#         current_app.logger.exception("Draft create failed")
+#         return jsonify({"ok": False, "error": str(e)}), 400
+
+
+def update_followup_email_format(fid: int, user_id: int, email_format: str) -> bool:
+    email_format = (email_format or "html").strip().lower()
+    if email_format not in ("text", "html", "raw"):
+        email_format = "html"
+
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            UPDATE followups
+               SET email_format = %s
+             WHERE id = %s AND user_id = %s
+            """,
+            (email_format, fid, user_id),
+        )
+        conn.commit()
+        return cur.rowcount > 0
+
+from models_saas import add_followup_draft
+
 @app.post("/followups/draft")
 def add_followup_draft_route():
     from flask import session, jsonify
@@ -1004,24 +1121,42 @@ def add_followup_draft_route():
     email = (request.form.get("email") or "").strip()
     followup_type = (request.form.get("followup_type") or "").strip()
     description = (request.form.get("description") or "").strip()
+    message_override = (request.form.get("message_override") or "").strip()
+    email_format = (request.form.get("email_format") or "html").strip().lower()
+    preferred_channel = (request.form.get("preferred_channel") or "email").strip().lower()
+
+    if email_format not in ("text", "html", "raw"):
+        email_format = "html"
+
+    if preferred_channel not in ("email", "whatsapp", "sms"):
+        preferred_channel = "email"
 
     if not client_name or not email or not followup_type:
         return jsonify({"ok": False, "error": "missing_required"}), 400
 
     try:
+        # create draft using CURRENT model signature
         fid = add_followup_draft(
             user_id=user_id,
             client_name=client_name,
             email=email,
             followup_type=followup_type,
             description=description,
-            preferred_channel="email",
+            preferred_channel=preferred_channel,
         )
+
+        # save message override separately
+        if message_override:
+            update_followup_message_override(int(fid), user_id, message_override)
+
+        # save email format separately
+        update_followup_email_format(int(fid), user_id, email_format)
+
         return jsonify({"ok": True, "id": fid})
+
     except Exception as e:
         current_app.logger.exception("Draft create failed")
         return jsonify({"ok": False, "error": str(e)}), 400
-
 
 @app.post("/billing/portal")
 def billing_portal():
@@ -1552,7 +1687,8 @@ def send_email_smtp(to_email, subject, body_text, body_html=None):
         server.sendmail(user, to_email, msg.as_string())
 
 
-# def send_email_smtp(to_email: str, subject: str, body_text: str, body_html: str | None = None) -> None:
+
+
 #     host = os.getenv("SMTP_HOST", "smtp.gmail.com")
 #     port = int(os.getenv("SMTP_PORT", "465"))
 #     user = os.getenv("SMTP_USER")
@@ -1734,29 +1870,109 @@ def dashboard():
 # -----------------------------
 # FOLLOWUPS (EMAIL ONLY)
 # -----------------------------
+# @app.route("/add", methods=["GET", "POST"])
+# def add():
+#     user, block = require_user()
+#     if block:
+#         return block
+#     if request.method == "POST":
+#         due_date_raw = (request.form.get("due_date") or "").strip()
+
+#         # ✅ If no due_date yet, create a draft and send user to Schedule
+#         if not due_date_raw:
+#             try:
+#                 fid = add_followup_draft(
+#                     user_id=int(user["id"]),
+#                     client_name=(request.form.get("client_name") or "").strip(),
+#                     email=(request.form.get("email") or "").strip(),
+#                     followup_type=(request.form.get("followup_type") or "other").strip(),
+#                     description=(request.form.get("description") or "").strip(),
+#                     email_format = request.form.get("email_format"),
+#                     preferred_channel="email",
+#                 )
+
+#                 msg_override = (request.form.get("message_override") or "").strip()
+#                 if msg_override:
+#                     update_followup_message_override(int(fid), int(user["id"]), msg_override)
+
+#                 flash("Draft created. Now set the schedule ✅", "success")
+#                 return redirect(url_for("schedule", fid=fid))
+
+#             except Exception as e:
+#                 current_app.logger.exception("Draft create failed")
+#                 flash(f"Add failed: {str(e)}", "danger")
+#                 return render_template("add.html", f={})
+
+#         # ✅ Normal flow: due_date is present
+#         due_date, err = parse_yyyy_mm_dd(due_date_raw)
+#         if err:
+#             flash(err, "danger")
+#             return render_template("add.html", f={})
+
+#         try:
+#             fid = add_followup(
+#                 user_id=int(user["id"]),
+#                 client_name=(request.form.get("client_name") or "").strip(),
+#                 email=(request.form.get("email") or "").strip(),
+#                 followup_type=(request.form.get("followup_type") or "other").strip(),
+#                 description=(request.form.get("description") or "").strip(),
+#                 due_date=due_date,
+#                 recurring_interval=int(request.form.get("recurring_interval", 0) or 0),
+#             )
+
+#             msg_override = (request.form.get("message_override") or "").strip()
+#             if msg_override:
+#                 update_followup_message_override(int(fid), int(user["id"]), msg_override)
+
+#         except Exception as e:
+#             current_app.logger.exception("Add follow-up failed")
+#             flash(f"Add failed: {str(e)}", "danger")
+#             return render_template("add.html", f={})
+
+#         flash("Follow-up added ✅", "success")
+#         return redirect(url_for("dashboard"))
+
+#     return render_template("add.html", f={})
+
 @app.route("/add", methods=["GET", "POST"])
 def add():
     user, block = require_user()
     if block:
         return block
+
     if request.method == "POST":
         due_date_raw = (request.form.get("due_date") or "").strip()
 
-        # ✅ If no due_date yet, create a draft and send user to Schedule
+        client_name = (request.form.get("client_name") or "").strip()
+        email = (request.form.get("email") or "").strip()
+        followup_type = (request.form.get("followup_type") or "other").strip()
+        description = (request.form.get("description") or "").strip()
+        message_override = (request.form.get("message_override") or "").strip()
+        email_format = (request.form.get("email_format") or "html").strip().lower()
+        preferred_channel = (request.form.get("preferred_channel") or "email").strip().lower()
+
+        if email_format not in ("text", "html", "raw"):
+            email_format = "html"
+
+        if preferred_channel not in ("email", "whatsapp", "sms"):
+            preferred_channel = "email"
+
+        # draft flow
         if not due_date_raw:
             try:
                 fid = add_followup_draft(
                     user_id=int(user["id"]),
-                    client_name=(request.form.get("client_name") or "").strip(),
-                    email=(request.form.get("email") or "").strip(),
-                    followup_type=(request.form.get("followup_type") or "other").strip(),
-                    description=(request.form.get("description") or "").strip(),
-                    preferred_channel="email",
+                    client_name=client_name,
+                    email=email,
+                    followup_type=followup_type,
+                    description=description,
+                    preferred_channel=preferred_channel,
                 )
 
-                msg_override = (request.form.get("message_override") or "").strip()
-                if msg_override:
-                    update_followup_message_override(int(fid), int(user["id"]), msg_override)
+                if message_override:
+                    update_followup_message_override(int(fid), int(user["id"]), message_override)
+
+                update_followup_email_format(int(fid), int(user["id"]), email_format)
 
                 flash("Draft created. Now set the schedule ✅", "success")
                 return redirect(url_for("schedule", fid=fid))
@@ -1764,38 +1980,40 @@ def add():
             except Exception as e:
                 current_app.logger.exception("Draft create failed")
                 flash(f"Add failed: {str(e)}", "danger")
-                return render_template("add.html", f={})
+                return render_template("add.html", f=request.form)
 
-        # ✅ Normal flow: due_date is present
+        # normal scheduled follow-up flow
         due_date, err = parse_yyyy_mm_dd(due_date_raw)
         if err:
             flash(err, "danger")
-            return render_template("add.html", f={})
+            return render_template("add.html", f=request.form)
 
         try:
             fid = add_followup(
                 user_id=int(user["id"]),
-                client_name=(request.form.get("client_name") or "").strip(),
-                email=(request.form.get("email") or "").strip(),
-                followup_type=(request.form.get("followup_type") or "other").strip(),
-                description=(request.form.get("description") or "").strip(),
+                client_name=client_name,
+                email=email,
+                followup_type=followup_type,
+                description=description,
                 due_date=due_date,
                 recurring_interval=int(request.form.get("recurring_interval", 0) or 0),
             )
 
-            msg_override = (request.form.get("message_override") or "").strip()
-            if msg_override:
-                update_followup_message_override(int(fid), int(user["id"]), msg_override)
+            if message_override:
+                update_followup_message_override(int(fid), int(user["id"]), message_override)
+
+            update_followup_email_format(int(fid), int(user["id"]), email_format)
 
         except Exception as e:
             current_app.logger.exception("Add follow-up failed")
             flash(f"Add failed: {str(e)}", "danger")
-            return render_template("add.html", f={})
+            return render_template("add.html", f=request.form)
 
         flash("Follow-up added ✅", "success")
         return redirect(url_for("dashboard"))
 
     return render_template("add.html", f={})
+
 
 
 # @app.post("/schedule/<int:fid>/set")
@@ -2156,22 +2374,22 @@ def mark_replied(fid):
 # -----------------------------
 # PREVIEW + SEND (EMAIL ONLY)
 # -----------------------------
-@app.route("/preview/<int:fid>", methods=["GET"])
-def preview(fid):
-    user, block = require_user()
-    if block:
-        return block
+# @app.route("/preview/<int:fid>", methods=["GET"])
+# def preview(fid):
+#     user, block = require_user()
+#     if block:
+#         return block
 
-    followup = get_followup(fid, user["id"])
-    if not followup:
-        abort(404)
+#     followup = get_followup(fid, user["id"])
+#     if not followup:
+#         abort(404)
 
-    message = build_message_preview(followup, user["id"])
-    override = (followup.get("message_override") or "").strip()
-    if override:
-        message = override
+#     message = build_message_preview(followup, user["id"])
+#     override = (followup.get("message_override") or "").strip()
+#     if override:
+#         message = override
 
-    return render_template("preview.html", followup=followup, message=message)
+#     return render_template("preview.html", followup=followup, message=message)
 
 
 # @app.route("/send/<int:fid>", methods=["POST"])
