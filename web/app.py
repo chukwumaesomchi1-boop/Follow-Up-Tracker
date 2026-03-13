@@ -132,7 +132,7 @@ app.config["SESSION_COOKIE_SECURE"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "None"
 
 # socketio = SocketIO(app)
-# socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 from flask_socketio import join_room
 
 @socketio.on("join_import")
