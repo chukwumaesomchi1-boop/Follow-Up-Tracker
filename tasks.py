@@ -1,5 +1,5 @@
 from celery import Celery
-from chase import process_auto_chase
+from chaser import process_auto_chase
 
 celery = Celery("tasks", broker="redis://localhost:6379/0")
 

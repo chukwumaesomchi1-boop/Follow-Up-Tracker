@@ -2014,7 +2014,50 @@ def add():
 
     return render_template("add.html", f={})
 
+@app.post("/followups/draft/preview")
+def followups_draft_preview():
+    from flask import session, request, Response
 
+    user_id = int(session.get("user_id") or 0)
+    if not user_id:
+        return Response("<p>Not logged in.</p>", status=401, mimetype="text/html")
+
+    user = get_user_by_id(user_id)
+    if not user:
+        return Response("<p>User not found.</p>", status=404, mimetype="text/html")
+
+    payload = request.get_json(silent=True) or {}
+
+    followup = {
+        "client_name": (payload.get("client_name") or "").strip(),
+        "email": (payload.get("email") or "").strip(),
+        "followup_type": (payload.get("followup_type") or "general").strip(),
+        "description": (payload.get("description") or "").strip(),
+        "message_override": (payload.get("message_override") or "").strip(),
+        "email_format": (payload.get("email_format") or "html").strip().lower(),
+        "preferred_channel": (payload.get("preferred_channel") or "email").strip().lower(),
+    }
+
+    try:
+        if followup["email_format"] == "text":
+            body = format_plain_text_message(
+                followup["message_override"] or followup["description"]
+            )
+            html = f"""
+            <pre style="white-space:pre-wrap; font-family:monospace; padding:24px;">{body}</pre>
+            """
+        else:
+            html = build_branded_email_html(user, followup)
+
+        return Response(html, mimetype="text/html")
+
+    except Exception:
+        current_app.logger.exception("Draft preview render failed")
+        return Response(
+            "<p style='padding:20px; font-family:sans-serif; color:#b91c1c;'>Preview failed.</p>",
+            status=500,
+            mimetype="text/html",
+        )
 
 # @app.post("/schedule/<int:fid>/set")
 # def schedule_set(fid):
