@@ -400,7 +400,8 @@ def init_db() -> None:
         # ========= FOLLOWUPS UPGRADES =========
         followups_migrations = [
             ("message_override", "TEXT"),
-            ("preferred_channel", "TEXT DEFAULT 'whatsapp'"),
+            ("email_format", "TEXT DEFAULT 'html'"),
+            ("preferred_channel", "TEXT DEFAULT 'email'"),
             ("last_error", "TEXT"),
             ("last_attempt_at", "TEXT"),
             ("scheduled_at", "TEXT"),
