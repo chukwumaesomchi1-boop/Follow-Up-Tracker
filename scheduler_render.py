@@ -211,95 +211,10 @@ def _render_vars(src: str, data: Mapping[str, Any]) -> str:
 
 
 
-# import bleach
-# from bleach.css_sanitizer import CSSSanitizer
-
-# def _sanitize_html(html: str) -> str:
-#     allowed_tags = [
-#         "div",
-#         "p",
-#         "br",
-#         "b",
-#         "strong",
-#         "i",
-#         "em",
-#         "ul",
-#         "ol",
-#         "li",
-#         "span",
-#         "small",
-#         "h1",
-#         "h2",
-#         "h3",
-#         "h4",
-#         "a",
-#         "img",
-#         "hr",
-#         "table",
-#         "thead",
-#         "tbody",
-#         "tr",
-#         "th",
-#         "td",
-#     ]
-
-#     allowed_attrs = {
-#         "*": ["style"],
-#         "a": ["href", "target", "rel"],
-#         "img": ["src", "alt", "width", "height", "style"],
-#     }
-
-#     css_sanitizer = CSSSanitizer(
-#         allowed_css_properties=[
-#             "background",
-#             "background-color",
-#             "color",
-#             "font-family",
-#             "font-size",
-#             "font-weight",
-#             "line-height",
-#             "text-align",
-#             "padding",
-#             "padding-top",
-#             "padding-right",
-#             "padding-bottom",
-#             "padding-left",
-#             "margin",
-#             "margin-top",
-#             "margin-right",
-#             "margin-bottom",
-#             "margin-left",
-#             "border",
-#             "border-top",
-#             "border-right",
-#             "border-bottom",
-#             "border-left",
-#             "border-radius",
-#             "width",
-#             "max-width",
-#             "height",
-#             "display",
-#             "vertical-align",
-#             "letter-spacing",
-#             "text-transform",
-#             "box-shadow",
-#             "overflow",
-#             "text-decoration",
-#         ]
-#     )
-
-#     cleaned = bleach.clean(
-#         html,
-#         tags=allowed_tags,
-#         attributes=allowed_attrs,
-#         css_sanitizer=css_sanitizer,
-#         strip=True,
-#     )
-#     return cleaned
-
+import bleach
+from bleach.css_sanitizer import CSSSanitizer
 
 def _sanitize_html(html: str) -> str:
-    # tight allowlist: tweak if you need more tags
     allowed_tags = [
         "div",
         "p",
@@ -327,21 +242,106 @@ def _sanitize_html(html: str) -> str:
         "th",
         "td",
     ]
+
     allowed_attrs = {
         "*": ["style"],
         "a": ["href", "target", "rel"],
         "img": ["src", "alt", "width", "height", "style"],
     }
 
-    # allow inline styles but strip dangerous protocols/attrs
+    css_sanitizer = CSSSanitizer(
+        allowed_css_properties=[
+            "background",
+            "background-color",
+            "color",
+            "font-family",
+            "font-size",
+            "font-weight",
+            "line-height",
+            "text-align",
+            "padding",
+            "padding-top",
+            "padding-right",
+            "padding-bottom",
+            "padding-left",
+            "margin",
+            "margin-top",
+            "margin-right",
+            "margin-bottom",
+            "margin-left",
+            "border",
+            "border-top",
+            "border-right",
+            "border-bottom",
+            "border-left",
+            "border-radius",
+            "width",
+            "max-width",
+            "height",
+            "display",
+            "vertical-align",
+            "letter-spacing",
+            "text-transform",
+            "box-shadow",
+            "overflow",
+            "text-decoration",
+        ]
+    )
+
     cleaned = bleach.clean(
         html,
         tags=allowed_tags,
         attributes=allowed_attrs,
+        css_sanitizer=css_sanitizer,
         strip=True,
     )
-    cleaned = bleach.linkify(cleaned)
     return cleaned
+
+
+# def _sanitize_html(html: str) -> str:
+#     # tight allowlist: tweak if you need more tags
+#     allowed_tags = [
+#         "div",
+#         "p",
+#         "br",
+#         "b",
+#         "strong",
+#         "i",
+#         "em",
+#         "ul",
+#         "ol",
+#         "li",
+#         "span",
+#         "small",
+#         "h1",
+#         "h2",
+#         "h3",
+#         "h4",
+#         "a",
+#         "img",
+#         "hr",
+#         "table",
+#         "thead",
+#         "tbody",
+#         "tr",
+#         "th",
+#         "td",
+#     ]
+#     allowed_attrs = {
+#         "*": ["style"],
+#         "a": ["href", "target", "rel"],
+#         "img": ["src", "alt", "width", "height", "style"],
+#     }
+
+#     # allow inline styles but strip dangerous protocols/attrs
+#     cleaned = bleach.clean(
+#         html,
+#         tags=allowed_tags,
+#         attributes=allowed_attrs,
+#         strip=True,
+#     )
+#     cleaned = bleach.linkify(cleaned)
+#     return cleaned
 
 
 def _wrap_personal_message(inner_html: str) -> str:
