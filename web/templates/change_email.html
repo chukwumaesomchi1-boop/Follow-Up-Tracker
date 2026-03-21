@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Change Email</h2>
+<form method="POST">
+  <input name="email" type="email" value="{{ user.email }}" required>
+  <button type="submit">Update & Verify</button>
+</form>
+{% endblock %}
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .wrap { max-width:520px; margin:0 auto; }
+  .card {
+    background:#fff;
+    border:1px solid #e5e7eb;
+    border-radius:16px;
+    padding:18px;
+  }
+  h2 { margin:0; font-size:22px; font-weight:900; }
+  .sub {
+    margin-top:6px;
+    font-size:13px;
+    color:#64748b;
+    line-height:1.4;
+  }
+  label {
+    display:block;
+    font-size:13px;
+    font-weight:900;
+    margin-top:14px;
+  }
+  input {
+    width:100%;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid #d1d5db;
+    margin-top:6px;
+  }
+  .btn {
+    margin-top:16px;
+    width:100%;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid #111827;
+    background:#111827;
+    color:#fff;
+    font-weight:900;
+    cursor:pointer;
+  }
+  .note {
+    margin-top:12px;
+    font-size:12px;
+    color:#64748b;
+    line-height:1.4;
+  }
+</style>
+
+<div class="wrap">
+  <div class="card">
+    <h2>Change email address</h2>
+    <div class="sub">
+      Update the email linked to your account.
+      <br>
+      For security, we’ll verify the new email before using it.
+    </div>
+
+    <form method="POST">
+      <label>New email address</label>
+      <input
+        name="email"
+        type="email"
+        value="{{ user.email }}"
+        placeholder="you@company.com"
+        required
+      >
+
+      <button type="submit" class="btn">
+        Update & send verification
+      </button>
+    </form>
+
+    <div class="note">
+      • Your current email stays active until the new one is verified.<br>
+      • You’ll receive a 6-digit verification code.
+    </div>
+  </div>
+</div>
+
+{% endblock %}

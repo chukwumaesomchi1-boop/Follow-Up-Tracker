@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Analytics</h2>
+
+{% set labels = stats.sent_per_day | map(attribute=0) | list %}
+{% set values = stats.sent_per_day | map(attribute=1) | list %}
+
+{% if labels|length == 0 %}
+  <p style="opacity:.8;">
+    No sent follow-ups yet. Send a follow-up (manual or scheduled) and this chart will populate.
+  </p>
+{% endif %}
+
+<div style="display:flex; flex-wrap:wrap; gap:30px;">
+  <div style="width:420px; max-width:100%;">
+    <canvas id="sentChart" height="220"></canvas>
+  </div>
+
+  <div style="width:420px; max-width:100%;">
+    <canvas id="usersChart" height="220"></canvas>
+  </div>
+</div>
+
+<script>
+  // guard: Chart.js must be loaded
+  if (typeof Chart === "undefined") {
+    console.error("Chart.js not loaded. Add it in base.html.");
+  } else {
+    // Follow-ups sent per day
+    const sentLabels = {{ labels | tojson }};
+    const sentValues = {{ values | tojson }};
+
+    const sentEl = document.getElementById('sentChart');
+    if (sentEl && sentLabels.length) {
+      new Chart(sentEl.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: sentLabels,
+          datasets: [{
+            label: 'Follow-ups Sent',
+            data: sentValues
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: true },
+            tooltip: { mode: 'index', intersect: false }
+          },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    // Users: Paid vs Trial
+    const usersEl = document.getElementById('usersChart');
+    if (usersEl) {
+      new Chart(usersEl.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Paid', 'Trial'],
+          datasets: [{
+            data: [{{ stats.paid }}, {{ stats.trial }}]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: { enabled: true }
+          }
+        }
+      });
+    }
+  }
+</script>
+{% endblock %}

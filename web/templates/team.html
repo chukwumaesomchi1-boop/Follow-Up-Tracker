@@ -1,0 +1,11 @@
+<h2>Team Members</h2>
+<table>
+<tr><th>Name</th><th>Email</th><th>Role</th></tr>
+{% for m in members %}
+<tr>
+<td>{{ m.name }}</td>
+<td>{{ m.email }}</td>
+<td>{{ m.role }}</td>
+</tr>
+{% endfor %}
+</table>

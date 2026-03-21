@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  /* --- Typography & Layout --- */
+  .page-header { margin-bottom: 24px; }
+  .page-title { font-size: 26px; font-weight: 800; color: #0f172a; margin: 0 0 6px; display: flex; align-items: center; gap: 12px; }
+  .page-sub { color: #64748b; font-size: 15px; margin: 0; line-height: 1.6; max-width: 600px; }
+
+  .card {
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 32px;
+    background: #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    margin-bottom: 24px;
+  }
+
+  .section-title { font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
+
+  /* --- Enhanced File Upload --- */
+  .file-drop-zone {
+    position: relative;
+    border: 2px dashed #cbd5e1;
+    border-radius: 16px;
+    background: #f8fafc;
+    padding: 40px 20px;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  .file-drop-zone:hover { border-color: #6366f1; background: #f5f7ff; }
+  .file-drop-zone input[type="file"] {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .upload-icon { font-size: 32px; margin-bottom: 12px; display: block; }
+
+  /* --- Buttons --- */
+  .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 24px; }
+  .btn {
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .btn-primary { background: #0f172a; color: white; border: none; }
+  .btn-primary:hover { background: #1e293b; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15,23,42,0.15); }
+  .btn-soft { background: #f1f5f9; color: #475569; }
+  .btn-soft:hover { background: #e2e8f0; }
+
+  /* --- Informational Sections --- */
+  .info-box {
+    background: #eef2ff;
+    border: 1px solid #e0e7ff;
+    padding: 20px;
+    border-radius: 16px;
+    margin-top: 24px;
+  }
+  .info-box ul { margin: 12px 0 0; padding-left: 20px; color: #4338ca; }
+  .info-box li { margin-bottom: 8px; font-size: 14px; line-height: 1.5; }
+
+  .step-card {
+    background: #ffffff;
+    border-left: 4px solid #6366f1;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .step-number {
+    background: #6366f1;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  code { background: #ffffff; border: 1px solid #e0e7ff; padding: 2px 6px; border-radius: 6px; color: #4338ca; font-weight: 600; }
+</style>
+
+<div class="page-header">
+  <h1 class="page-title">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+    Import Follow-ups
+  </h1>
+  <p class="page-sub">
+    Upload your client list via CSV. Imported records are saved as <b>Drafts</b>—nothing is sent until you manually schedule them.
+  </p>
+</div>
+
+<div class="card">
+  <div class="section-title">Step 1: Choose CSV File</div>
+  
+  <form method="post" enctype="multipart/form-data" id="importForm">
+    <div class="file-drop-zone" id="dropZone">
+      <span class="upload-icon">📄</span>
+      <div style="font-weight: 700; color: #0f172a; margin-bottom: 4px;" id="fileNameDisplay">Click or drag to upload</div>
+      <div style="font-size: 13px; color: #64748b;">Supports .csv files up to 5MB</div>
+      <input type="file" name="file" id="fileInput" accept=".csv,text/csv" required>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" type="submit" id="btnImport">
+        <span>🚀 Start Import</span>
+      </button>
+      <a class="btn btn-soft" href="{{ url_for('dashboard') }}">Cancel</a>
+    </div>
+
+    <div class="info-box">
+      <div style="font-weight: 800; color: #312e81; font-size: 13px; text-transform: uppercase;">CSV Column Guide</div>
+      <ul>
+        <li><b>Required:</b> <code>email</code></li>
+        <li><b>Recommended:</b> <code>client_name</code>, <code>followup_type</code>, <code>description</code></li>
+        <li><b>Power Tip:</b> Use <code>message_override</code> to set a custom email body for specific rows.</li>
+      </ul>
+    </div>
+  </form>
+</div>
+
+<div class="card step-card">
+  <div class="step-number">2</div>
+  <div style="flex-grow: 1;">
+    <div style="font-weight: 700; color: #0f172a;">What happens next?</div>
+    <div style="font-size: 14px; color: #64748b; margin-top: 2px;">After importing, head to the <b>Scheduling</b> tab to set your send times.</div>
+  </div>
+  <a class="btn btn-soft" href="{{ url_for('schedule') }}" style="border-style: dashed; background: transparent;">
+    🗓 Go to Schedule
+  </a>
+</div>
+
+<script>
+  const form = document.getElementById("importForm");
+  const btn = document.getElementById("btnImport");
+  const fileInput = document.getElementById("fileInput");
+  const fileNameDisplay = document.getElementById("fileNameDisplay");
+  const dropZone = document.getElementById("dropZone");
+
+  // Visual feedback for file selection
+  fileInput.addEventListener("change", (e) => {
+    if (fileInput.files.length > 0) {
+      const name = fileInput.files[0].name;
+      fileNameDisplay.textContent = `Selected: ${name}`;
+      dropZone.style.borderColor = "#6366f1";
+      dropZone.style.background = "#f5f7ff";
+    }
+  });
+
+  // Prevent double submission
+  if (form && btn) {
+    form.addEventListener("submit", () => {
+      btn.disabled = true;
+      btn.style.opacity = "0.7";
+      btn.querySelector('span').textContent = "Processing File...";
+    });
+  }
+</script>
+
+{% endblock %}
