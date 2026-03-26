@@ -86,37 +86,40 @@
     text-align: center;
   }
 
-  .mock-email-wrap {
-    background-color: #f8fafc;
-    padding: 22px 10px;
-    border-radius: 18px;
+  .mock-email {
+    background: #fff;
     border: 1px solid var(--border-color);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   }
 
-  .mock-email {
-    width: 100%;
-    max-width: 600px;
-    margin: 0 auto;
-    background-color: #ffffff;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+  .email-header {
+    padding: 20px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
   .email-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    object-fit: contain;
+    background: #f8fafc;
     display: block;
-    max-width: 140px;
-    height: auto;
-    margin: 0 auto;
-    outline: none;
-    border: none;
-    text-decoration: none;
+    flex-shrink: 0;
   }
 
   .email-logo.hidden {
-    display: none;
+    opacity: 0;
+  }
+
+  .email-body {
+    padding: 28px 24px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #334155;
   }
 
   .email-btn {
@@ -128,29 +131,23 @@
     font-weight: 600;
     font-size: 13px;
     margin-top: 16px;
-    background: var(--accent-default);
   }
 
-  .doc-note {
-    background: #fffbeb;
-    border: 1px solid #fef3c7;
-    border-radius: 12px;
-    padding: 16px;
-    margin-top: 24px;
+  .brand-details-box {
+    margin-top: 22px;
+    padding: 14px 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
   }
 
-  .doc-note h4 {
-    font-size: 13px;
-    font-weight: 800;
-    color: #92400e;
-    margin-bottom: 4px;
-  }
-
-  .doc-note p {
+  .email-footer {
+    padding: 20px 24px;
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
     font-size: 12px;
-    color: #b45309;
-    line-height: 1.5;
-    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.6;
   }
 
   .btn {
@@ -188,11 +185,33 @@
     background: #f1f5f9;
     color: var(--text-dark);
   }
+
+  .doc-note {
+    background: #fffbeb;
+    border: 1px solid #fef3c7;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 24px;
+  }
+
+  .doc-note h4 {
+    font-size: 13px;
+    font-weight: 800;
+    color: #92400e;
+    margin-bottom: 4px;
+  }
+
+  .doc-note p {
+    font-size: 12px;
+    color: #b45309;
+    line-height: 1.5;
+    margin: 0;
+  }
 </style>
 
 <div class="page-header">
   <h1 class="page-title">🎨 Brand Studio</h1>
-  <p class="page-sub">Define how your automated outreach looks to your clients. These variables are injected into your email templates.</p>
+  <p class="page-sub">Define how your automated outreach looks to your clients. This mock preview highlights your core brand details.</p>
 </div>
 
 <div class="brand-grid">
@@ -249,8 +268,8 @@
       </div>
 
       <div class="doc-note">
-        <h4>System Logic</h4>
-        <p>If you leave the footer blank but provide a support email, we'll automatically add a "Need help? Reach out at..." line.</p>
+        <h4>Mock Preview Logic</h4>
+        <p>This preview is a simple mock email designed to show your saved company name, support email, logo, brand color, and footer.</p>
       </div>
 
       <div style="display: flex; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border-color);">
@@ -262,98 +281,66 @@
   </div>
 
   <div class="preview-container">
-    <div class="preview-label">LIVE INBOX PREVIEW</div>
+    <div class="preview-label">LIVE BRAND PREVIEW</div>
 
-    <div class="mock-email-wrap">
-      <div class="mock-email">
-        <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#ffffff;">
-          <tr>
-            <td style="padding:32px 32px 24px 32px; text-align:center;">
-              <img
-                class="email-logo {% if not branding.brand_logo %}hidden{% endif %}"
-                id="pvLogo"
-                src="{{ branding.brand_logo or '' }}"
-                alt="Logo preview"
-                onerror="this.classList.add('hidden')"
-              >
-            </td>
-          </tr>
+    <div class="mock-email">
+      <div class="email-header">
+        <img
+          class="email-logo {% if not branding.brand_logo %}hidden{% endif %}"
+          id="pvLogo"
+          src="{{ branding.brand_logo or '' }}"
+          alt="Logo preview"
+          onerror="this.classList.add('hidden')"
+        >
+        <div>
+          <div style="font-size: 15px; font-weight: 800; color: #0f172a;" id="pvCompany">
+            {{ branding.company_name or "Your Company" }}
+          </div>
+          <div style="font-size: 12px; color: #64748b;" id="pvSupport">
+            {{ branding.support_email or "support@company.com" }}
+          </div>
+        </div>
+      </div>
 
-          <tr>
-            <td style="padding:0 40px 40px 40px;">
-              <h2 style="margin:0 0 16px 0; color:#1e293b; font-size:20px; font-weight:700; line-height:1.4;">
-                Hi Nelly,
-              </h2>
+      <div class="email-body">
+        <p style="margin: 0; font-size: 15px; font-weight: 700; color: #0f172a;">
+          Hello Client,
+        </p>
 
-              <p style="margin:0 0 24px 0; color:#475569; font-size:16px; line-height:1.6;">
-                This is a friendly reminder regarding your upcoming schedule. Please see the details of your <strong>proposal</strong> below:
-              </p>
+        <p style="margin: 12px 0 0; font-size: 14px; line-height: 1.6;">
+          This is a sample preview showing how your brand details will appear in outgoing emails.
+        </p>
 
-              <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9; border-radius:8px; margin-bottom:24px;">
-                <tr>
-                  <td style="padding:20px;">
-                    <table width="100%" border="0" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.05em; font-weight:600; padding-bottom:4px;">
-                          Event Type
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="color:#0f172a; font-size:16px; font-weight:600; padding-bottom:16px;">
-                          Proposal
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.05em; font-weight:600; padding-bottom:4px;">
-                          Due Date
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="color:#0f172a; font-size:16px; font-weight:600;">
-                          2026-03-25
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
+        <div style="margin-top: 18px;">
+          <a href="#" class="email-btn" id="pvBtn">Brand Action Button</a>
+        </div>
 
-              <div style="margin:0 0 24px 0;">
-                <a href="#" class="email-btn" id="pvBtn">View Proposal</a>
-              </div>
+        <div class="brand-details-box">
+          <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em;">
+            Brand Details
+          </div>
+          <div style="margin-top: 10px; font-size: 13px; color: #334155; line-height: 1.7;">
+            <div><strong>Company:</strong> <span id="pvCompanyInline">{{ branding.company_name or "Your Company" }}</span></div>
+            <div><strong>Support:</strong> <span id="pvSupportInline">{{ branding.support_email or "support@company.com" }}</span></div>
+            <div><strong>Color:</strong> <span id="pvColorText">{{ branding.color or "#6366f1" }}</span></div>
+          </div>
+        </div>
+      </div>
 
-              <p style="margin:0; color:#475569; font-size:15px; line-height:1.6;">
-                Best regards,<br>
-                <span style="color:#1e293b; font-weight:600;" id="pvSender">{{ branding.company_name or "Your Company" }}</span>
-              </p>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:24px 40px; background-color:#f8fafc; border-top:1px solid #e2e8f0; text-align:center;">
-              <p style="margin:0; font-size:12px; color:#94a3b8; line-height:1.5;">
-                &copy; <span id="pvCompany">{{ branding.company_name or "Your Company" }}</span><br>
-                This is an automated notification. Please do not reply directly to this email.
-              </p>
-
-              <p style="margin:10px 0 0 0; font-size:12px; color:#94a3b8; line-height:1.5;" id="pvFooter">
-                {% if branding.footer %}
-                  {{ branding.footer }}
-                {% elif branding.support_email %}
-                  Need help? Reach out at <strong id="pvSupport">{{ branding.support_email }}</strong>
-                {% else %}
-                  <span id="pvSupport">support@company.com</span>
-                {% endif %}
-              </p>
-            </td>
-          </tr>
-        </table>
+      <div class="email-footer" id="pvFooter">
+        {% if branding.footer %}
+          {{ branding.footer }}
+        {% elif branding.support_email %}
+          Need help? Reach out at <strong>{{ branding.support_email }}</strong>
+        {% else %}
+          Your custom footer will appear here.
+        {% endif %}
       </div>
     </div>
 
     <div style="margin-top: 20px; text-align: center;">
       <p style="font-size: 12px; color: var(--text-muted);">
-        This preview matches your default scheduler template style.
+        This is a mock email preview showing your core brand details.
       </p>
     </div>
   </div>
@@ -368,10 +355,13 @@
   const colorInput = document.getElementById("color");
 
   const pvCompany = document.getElementById("pvCompany");
-  const pvSender = document.getElementById("pvSender");
+  const pvCompanyInline = document.getElementById("pvCompanyInline");
+  const pvSupport = document.getElementById("pvSupport");
+  const pvSupportInline = document.getElementById("pvSupportInline");
   const pvLogo = document.getElementById("pvLogo");
   const pvBtn = document.getElementById("pvBtn");
   const pvFooter = document.getElementById("pvFooter");
+  const pvColorText = document.getElementById("pvColorText");
   const colorSwatch = document.getElementById("colorSwatch");
 
   let selectedLogoPreviewUrl = null;
@@ -389,17 +379,22 @@
     const hex = validHex(color) ? color : "#6366f1";
 
     if (pvCompany) pvCompany.textContent = company || "Your Company";
-    if (pvSender) pvSender.textContent = company || "Your Company";
+    if (pvCompanyInline) pvCompanyInline.textContent = company || "Your Company";
+
+    if (pvSupport) pvSupport.textContent = support || "support@company.com";
+    if (pvSupportInline) pvSupportInline.textContent = support || "support@company.com";
+
     if (pvBtn) pvBtn.style.backgroundColor = hex;
+    if (pvColorText) pvColorText.textContent = color || "#6366f1";
     if (colorSwatch) colorSwatch.style.backgroundColor = hex;
 
     if (pvFooter) {
       if (footer) {
-        pvFooter.innerHTML = footer;
+        pvFooter.textContent = footer;
       } else if (support) {
-        pvFooter.innerHTML = `Need help? Reach out at <strong id="pvSupport">${support}</strong>`;
+        pvFooter.innerHTML = `Need help? Reach out at <strong>${support}</strong>`;
       } else {
-        pvFooter.innerHTML = `<span id="pvSupport">support@company.com</span>`;
+        pvFooter.textContent = "Your custom footer will appear here.";
       }
     }
 
