@@ -9,7 +9,19 @@
     --ide-border: #27272a;
     --ide-text: #e4e4e7;
     --accent: {{ branding.color or '#6366f1' }};
-    --accent-soft: rgba(99, 102, 241, 0.1);
+    --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .preview-wrapper {
@@ -28,6 +40,8 @@
     border-radius: 12px;
     border: 1px solid var(--border-strong);
     box-shadow: var(--shadow-sm);
+    gap: 16px;
+    flex-wrap: wrap;
   }
 
   .nav-info h2 {
@@ -38,13 +52,30 @@
     margin: 0;
   }
 
-  .nav-pills { display: flex; gap: 8px; margin-top: 4px; }
-  .pill {
-    font-size: 11px; font-weight: 700; padding: 2px 10px;
-    border-radius: 6px; text-transform: uppercase;
+  .nav-pills {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+    flex-wrap: wrap;
   }
-  .pill-id { background: var(--border); color: var(--text-muted); }
-  .pill-status { background: var(--accent-soft); color: var(--accent); }
+
+  .pill {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 6px;
+    text-transform: uppercase;
+  }
+
+  .pill-id {
+    background: var(--border);
+    color: var(--text-muted);
+  }
+
+  .pill-status {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
 
   .editor-grid {
     display: grid;
@@ -74,30 +105,57 @@
     background: #fafafa;
   }
 
-  .meta-body { padding: 20px; }
+  .meta-body {
+    padding: 20px;
+  }
 
   .form-label {
-    display: block; font-size: 12px; font-weight: 700;
-    color: var(--text-muted); text-transform: uppercase;
-    margin-bottom: 6px; letter-spacing: 0.02em;
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
   }
 
   .input-field {
-    width: 100%; padding: 10px 14px; border-radius: 10px;
-    border: 1px solid var(--border-strong); font-size: 14px;
-    transition: 0.2s; margin-bottom: 16px; background: #fff;
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border-strong);
+    font-size: 14px;
+    transition: 0.2s;
+    margin-bottom: 16px;
+    background: #fff;
+    box-sizing: border-box;
   }
-  .input-field:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); outline: none; }
-  .input-readonly { background: #f9fafb; color: #94a3b8; border-style: dashed; cursor: not-allowed; }
 
-  .composer-pane { display: flex; flex-direction: column; gap: 24px; }
+  .input-field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-soft);
+    outline: none;
+  }
+
+  .input-readonly {
+    background: #f9fafb;
+    color: #94a3b8;
+    border-style: dashed;
+    cursor: not-allowed;
+  }
+
+  .composer-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
 
   .ide-container {
     background: var(--ide-bg);
     border-radius: 16px;
     border: 1px solid var(--ide-border);
     overflow: hidden;
-    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
   }
 
   .ide-toolbar {
@@ -107,6 +165,8 @@
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--ide-border);
+    gap: 16px;
+    flex-wrap: wrap;
   }
 
   .segmented-control {
@@ -115,40 +175,82 @@
     border-radius: 8px;
     display: flex;
     gap: 2px;
+    flex-wrap: wrap;
   }
+
+  .segment {
+    position: relative;
+  }
+
   .segment label {
-    padding: 6px 14px; font-size: 11px; font-weight: 600;
-    color: #a1a1aa; cursor: pointer; border-radius: 6px; transition: 0.2s;
+    display: inline-block;
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #a1a1aa;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: 0.2s;
+    user-select: none;
   }
-  .segment input:checked + label { background: #3f3f46; color: #fff; }
+
+  .segment input:checked + label {
+    background: #3f3f46;
+    color: #fff;
+  }
 
   .var-strip {
     background: #18181b;
     padding: 8px 20px;
     border-bottom: 1px solid var(--ide-border);
-    display: flex; gap: 8px; align-items: center;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
   }
+
   .var-chip {
-    background: #27272a; color: var(--accent);
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
-    padding: 4px 8px; border-radius: 4px; cursor: pointer;
-    border: 1px solid #3f3f46; transition: 0.2s;
+    background: #27272a;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid #3f3f46;
+    transition: 0.2s;
   }
-  .var-chip:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .var-chip:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
 
   .code-area {
-    width: 100%; min-height: 380px;
-    background: transparent; color: #e4e4e7;
+    width: 100%;
+    min-height: 380px;
+    background: transparent;
+    color: #e4e4e7;
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    font-size: 14px; line-height: 1.6; padding: 24px;
-    border: none; resize: vertical; outline: none;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 24px;
+    border: none;
+    resize: vertical;
+    outline: none;
+    box-sizing: border-box;
   }
 
   .ide-footer {
     padding: 16px 20px;
     background: var(--ide-header);
     border-top: 1px solid var(--ide-border);
-    display: flex; justify-content: space-between;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
   }
 
   .viewport-container {
@@ -160,12 +262,23 @@
   }
 
   .viewport-header {
-    padding: 12px 20px; background: #fafafa;
+    padding: 12px 20px;
+    background: #fafafa;
     border-bottom: 1px solid var(--border);
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
   }
 
-  .preview-frame { width: 100%; height: 500px; border: none; }
+  .preview-frame {
+    width: 100%;
+    height: 500px;
+    border: none;
+    background: #fff;
+  }
+
   .preview-text {
     min-height: 500px;
     padding: 24px;
@@ -175,28 +288,64 @@
     line-height: 1.7;
     background: #fff;
     color: #1f2937;
+    box-sizing: border-box;
   }
 
   .btn-action {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 10px 18px; border-radius: 10px; font-size: 14px;
-    font-weight: 600; cursor: pointer; border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
     transition: 0.2s;
+    text-decoration: none;
+    white-space: nowrap;
   }
-  .btn-save { background: var(--accent); color: white; }
-  .btn-send { background: #fff; border-color: #27272a; color: #fff; background: #27272a; }
-  .btn-reset { color: #f87171; background: transparent; font-size: 12px; }
-  .btn-reset:hover { background: rgba(248, 113, 113, 0.1); }
+
+  .btn-action:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  .btn-save {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-send {
+    background: #27272a;
+    border-color: #27272a;
+    color: #fff;
+  }
+
+  .btn-reset {
+    color: #f87171;
+    background: transparent;
+    font-size: 12px;
+  }
+
+  .btn-reset:hover {
+    background: rgba(248, 113, 113, 0.1);
+  }
 
   @media (max-width: 1100px) {
-    .editor-grid { grid-template-columns: 1fr; }
-    .meta-card { position: static; }
+    .editor-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .meta-card {
+      position: static;
+    }
   }
 </style>
 
 <div class="preview-wrapper">
   <form method="POST" action="{{ url_for('preview_edit_all', fid=followup.id) }}" id="previewForm">
-
     <header class="editor-nav">
       <div class="nav-info">
         <div class="nav-pills">
@@ -205,74 +354,97 @@
         </div>
         <h2>Review Campaign Content</h2>
       </div>
-      <div style="display: flex; gap: 12px;">
-        <a href="{{ url_for('dashboard') }}" class="btn-action" style="color: var(--text-muted); text-decoration: none;">Cancel</a>
-        <button type="submit" class="btn-action btn-save">Save & Close</button>
+
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <a href="{{ url_for('dashboard') }}" class="btn-action" style="color: var(--text-muted);">
+          Cancel
+        </a>
+        <button type="submit" class="btn-action btn-save">
+          Save &amp; Close
+        </button>
       </div>
     </header>
 
     <div class="editor-grid">
       <aside class="meta-card">
         <div class="meta-header">
-          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+          </svg>
           Recipient Details
         </div>
+
         <div class="meta-body">
-          <label class="form-label">Full Name</label>
+          <label class="form-label" for="client_name">Full Name</label>
           <input type="text" name="client_name" id="client_name" class="input-field" value="{{ followup.client_name or '' }}">
 
-          <label class="form-label">Email Address</label>
+          <label class="form-label" for="email">Email Address</label>
           <input type="email" name="email" id="email" class="input-field" value="{{ followup.email or '' }}">
 
-          <label class="form-label">Follow-Up Type</label>
+          <label class="form-label" for="followup_type">Follow-Up Type</label>
           <input type="text" name="followup_type" id="followup_type" class="input-field" value="{{ followup.followup_type or 'general' }}">
 
           <label class="form-label">Next Scheduled Date</label>
           <input type="text" class="input-field input-readonly" readonly value="{{ followup.next_send_at or 'Manual Only' }}">
 
-          <label class="form-label">Internal Briefing</label>
-          <textarea name="description" id="description" class="input-field" rows="4" style="resize: none;">{{ followup.description or '' }}</textarea>
+          <label class="form-label" for="description">Internal Briefing</label>
+          <textarea name="description" id="description" class="input-field" rows="4" style="resize: vertical;">{{ followup.description or '' }}</textarea>
         </div>
       </aside>
 
       <div class="composer-pane">
-
         <div class="ide-container">
           <div class="ide-toolbar">
-            <div style="color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-              <span style="color: #10b981;">●</span> Message Composer
+            <div style="color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; gap:8px;">
+              <span style="color:#10b981;">●</span> Message Composer
             </div>
 
-            <div class="segmented-control">
+            <div class="segmented-control" role="radiogroup" aria-label="Email format">
               <div class="segment">
-                <input type="radio" name="email_format" id="f_text" value="text" hidden {% if followup.email_format == 'text' %}checked{% endif %}>
+                <input class="sr-only" type="radio" name="email_format" id="f_text" value="text"
+                  {% if followup.email_format == 'text' %}checked{% endif %}>
                 <label for="f_text">Plain Text</label>
               </div>
+
               <div class="segment">
-                <input type="radio" name="email_format" id="f_html" value="html" hidden {% if followup.email_format == 'html' or not followup.email_format %}checked{% endif %}>
+                <input class="sr-only" type="radio" name="email_format" id="f_html" value="html"
+                  {% if followup.email_format == 'html' or not followup.email_format %}checked{% endif %}>
                 <label for="f_html">Branded Template</label>
               </div>
+
               <div class="segment">
-                <input type="radio" name="email_format" id="f_raw" value="raw" hidden {% if followup.email_format == 'raw' %}checked{% endif %}>
+                <input class="sr-only" type="radio" name="email_format" id="f_raw" value="raw"
+                  {% if followup.email_format == 'raw' %}checked{% endif %}>
                 <label for="f_raw">Raw HTML</label>
               </div>
             </div>
           </div>
 
           <div class="var-strip">
-            <span class="var-chip" onclick="insertVar('{{name}}')">{% raw %}{{name}}{% endraw %}</span>
-            <span class="var-chip" onclick="insertVar('{{company_name}}')">{% raw %}{{company_name}}{% endraw %}</span>
-            <span class="var-chip" onclick="insertVar('{{type}}')">{% raw %}{{type}}{% endraw %}</span>
+            <button type="button" class="var-chip" data-var="{% raw %}{{name}}{% endraw %}">{% raw %}{{name}}{% endraw %}</button>
+            <button type="button" class="var-chip" data-var="{% raw %}{{company_name}}{% endraw %}">{% raw %}{{company_name}}{% endraw %}</button>
+            <button type="button" class="var-chip" data-var="{% raw %}{{type}}{% endraw %}">{% raw %}{{type}}{% endraw %}</button>
+            <button type="button" class="var-chip" data-var="{% raw %}{{sender}}{% endraw %}">{% raw %}{{sender}}{% endraw %}</button>
+            <button type="button" class="var-chip" data-var="{% raw %}{{support_email}}{% endraw %}">{% raw %}{{support_email}}{% endraw %}</button>
+            <button type="button" class="var-chip" data-var="{% raw %}{{due_date}}{% endraw %}">{% raw %}{{due_date}}{% endraw %}</button>
           </div>
 
-          <textarea class="code-area" name="message_override" id="message_override">{{ followup.message_override or '' }}</textarea>
+          <textarea class="code-area" name="message_override" id="message_override" spellcheck="false">{{ followup.message_override or '' }}</textarea>
 
           <div class="ide-footer">
-            <button type="submit" formaction="{{ url_for('preview_reset', fid=followup.id) }}" class="btn-action btn-reset" onclick="return confirm('Erase custom draft and use global template?')">
+            <button
+              type="submit"
+              formaction="{{ url_for('preview_reset', fid=followup.id) }}"
+              class="btn-action btn-reset"
+              onclick="return confirm('Erase custom draft and use global template?');"
+            >
               Reset to Global Template
             </button>
+
             <button type="submit" formaction="{{ url_for('send_followup', fid=followup.id) }}" class="btn-action btn-send">
-              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
               Send Now
             </button>
           </div>
@@ -280,11 +452,19 @@
 
         <div class="viewport-container">
           <div class="viewport-header">
-            <div style="font-size: 12px; font-weight: 800; color: var(--text-main);">LIVE BRANDED VIEWPORT</div>
-            <div id="previewStatus" style="font-size: 11px; font-weight: 700; color: var(--accent);">READY</div>
+            <div style="font-size:12px; font-weight:800; color:var(--text-main);">LIVE PREVIEW</div>
+            <div id="previewStatus" style="font-size:11px; font-weight:700; color:var(--accent);">READY</div>
           </div>
-          <div id="previewTextBox" class="preview-text" style="display:none;"></div>
-          <iframe id="livePreviewFrame" class="preview-frame" sandbox="" srcdoc="<p style='padding:20px; font-family:sans-serif;'>Loading preview...</p>"></iframe>
+
+          <div id="previewTextBox" class="preview-text" hidden></div>
+
+          <iframe
+            id="livePreviewFrame"
+            class="preview-frame"
+            sandbox=""
+            srcdoc="<p style='padding:20px; font-family:sans-serif;'>Loading preview...</p>"
+            title="Live email preview"
+          ></iframe>
         </div>
       </div>
     </div>
@@ -292,90 +472,189 @@
 </div>
 
 <script>
-  const editor = document.getElementById('message_override');
-  const frame = document.getElementById('livePreviewFrame');
-  const previewTextBox = document.getElementById('previewTextBox');
-  const statusEl = document.getElementById('previewStatus');
+  (() => {
+    const editor = document.getElementById("message_override");
+    const frame = document.getElementById("livePreviewFrame");
+    const previewTextBox = document.getElementById("previewTextBox");
+    const statusEl = document.getElementById("previewStatus");
 
-  function insertVar(v) {
-    const start = editor.selectionStart;
-    const end = editor.selectionEnd;
-    editor.value = editor.value.substring(0, start) + v + editor.value.substring(end);
-    editor.focus();
-    refreshPreview();
-  }
+    const clientNameEl = document.getElementById("client_name");
+    const emailEl = document.getElementById("email");
+    const followupTypeEl = document.getElementById("followup_type");
+    const descriptionEl = document.getElementById("description");
 
-  function formatPlainTextMessage(rawMessage) {
-    if (!rawMessage) return "";
-    const lines = rawMessage.split(/\r?\n/);
-    const formatted = [];
+    let refreshTimer = null;
+    let currentController = null;
+    let latestRequestId = 0;
 
-    for (const line of lines) {
-      const stripped = line.trim();
-      if (!stripped) {
-        formatted.push("");
-      } else if (stripped.startsWith("-") || stripped.startsWith("*")) {
-        formatted.push("• " + stripped.slice(1).trim());
-      } else {
-        formatted.push(stripped);
-      }
+    function getSelectedEmailFormat() {
+      const selected = document.querySelector('input[name="email_format"]:checked');
+      return selected ? selected.value : "html";
     }
 
-    return formatted.join("\n");
-  }
+    function setStatus(text) {
+      statusEl.textContent = text;
+    }
 
-  let refreshTimer;
-  function scheduleRefresh() {
-    clearTimeout(refreshTimer);
-    refreshTimer = setTimeout(refreshPreview, 350);
-  }
+    function showTextPreview(text) {
+      frame.hidden = true;
+      previewTextBox.hidden = false;
+      previewTextBox.textContent = text;
+    }
 
-  async function refreshPreview() {
-    statusEl.textContent = "SYNCHRONIZING...";
-
-    const emailFormat = document.querySelector('input[name="email_format"]:checked').value;
-    const payload = {
-      client_name: document.getElementById('client_name').value,
-      email: document.getElementById('email').value,
-      followup_type: document.getElementById('followup_type').value,
-      description: document.getElementById('description').value,
-      email_format: emailFormat,
-      message_override: editor.value,
-      preferred_channel: "email"
-    };
-
-    try {
-      if (emailFormat === "text") {
-        frame.style.display = "none";
-        previewTextBox.style.display = "block";
-        previewTextBox.textContent = formatPlainTextMessage(
-          (payload.message_override || "").trim() || (payload.description || "").trim()
-        );
-        statusEl.textContent = "LIVE";
-        return;
-      }
-
-      previewTextBox.style.display = "none";
-      frame.style.display = "block";
-
-      const res = await fetch("{{ url_for('preview_render_email', fid=followup.id) }}", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(payload)
-      });
-
-      const html = await res.text();
+    function showHtmlPreview(html) {
+      previewTextBox.hidden = true;
+      frame.hidden = false;
       frame.srcdoc = html;
-      statusEl.textContent = "LIVE";
-    } catch (e) {
-      statusEl.textContent = "SYNC ERROR";
     }
-  }
 
-  editor.addEventListener('input', scheduleRefresh);
-  document.querySelectorAll('.input-field').forEach(el => el.addEventListener('input', scheduleRefresh));
-  document.querySelectorAll('input[name="email_format"]').forEach(el => el.addEventListener('change', scheduleRefresh));
+    function insertVar(token) {
+      const start = editor.selectionStart ?? editor.value.length;
+      const end = editor.selectionEnd ?? editor.value.length;
+      const before = editor.value.slice(0, start);
+      const after = editor.value.slice(end);
 
-  window.addEventListener('load', refreshPreview);
+      editor.value = before + token + after;
+      editor.focus();
+
+      const newPos = start + token.length;
+      editor.setSelectionRange(newPos, newPos);
+
+      scheduleRefresh();
+    }
+
+    function normalizePlainText(rawMessage) {
+      if (!rawMessage) return "";
+
+      const lines = String(rawMessage).replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+      const formatted = [];
+
+      for (const line of lines) {
+        const rightTrimmed = line.replace(/\s+$/, "");
+        const stripped = rightTrimmed.trim();
+
+        if (!stripped) {
+          formatted.push("");
+          continue;
+        }
+
+        if (stripped.startsWith("-") || stripped.startsWith("*")) {
+          formatted.push("• " + stripped.slice(1).trim());
+          continue;
+        }
+
+        formatted.push(rightTrimmed);
+      }
+
+      return formatted.join("\n");
+    }
+
+    function resolvePreviewVars(text) {
+      const vars = {
+        name: clientNameEl.value.trim() || "there",
+        company_name: "{{ branding.company_name or '' }}",
+        type: followupTypeEl.value.trim() || "follow-up",
+        sender: "{{ branding.company_name or '' }}",
+        support_email: "{{ branding.support_email or '' }}",
+        due_date: "{{ followup.next_send_at or '' }}"
+      };
+
+      return String(text).replace(/\{\{\s*(name|company_name|type|sender|support_email|due_date)\s*\}\}/g, (_, key) => {
+        return vars[key] ?? "";
+      });
+    }
+
+    function getPayload() {
+      return {
+        client_name: clientNameEl.value,
+        email: emailEl.value,
+        followup_type: followupTypeEl.value,
+        description: descriptionEl.value,
+        email_format: getSelectedEmailFormat(),
+        message_override: editor.value,
+        preferred_channel: "email"
+      };
+    }
+
+    function scheduleRefresh() {
+      clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(refreshPreview, 350);
+    }
+
+    async function refreshPreview() {
+      const requestId = ++latestRequestId;
+
+      if (currentController) {
+        currentController.abort();
+      }
+
+      currentController = new AbortController();
+      const payload = getPayload();
+      const emailFormat = payload.email_format;
+
+      setStatus("SYNCHRONIZING...");
+
+      try {
+        if (emailFormat === "text") {
+          const raw = (payload.message_override || "").trim() || (payload.description || "").trim();
+          const resolved = resolvePreviewVars(raw);
+          const formatted = normalizePlainText(resolved);
+
+          if (requestId !== latestRequestId) return;
+
+          showTextPreview(formatted);
+          setStatus("LIVE");
+          return;
+        }
+
+        const response = await fetch("{{ url_for('preview_render_email', fid=followup.id) }}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest"
+          },
+          body: JSON.stringify(payload),
+          signal: currentController.signal
+        });
+
+        if (!response.ok) {
+          throw new Error(`Preview failed with status ${response.status}`);
+        }
+
+        const html = await response.text();
+
+        if (requestId !== latestRequestId) return;
+
+        showHtmlPreview(html);
+        setStatus("LIVE");
+      } catch (error) {
+        if (error.name === "AbortError") {
+          return;
+        }
+
+        if (requestId !== latestRequestId) return;
+
+        showTextPreview("Preview could not be loaded right now.");
+        setStatus("SYNC ERROR");
+        console.error("Preview refresh failed:", error);
+      }
+    }
+
+    document.querySelectorAll(".var-chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        insertVar(chip.dataset.var || "");
+      });
+    });
+
+    [editor, clientNameEl, emailEl, followupTypeEl, descriptionEl].forEach((el) => {
+      el.addEventListener("input", scheduleRefresh);
+    });
+
+    document.querySelectorAll('input[name="email_format"]').forEach((el) => {
+      el.addEventListener("change", scheduleRefresh);
+    });
+
+    window.addEventListener("load", refreshPreview);
+  })();
 </script>
 {% endblock %}
