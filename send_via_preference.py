@@ -518,7 +518,7 @@ def send_via_preference(user: dict, f: dict, message: str):
     """
     logger.debug("MESSAGE BEFORE DISPATCH: %r", message)
 
-    channel = (f.get("preferred_channel") or "whatsapp").strip().lower()
+    channel = (f.get("preferred_channel") or "email").strip().lower()
     logger.debug("Resolved channel: %s", channel)
 
     # -------- Email --------
@@ -528,7 +528,7 @@ def send_via_preference(user: dict, f: dict, message: str):
             logger.warning("Preferred channel is Email but email is missing.")
             return None, "Preferred channel is Email but email is missing."
 
-        subject = f"HTML TEST {int(time.time())}"
+        subject =  f"{followup_type.title()} for {client_name}"
         format_type = (f.get("email_format") or "html").strip().lower()
 
         # -------- PLAIN TEXT --------

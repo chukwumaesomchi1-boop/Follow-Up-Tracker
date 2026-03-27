@@ -77,7 +77,7 @@ def _clean_phone(raw: str) -> str:
 
 
 def _require_channel_fields(preferred_channel: str, email: str, phone: str) -> None:
-    ch = (preferred_channel or "whatsapp").strip().lower()
+    ch = (preferred_channel or "email").strip().lower()
 
     if ch == "email":
         if not (email or "").strip():
@@ -88,13 +88,27 @@ def _require_channel_fields(preferred_channel: str, email: str, phone: str) -> N
         if not (phone or "").strip():
             raise ValueError(f"Preferred channel is {ch.upper()} but phone is missing.")
         return
+    
+
+def update_followup_email_format(fid, user_id, email_format):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("""
+        UPDATE followups
+        SET email_format = ?
+        WHERE id = ? AND user_id = ?
+    """, (email_format, fid, user_id))
+    conn.commit()
+    ok = c.rowcount > 0
+    conn.close()
+    return ok
 
 
 def resolve_channel(preferred_channel: str, email: str, phone: str) -> str:
     """
     Decide final channel with sane fallbacks.
     """
-    ch = (preferred_channel or "whatsapp").strip().lower()
+    ch = (preferred_channel or "email").strip().lower()
     email_ok = bool((email or "").strip())
     phone_ok = bool((phone or "").strip())
 
@@ -627,6 +641,7 @@ def update_followup(
     description: str,
     phone: str = "",
     preferred_channel: str = "email",
+    email_format: str = "html",
 ) -> bool:
     email_clean = _clean_email(email)
     phone_clean = _clean_phone(phone) if phone else ""
@@ -647,6 +662,8 @@ def update_followup(
             followup_type=?,
             description=?,
             preferred_channel=?
+            email_format = ?
+
         WHERE id=? AND user_id=?
         """,
         (

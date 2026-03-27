@@ -494,6 +494,55 @@ def import_csv():
 
 from datetime import datetime
 
+# @app.route("/preview/<int:fid>/edit-all", methods=["POST"])
+# def preview_edit_all(fid):
+#     user, block = require_user()
+#     if block:
+#         return block
+
+#     f = get_followup(fid, user["id"])
+#     if not f:
+#         flash("Follow-up not found.", "danger")
+#         return redirect(url_for("dashboard"))
+
+#     client_name = (request.form.get("client_name") or "").strip()
+#     email = (request.form.get("email") or "").strip()
+#     preferred_channel = (request.form.get("preferred_channel") or "whatsapp").strip().lower()
+#     followup_type = (request.form.get("followup_type") or "other").strip()
+#     description = (request.form.get("description") or "").strip()
+    
+#     # ✅ if your edit-all form does NOT include due_date, keep the existing one
+#     # due_date = (request.form.get("due_date") or "").strip() or (f.get("due_date") or "").strip()
+
+#     err = None
+#     if not client_name:
+#         err = "Client name is required."
+#     elif not email:
+#         err = "Email is required."
+#     if err:
+#         flash(err, "danger")
+#         return redirect(url_for("preview", fid=fid))
+
+#     ok = update_followup(
+#         fid=fid,
+#         user_id=user["id"],
+#         client_name=client_name,
+#         email=email,
+#         followup_type=followup_type,
+#         description=description,
+#         preferred_channel=preferred_channel,
+#         email_format=email_format, 
+#     )
+#     if not ok:
+#         flash("Update failed (not found / not yours).", "danger")
+#         return redirect(url_for("preview", fid=fid))
+
+#     msg_override = (request.form.get("message_override") or "").strip()
+#     update_followup_message_override(fid, user["id"], msg_override if msg_override else None)
+
+#     flash("Saved ✅", "success")
+#     return redirect(url_for("preview", fid=fid))
+
 @app.route("/preview/<int:fid>/edit-all", methods=["POST"])
 def preview_edit_all(fid):
     user, block = require_user()
@@ -507,18 +556,20 @@ def preview_edit_all(fid):
 
     client_name = (request.form.get("client_name") or "").strip()
     email = (request.form.get("email") or "").strip()
-    preferred_channel = (request.form.get("preferred_channel") or "whatsapp").strip().lower()
+    preferred_channel = (request.form.get("preferred_channel") or "email").strip().lower()
     followup_type = (request.form.get("followup_type") or "other").strip()
     description = (request.form.get("description") or "").strip()
 
-    # ✅ if your edit-all form does NOT include due_date, keep the existing one
-    # due_date = (request.form.get("due_date") or "").strip() or (f.get("due_date") or "").strip()
+    email_format = (request.form.get("email_format") or f.get("email_format") or "html").strip().lower()
+    if email_format not in {"text", "html", "raw"}:
+        email_format = "html"
 
     err = None
     if not client_name:
         err = "Client name is required."
     elif not email:
         err = "Email is required."
+
     if err:
         flash(err, "danger")
         return redirect(url_for("preview", fid=fid))
@@ -531,6 +582,7 @@ def preview_edit_all(fid):
         followup_type=followup_type,
         description=description,
         preferred_channel=preferred_channel,
+        email_format=email_format,   # <-- added
     )
     if not ok:
         flash("Update failed (not found / not yours).", "danger")
@@ -542,12 +594,37 @@ def preview_edit_all(fid):
     flash("Saved ✅", "success")
     return redirect(url_for("preview", fid=fid))
 
-# routes_preview.py (or wherever your preview routes live)
-
 from flask import request, Response
 from models_saas import get_followup
 
 from email_scheduler import build_branded_email_html  # wherever you placed it
+
+# @app.route("/preview/<int:fid>/render-email", methods=["GET", "POST"])
+# def preview_render_email(fid):
+#     user, block = require_user()
+#     if block:
+#         return block
+
+#     f = get_followup(fid, user["id"])
+#     if not f:
+#         return Response("<div>Follow-up not found.</div>", status=404, mimetype="text/html")
+
+#     # Merge unsaved edits (POST) into the followup dict for preview
+#     if request.method == "POST":
+#         data = request.get_json(silent=True) or {}
+#         f = dict(f)  # make it mutable
+#         f["client_name"] = (data.get("client_name") or f.get("client_name") or "").strip()
+#         f["email"] = (data.get("email") or f.get("email") or "").strip()
+#         f["followup_type"] = (data.get("followup_type") or f.get("followup_type") or "").strip()
+#         f["description"] = (data.get("description") or f.get("description") or "").strip()
+#         f["email_format"] = (data.get("email_format") or f.get("email_format") or "html").strip().lower()
+#         f["message_override"] = (data.get("message_override") or "").strip()
+
+#     # Render the *real* branded email HTML
+#     html_doc = build_branded_email_html(user, f)
+
+#     return Response(html_doc, mimetype="text/html")
+
 
 @app.route("/preview/<int:fid>/render-email", methods=["GET", "POST"])
 def preview_render_email(fid):
@@ -559,21 +636,30 @@ def preview_render_email(fid):
     if not f:
         return Response("<div>Follow-up not found.</div>", status=404, mimetype="text/html")
 
+    def as_text(value, default=""):
+        return value.strip() if isinstance(value, str) else default
+
     # Merge unsaved edits (POST) into the followup dict for preview
     if request.method == "POST":
-        data = request.get_json(silent=True) or {}
-        f = dict(f)  # make it mutable
-        f["client_name"] = (data.get("client_name") or f.get("client_name") or "").strip()
-        f["email"] = (data.get("email") or f.get("email") or "").strip()
-        f["followup_type"] = (data.get("followup_type") or f.get("followup_type") or "").strip()
-        f["description"] = (data.get("description") or f.get("description") or "").strip()
-        f["email_format"] = (data.get("email_format") or f.get("email_format") or "html").strip().lower()
-        f["message_override"] = (data.get("message_override") or "").strip()
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            data = {}
 
-    # Render the *real* branded email HTML
+        f = dict(f)  # make mutable copy
+        f["client_name"] = as_text(data.get("client_name"), as_text(f.get("client_name"), ""))
+        f["email"] = as_text(data.get("email"), as_text(f.get("email"), ""))
+        f["followup_type"] = as_text(data.get("followup_type"), as_text(f.get("followup_type"), ""))
+        f["description"] = as_text(data.get("description"), as_text(f.get("description"), ""))
+        f["message_override"] = as_text(data.get("message_override"), "")
+
+        email_format = as_text(data.get("email_format"), as_text(f.get("email_format"), "html")).lower()
+        if email_format not in {"text", "html", "raw"}:
+            email_format = "html"
+        f["email_format"] = email_format
+
     html_doc = build_branded_email_html(user, f)
-
     return Response(html_doc, mimetype="text/html")
+
 from flask import jsonify, request
 from scheduler_render import render_scheduler_html, DEFAULT_SCHEDULER_TEMPLATE
 from models_saas import get_branding
@@ -884,12 +970,39 @@ def send_followup(fid):
         flash(f"Not sent. This follow-up is already {f['status']}.", "warning")
         return redirect(url_for("dashboard"))
 
+    def as_text(value, default=""):
+        return value.strip() if isinstance(value, str) else default
+
+    # Merge current unsaved form edits into a copy of the DB record
+    merged = dict(f)
+    merged["client_name"] = as_text(request.form.get("client_name"), as_text(f.get("client_name"), ""))
+    merged["email"] = as_text(request.form.get("email"), as_text(f.get("email"), ""))
+    merged["followup_type"] = as_text(request.form.get("followup_type"), as_text(f.get("followup_type"), "other"))
+    merged["description"] = as_text(request.form.get("description"), as_text(f.get("description"), ""))
+    merged["message_override"] = as_text(request.form.get("message_override"), as_text(f.get("message_override"), ""))
+
+    email_format = as_text(request.form.get("email_format"), as_text(f.get("email_format"), "html")).lower()
+    if email_format not in {"text", "html", "raw"}:
+        email_format = "html"
+    merged["email_format"] = email_format
+
+    merged["preferred_channel"] = "email"
+
+
+    # Basic validation for manual send
+    if not merged["client_name"]:
+        flash("Client name is required before sending.", "danger")
+        return redirect(url_for("preview", fid=fid))
+
+    if not merged["email"]:
+        flash("Email is required before sending.", "danger")
+        return redirect(url_for("preview", fid=fid))
+
     try:
-        # mark attempt
         mark_send_attempt(fid, user["id"])
 
-        # send using user's preferred channel
-        channel_used, error = send_via_preference(user, f, None)
+        # Send the merged in-memory version, not stale DB-only data
+        channel_used, error = send_via_preference(user, merged, None)
 
         current_app.logger.info(
             f"[SEND] followup={fid} channel={channel_used} error={error}"
@@ -898,12 +1011,11 @@ def send_followup(fid):
         if error:
             raise RuntimeError(error)
 
-        # mark success
         mark_send_success(fid, user["id"])
 
         add_notification(
             user["id"],
-            f"Sent {channel_used} to {f.get('client_name','')}"
+            f"Sent {channel_used} to {merged.get('client_name', '')}"
         )
 
         flash(f"Message sent via {channel_used} ✅", "success")
@@ -911,8 +1023,104 @@ def send_followup(fid):
     except Exception as e:
         mark_send_failed(fid, user["id"], str(e))
         current_app.logger.exception("Send failed")
+        flash(map_send_error(e), "danger")
 
-        flash(f"Send failed: {str(e)}", "danger")
+    return redirect(url_for("dashboard"))
+
+@app.route("/preview/<int:fid>/send-now", methods=["POST"])
+def preview_send_now(fid):
+    user, block = require_user()
+    if block:
+        return block
+
+    f = get_followup(fid, user["id"])
+    if not f:
+        flash("Follow-up not found.", "danger")
+        return redirect(url_for("dashboard"))
+
+    if f.get("status") in ("done", "replied"):
+        flash(f"Not sent. This follow-up is already {f['status']}.", "warning")
+        return redirect(url_for("dashboard"))
+
+    if int(f.get("schedule_enabled") or 0) == 1 and (f.get("next_send_at") or "").strip():
+        flash(
+            "This follow-up is scheduled. Clear the schedule before sending manually.",
+            "warning",
+        )
+        return redirect(url_for("schedule"))
+
+    def _clean_text(value, default=""):
+        return value.strip() if isinstance(value, str) else default
+
+    client_name = _clean_text(request.form.get("client_name"))
+    email = _clean_text(request.form.get("email"))
+    followup_type = _clean_text(request.form.get("followup_type"), "other")
+    description = _clean_text(request.form.get("description"))
+    message_override = _clean_text(request.form.get("message_override"))
+
+    email_format = _clean_text(
+        request.form.get("email_format"),
+        _clean_text(f.get("email_format"), "html")
+    ).lower()
+    if email_format not in {"text", "html", "raw"}:
+        email_format = "html"
+
+    if not client_name:
+        flash("Client name is required.", "danger")
+        return redirect(url_for("preview", fid=fid))
+
+    if not email:
+        flash("Email is required.", "danger")
+        return redirect(url_for("preview", fid=fid))
+
+    ok = update_followup(
+        fid=fid,
+        user_id=user["id"],
+        client_name=client_name,
+        email=email,
+        followup_type=followup_type,
+        description=description,
+        preferred_channel="email",
+        email_format=email_format,
+    )
+    if not ok:
+        flash("Could not save latest edits before sending.", "danger")
+        return redirect(url_for("preview", fid=fid))
+
+    update_followup_message_override(
+        fid,
+        user["id"],
+        message_override if message_override else None
+    )
+
+    fresh = get_followup(fid, user["id"])
+    if not fresh:
+        flash("Follow-up not found after update.", "danger")
+        return redirect(url_for("dashboard"))
+
+    try:
+        mark_send_attempt(fid, user["id"])
+
+        channel_used, error = send_via_preference(user, fresh, "email")
+
+        current_app.logger.info(
+            f"[SEND] followup={fid} channel={channel_used} error={error}"
+        )
+
+        if error:
+            raise RuntimeError(error)
+
+        mark_send_success(fid, user["id"])
+        add_notification(
+            user["id"],
+            f"Sent {channel_used} to {fresh.get('client_name', '')}"
+        )
+        flash(f"Message sent via {channel_used} ✅", "success")
+
+    except Exception:
+        current_app.logger.exception("Send failed")
+        mark_send_failed(fid, user["id"], "Send failed")
+        flash("Send failed. Please try again.", "danger")
 
     return redirect(url_for("dashboard"))
 
@@ -1717,15 +1925,55 @@ def send_email_smtp(to_email, subject, body_text, body_html=None):
 #         server.sendmail(user, [to_email], msg.as_string())
 
 
+# @app.route("/preview/<int:fid>/reset", methods=["POST"])
+# def preview_reset(fid):
+#     user, block = require_user()
+#     if block:
+#         return block
+
+#     ok = update_followup_message_override(fid, user["id"], None)
+#     flash("Message reset ✅" if ok else "Could not reset message.", "success" if ok else "danger")
+#     return redirect(url_for("preview", fid=fid))
+def map_send_error(e: Exception) -> str:
+    msg = str(e).lower()
+
+    # Email-related
+    if "invalid recipient" in msg or "invalid address" in msg:
+        return "The email address looks invalid. Please check it."
+
+    if "authentication" in msg or "unauthorized" in msg:
+        return "Your email account needs to be reconnected."
+
+    if "quota" in msg or "limit" in msg:
+        return "You’ve hit a sending limit. Try again later."
+
+    if "timeout" in msg or "connection" in msg:
+        return "Network issue. Please try again."
+
+    if "missing" in msg and "email" in msg:
+        return "Recipient email is required."
+
+    # fallback (safe but still informative)
+    return "Message could not be sent. Please check your details and try again."
+
 @app.route("/preview/<int:fid>/reset", methods=["POST"])
 def preview_reset(fid):
     user, block = require_user()
     if block:
         return block
 
-    ok = update_followup_message_override(fid, user["id"], None)
-    flash("Message reset ✅" if ok else "Could not reset message.", "success" if ok else "danger")
+    ok1 = update_followup_message_override(fid, user["id"], None)
+    ok2 = update_followup_email_format(fid, user["id"], "html")
+
+    ok = ok1 and ok2
+
+    flash(
+        "Message reset ✅" if ok else "Could not reset message.",
+        "success" if ok else "danger"
+    )
     return redirect(url_for("preview", fid=fid))
+
+
 
 
 def build_verify_email_html(code: str, app_name: str, support_email: str | None = None) -> str:
