@@ -2099,6 +2099,83 @@ def map_send_error(e: Exception) -> str:
 #     )
 #     return redirect(url_for("preview", fid=fid))
 
+@app.route("/preview/<int:fid>/send", methods=["POST"])
+def preview_send_followup(fid):
+    user, block = require_user()
+    if block:
+        return block
+
+    f = get_followup(fid, user["id"])
+    if not f:
+        flash("Follow-up not found.", "danger")
+        return redirect(url_for("dashboard"))
+
+    # Prevent sending completed items
+    if f.get("status") in ("done", "replied"):
+        flash(f"Not sent. This follow-up is already {f['status']}.", "warning")
+        return redirect(url_for("preview", fid=fid))
+
+    def as_text(value, default=""):
+        return value.strip() if isinstance(value, str) else default
+
+    merged = dict(f)
+    merged["client_name"] = as_text(request.form.get("client_name"), as_text(f.get("client_name"), ""))
+    merged["email"] = as_text(request.form.get("email"), as_text(f.get("email"), ""))
+    merged["followup_type"] = as_text(request.form.get("followup_type"), as_text(f.get("followup_type"), "other"))
+    merged["description"] = as_text(request.form.get("description"), as_text(f.get("description"), ""))
+    merged["message_override"] = as_text(request.form.get("message_override"), as_text(f.get("message_override"), ""))
+
+    email_format = as_text(request.form.get("email_format"), as_text(f.get("email_format"), "html")).lower()
+    if email_format not in {"text", "html", "raw"}:
+        email_format = "html"
+    merged["email_format"] = email_format
+
+    # This preview page is email-only
+    merged["preferred_channel"] = "email"
+
+    if not merged["client_name"]:
+        flash("Client name is required before sending.", "danger")
+        return redirect(url_for("preview", fid=fid))
+
+    if not merged["email"]:
+        flash("Email is required before sending.", "danger")
+        return redirect(url_for("preview", fid=fid))
+
+    try:
+        mark_send_attempt(fid, user["id"])
+
+        channel_used, error = send_via_preference(user, merged, None)
+
+        current_app.logger.info(
+            "[PREVIEW SEND] followup=%s channel=%s error=%s format=%s",
+            fid,
+            channel_used,
+            error,
+            merged["email_format"],
+        )
+
+        if error:
+            raise RuntimeError(error)
+
+        mark_send_success(fid, user["id"])
+
+        add_notification(
+            user["id"],
+            f"Sent {channel_used} to {merged.get('client_name', '')}"
+        )
+
+        flash(f"Message sent via {channel_used} ✅", "success")
+
+    except Exception as e:
+        mark_send_failed(fid, user["id"], str(e))
+        current_app.logger.exception("Preview send failed")
+        flash(map_send_error(e), "danger")
+
+    return redirect(url_for("preview", fid=fid))
+
+
+
+
 
 @app.route("/send/<int:fid>", methods=["POST"])
 def send_followup(fid):
