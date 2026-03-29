@@ -88,7 +88,26 @@ def _require_channel_fields(preferred_channel: str, email: str, phone: str) -> N
         if not (phone or "").strip():
             raise ValueError(f"Preferred channel is {ch.upper()} but phone is missing.")
         return
-    
+
+
+def update_followup_email_format(fid: int, user_id: int, email_format: str) -> bool:
+    email_format = (email_format or "html").strip().lower()
+    if email_format not in {"text", "html", "raw"}:
+        email_format = "html"
+
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("""
+        UPDATE followups
+        SET email_format = ?
+        WHERE id = ? AND user_id = ?
+    """, (email_format, int(fid), int(user_id)))
+    conn.commit()
+    ok = c.rowcount > 0
+    conn.close()
+    return ok
+
+
 
 def update_followup_email_format(fid, user_id, email_format):
     conn = get_connection()
@@ -673,6 +692,7 @@ def update_followup(
             _clean_text(followup_type) or "other",
             _clean_text(description),
             channel,
+            email_format,
             int(fid),
             int(user_id),
         ),

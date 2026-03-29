@@ -59,6 +59,12 @@ DEFAULT_SCHEDULER_TEMPLATE = """
               This is a friendly reminder regarding your upcoming schedule. Please see the details of your <strong>{{ type }}</strong> below:
             </p>
 
+            {% if content %}
+            <div style="margin:0 0 24px 0; color:#475569; font-size:15px; line-height:1.7;">
+              {{ content }}
+            </div>
+            {% endif %}
+
             <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9; border-radius:8px; margin-bottom:24px;">
               <tr>
                 <td style="padding:20px;">
@@ -135,6 +141,7 @@ DEFAULT_SCHEDULER_TEMPLATE = """
 </body>
 </html>
 """.strip()
+
 
 # DEFAULT_SCHEDULER_TEMPLATE = """
 # <!DOCTYPE html>
@@ -496,50 +503,120 @@ import html as _html
 def safe_nl2br(text: str) -> str:
     return _html.escape(text or "").replace("\n", "<br>")
 
+# def render_scheduler_html(tmpl: str, user: dict, followup: dict, branding: dict) -> str:
+#     sender = (branding.get("company_name") or "").strip() or "Your Company"
+#     support_email = (branding.get("support_email") or "").strip()
+#     footer = (branding.get("footer") or "").strip()
+
+#     if support_email and not footer:
+#         footer = f"Need help? Contact {support_email}"
+
+#     message_override = (followup.get("message_override") or "").strip()
+
+#     # override path: simple personal content
+#     if message_override:
+#         safe_body = bleach.clean(
+#             message_override.replace("\n", "<br>"),
+#             tags=["b", "strong", "i", "em", "u", "br", "p", "ul", "ol", "li", "div", "span", "a"],
+#             attributes={"a": ["href", "target", "rel"]},
+#             strip=True,
+#         )
+
+#         html = PERSONAL_MESSAGE_WRAPPER.replace("{{content}}", safe_body)
+
+#         return f"""<!doctype html>
+# <html>
+# <head>
+#   <meta charset="utf-8">
+#   <meta name="viewport" content="width=device-width, initial-scale=1">
+# </head>
+# <body>{html}</body>
+# </html>"""
+
+#     data = {
+#         "name": (followup.get("client_name") or "there").strip(),
+#         "type": (followup.get("followup_type") or "follow-up").strip(),
+#         "description": safe_nl2br(followup.get("description") or "").strip(),
+#         "due_date": (followup.get("due_date") or "").strip(),
+#         "sender": sender,
+#         "company_name": sender,
+#         "brand_logo": (branding.get("brand_logo") or "").strip(),
+#         "support_email": support_email,
+#         "footer": footer,
+#     }
+
+#     step1 = _render_conditionals(tmpl or "", data)
+#     step2 = _render_vars(step1, data)
+
+#     # for full trusted template, return directly
+#     return step2.strip()
+
 def render_scheduler_html(tmpl: str, user: dict, followup: dict, branding: dict) -> str:
-    sender = (branding.get("company_name") or "").strip() or "Your Company"
-    support_email = (branding.get("support_email") or "").strip()
-    footer = (branding.get("footer") or "").strip()
+    def as_text(value, default=""):
+        return value.strip() if isinstance(value, str) else default
+
+    sender = as_text(branding.get("company_name"), "Your Company")
+    support_email = as_text(branding.get("support_email"))
+    footer = as_text(branding.get("footer"))
 
     if support_email and not footer:
         footer = f"Need help? Contact {support_email}"
 
-    message_override = (followup.get("message_override") or "").strip()
+    format_type = as_text(followup.get("email_format"), "html").lower()
+    if format_type not in {"text", "html", "raw"}:
+        format_type = "html"
 
-    # override path: simple personal content
-    if message_override:
+    message_override = as_text(followup.get("message_override"))
+
+    # --- RAW HTML MODE ---
+    # User is editing one-off HTML for this follow-up only.
+    if format_type == "raw" and message_override:
         safe_body = bleach.clean(
-            message_override.replace("\n", "<br>"),
-            tags=["b", "strong", "i", "em", "u", "br", "p", "ul", "ol", "li", "div", "span", "a"],
-            attributes={"a": ["href", "target", "rel"]},
+            message_override,
+            tags=[
+                "html", "head", "body", "meta", "title",
+                "div", "p", "br", "b", "strong", "i", "em", "u",
+                "ul", "ol", "li", "span", "small",
+                "h1", "h2", "h3", "h4",
+                "table", "thead", "tbody", "tr", "th", "td",
+                "a", "img", "hr"
+            ],
+            attributes={
+                "*": ["style"],
+                "a": ["href", "target", "rel"],
+                "img": ["src", "alt", "width", "height", "style"],
+                "meta": ["charset", "name", "content"],
+            },
             strip=True,
         )
+        return safe_body.strip()
 
-        html = PERSONAL_MESSAGE_WRAPPER.replace("{{content}}", safe_body)
-
-        return f"""<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-<body>{html}</body>
-</html>"""
-
+    # --- TEMPLATE DATA ---
+    # In branded mode, message_override should be available as {{content}}
+    # or ignored by the template if not used.
     data = {
-        "name": (followup.get("client_name") or "there").strip(),
-        "type": (followup.get("followup_type") or "follow-up").strip(),
+        "name": as_text(followup.get("client_name"), "there"),
+        "type": as_text(followup.get("followup_type"), "follow-up"),
         "description": safe_nl2br(followup.get("description") or "").strip(),
-        "due_date": (followup.get("due_date") or "").strip(),
+        "due_date": as_text(followup.get("due_date")),
         "sender": sender,
         "company_name": sender,
-        "brand_logo": (branding.get("brand_logo") or "").strip(),
+        "brand_logo": as_text(branding.get("brand_logo")),
         "support_email": support_email,
         "footer": footer,
+        "content": (
+            bleach.clean(
+                message_override.replace("\n", "<br>"),
+                tags=["b", "strong", "i", "em", "u", "br", "p", "ul", "ol", "li", "div", "span", "a"],
+                attributes={"a": ["href", "target", "rel"]},
+                strip=True,
+            ).strip()
+            if message_override else ""
+        ),
     }
 
+    # --- BRANDED TEMPLATE MODE ---
     step1 = _render_conditionals(tmpl or "", data)
     step2 = _render_vars(step1, data)
 
-    # for full trusted template, return directly
     return step2.strip()

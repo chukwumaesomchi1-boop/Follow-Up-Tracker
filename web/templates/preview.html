@@ -4,30 +4,41 @@
 {% block content %}
 <style>
   :root {
-    /* Refined Color Palette */
     --editor-bg: #09090b;
     --editor-surface: #18181b;
     --editor-border: #27272a;
     --editor-text: #f4f4f5;
-    
+
     --ui-bg: #fbfbfc;
     --ui-card: #ffffff;
     --ui-border: #e4e4e7;
     --ui-text-main: #09090b;
     --ui-text-muted: #71717a;
-    
+
     --accent: {{ branding.color or '#6366f1' }};
     --accent-soft: color-mix(in srgb, var(--accent) 15%, transparent);
     --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
-    
+
     --radius-lg: 12px;
     --radius-md: 8px;
     --shadow-subtle: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   }
 
-  body { background-color: var(--ui-bg); }
+  body {
+    background-color: var(--ui-bg);
+  }
 
-  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 
   .preview-wrapper {
     max-width: 1400px;
@@ -36,11 +47,12 @@
     animation: fadeIn 0.5s ease-out;
   }
 
-  /* Header Navigation */
   .editor-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
     margin-bottom: 24px;
     background: var(--ui-card);
     padding: 16px 24px;
@@ -66,10 +78,18 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
-  .pill-id { background: #f4f4f5; color: #71717a; border: 1px solid #e4e4e7; }
-  .pill-status { background: var(--accent-soft); color: var(--accent); }
 
-  /* Main Grid */
+  .pill-id {
+    background: #f4f4f5;
+    color: #71717a;
+    border: 1px solid #e4e4e7;
+  }
+
+  .pill-status {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
   .editor-grid {
     display: grid;
     grid-template-columns: 340px 1fr;
@@ -77,7 +97,6 @@
     align-items: start;
   }
 
-  /* Sidebar Card */
   .meta-card {
     background: var(--ui-card);
     border: 1px solid var(--ui-border);
@@ -100,9 +119,14 @@
     gap: 8px;
   }
 
-  .meta-body { padding: 20px; }
+  .meta-body {
+    padding: 20px;
+  }
 
-  .form-group { margin-bottom: 18px; }
+  .form-group {
+    margin-bottom: 18px;
+  }
+
   .form-label {
     display: block;
     font-size: 11px;
@@ -122,15 +146,28 @@
     transition: all 0.2s;
     background: #fff;
     color: var(--ui-text-main);
+    box-sizing: border-box;
   }
+
   .input-field:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
     outline: none;
   }
-  .input-readonly { background: #f9fafb; color: #94a3b8; cursor: not-allowed; border-style: dashed; }
 
-  /* IDE / Composer */
+  .input-readonly {
+    background: #f9fafb;
+    color: #94a3b8;
+    cursor: not-allowed;
+    border-style: dashed;
+  }
+
+  .composer-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
   .ide-container {
     background: var(--editor-bg);
     border-radius: var(--radius-lg);
@@ -145,6 +182,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
     border-bottom: 1px solid var(--editor-border);
   }
 
@@ -153,7 +192,10 @@
     padding: 2px;
     border-radius: 8px;
     display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
   }
+
   .segment label {
     padding: 6px 12px;
     font-size: 11px;
@@ -162,8 +204,14 @@
     cursor: pointer;
     border-radius: 6px;
     transition: 0.2s;
+    display: inline-block;
+    user-select: none;
   }
-  .segment input:checked + label { background: #3f3f46; color: #fff; }
+
+  .segment input:checked + label {
+    background: #3f3f46;
+    color: #fff;
+  }
 
   .var-strip {
     background: #121214;
@@ -185,7 +233,11 @@
     cursor: pointer;
     transition: 0.2s;
   }
-  .var-chip:hover { background: var(--accent); color: #fff; }
+
+  .var-chip:hover {
+    background: var(--accent);
+    color: #fff;
+  }
 
   .code-area {
     width: 100%;
@@ -199,11 +251,27 @@
     border: none;
     resize: vertical;
     outline: none;
+    box-sizing: border-box;
   }
 
-  /* Preview Section */
+  .composer-help {
+    padding: 0 24px 16px;
+    font-size: 12px;
+    color: #a1a1aa;
+  }
+
+  .ide-footer {
+    padding: 12px 16px;
+    background: var(--editor-surface);
+    border-top: 1px solid var(--editor-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
   .viewport-container {
-    margin-top: 24px;
     background: #fff;
     border: 1px solid var(--ui-border);
     border-radius: var(--radius-lg);
@@ -218,6 +286,40 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .preview-actions {
+    padding: 16px;
+    border-bottom: 1px solid var(--ui-border);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .preview-editor-wrap {
+    padding: 16px;
+    border-bottom: 1px solid var(--ui-border);
+  }
+
+  .preview-text {
+    min-height: 500px;
+    padding: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    white-space: pre-wrap;
+    line-height: 1.7;
+    color: #1f2937;
+    background: #fff;
+    box-sizing: border-box;
+  }
+
+  .preview-frame {
+    width: 100%;
+    height: 560px;
+    border: none;
+    background: #fff;
   }
 
   .status-dot {
@@ -237,7 +339,6 @@
     100% { opacity: 1; }
   }
 
-  /* Buttons */
   .btn-action {
     padding: 10px 20px;
     border-radius: var(--radius-md);
@@ -248,38 +349,74 @@
     border: 1px solid transparent;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     text-decoration: none;
+    white-space: nowrap;
   }
 
-  .btn-save { background: var(--accent); color: #fff; }
-  .btn-save:hover { background: var(--accent-hover); transform: translateY(-1px); }
+  .btn-save {
+    background: var(--accent);
+    color: #fff;
+  }
 
-  .btn-send { background: #09090b; color: #fff; }
-  .btn-send:hover { background: #27272a; }
+  .btn-save:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+  }
 
-  .btn-reset { color: #ef4444; font-size: 12px; background: transparent; }
-  .btn-reset:hover { background: #fef2f2; }
+  .btn-send {
+    background: #09090b;
+    color: #fff;
+  }
+
+  .btn-send:hover {
+    background: #27272a;
+  }
+
+  .btn-reset {
+    color: #ef4444;
+    font-size: 12px;
+    background: transparent;
+  }
+
+  .btn-reset:hover {
+    background: #fef2f2;
+  }
+
+  .btn-secondary {
+    background: #fff;
+    border: 1px solid var(--ui-border);
+    color: var(--ui-text-main);
+  }
+
+  .btn-secondary:hover {
+    background: #fafafa;
+  }
 
   @media (max-width: 1024px) {
-    .editor-grid { grid-template-columns: 1fr; }
-    .meta-card { position: static; }
+    .editor-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .meta-card {
+      position: static;
+    }
   }
 </style>
 
 <div class="preview-wrapper">
   <form method="POST" action="{{ url_for('preview_edit_all', fid=followup.id) }}" id="previewForm">
-    
     <header class="editor-nav">
       <div class="nav-info">
-        <div style="display: flex; gap: 8px; margin-bottom: 4px;">
+        <div style="display:flex; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
           <span class="pill pill-id">ID: {{ followup.id }}</span>
           <span class="pill pill-status">{{ 'Scheduled' if followup.schedule_enabled else 'Draft' }}</span>
         </div>
         <h2>Campaign Editor</h2>
       </div>
 
-      <div style="display:flex; gap:12px;">
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
         <a href="{{ url_for('dashboard') }}" class="btn-action" style="color: var(--ui-text-muted);">Discard</a>
         <button type="submit" class="btn-action btn-save">Save Changes</button>
       </div>
@@ -288,7 +425,10 @@
     <div class="editor-grid">
       <aside class="meta-card">
         <div class="meta-header">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
           Recipient Context
         </div>
 
@@ -313,9 +453,9 @@
             <input type="text" class="input-field input-readonly" readonly value="{{ followup.next_send_at or 'Manual Trigger' }}">
           </div>
 
-          <div class="form-group" style="margin-bottom: 0;">
+          <div class="form-group" style="margin-bottom:0;">
             <label class="form-label" for="description">Internal Notes</label>
-            <textarea name="description" id="description" class="input-field" rows="3" style="resize: none; font-size: 13px;">{{ followup.description or '' }}</textarea>
+            <textarea name="description" id="description" class="input-field" rows="4" style="resize:vertical; font-size:13px;">{{ followup.description or '' }}</textarea>
           </div>
         </div>
       </aside>
@@ -324,58 +464,130 @@
         <div class="ide-container">
           <div class="ide-toolbar">
             <div style="color:#a1a1aa; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">
-              Message Composer
+              Quick Message Sender
             </div>
 
-            <div class="segmented-control" role="radiogroup">
+            <div class="segmented-control" role="radiogroup" aria-label="Composer format">
               <div class="segment">
-                <input class="sr-only" type="radio" name="email_format" id="f_text" value="text" {% if followup.email_format == 'text' %}checked{% endif %}>
-                <label for="f_text">Text</label>
+                <input class="sr-only" type="radio" name="email_format" id="composer_text" value="text" {% if followup.email_format == 'text' %}checked{% endif %}>
+                <label for="composer_text">Text</label>
               </div>
               <div class="segment">
-                <input class="sr-only" type="radio" name="email_format" id="f_html" value="html" {% if followup.email_format == 'html' or not followup.email_format %}checked{% endif %}>
-                <label for="f_html">Branded</label>
+                <input class="sr-only" type="radio" name="email_format" id="composer_html" value="html" {% if followup.email_format == 'html' or not followup.email_format %}checked{% endif %}>
+                <label for="composer_html">Branded</label>
               </div>
               <div class="segment">
-                <input class="sr-only" type="radio" name="email_format" id="f_raw" value="raw" {% if followup.email_format == 'raw' %}checked{% endif %}>
-                <label for="f_raw">Raw</label>
+                <input class="sr-only" type="radio" name="email_format" id="composer_raw" value="raw" {% if followup.email_format == 'raw' %}checked{% endif %}>
+                <label for="composer_raw">Raw</label>
               </div>
             </div>
           </div>
 
           <div class="var-strip">
             {% for var in ['name', 'company_name', 'type', 'sender', 'support_email', 'due_date'] %}
-              <button type="button" class="var-chip" data-var="{% raw %}{{{% endraw %}{{ var }}{% raw %}}}{% endraw %}">
+              <button type="button" class="var-chip composer-var" data-var="{% raw %}{{{% endraw %}{{ var }}{% raw %}}}{% endraw %}">
                 {{ var }}
               </button>
             {% endfor %}
           </div>
 
-          <textarea class="code-area" name="message_override" id="message_override" spellcheck="false" placeholder="Write your message here...">{{ followup.message_override or '' }}</textarea>
+          <textarea
+            class="code-area"
+            name="message_override"
+            id="composer_message"
+            spellcheck="false"
+            placeholder="Write a one-off message for this follow-up. Send Now uses this editor only."
+          >{{ followup.message_override or '' }}</textarea>
 
-          <div class="ide-footer" style="padding: 12px 16px; background: var(--editor-surface); border-top: 1px solid var(--editor-border); display: flex; justify-content: space-between;">
-            <button type="submit" formaction="{{ url_for('preview_reset', fid=followup.id) }}" class="btn-action btn-reset" onclick="return confirm('Reset to global template?');">
-              Reset to Template
+          <div class="composer-help">
+            This message is only for this follow-up. It does not change your scheduler template.
+          </div>
+
+          <div class="ide-footer">
+            <button
+              type="submit"
+              formaction="{{ url_for('preview_reset', fid=followup.id) }}"
+              class="btn-action btn-reset"
+              onclick="return confirm('Reset this saved one-off message and go back to the default branded template?');"
+            >
+              Reset Saved Draft
             </button>
 
-            <button type="submit" formaction="{{ url_for('send_followup', fid=followup.id) }}" class="btn-action btn-send">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-              Send Now
-            </button>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+              <button type="button" id="copyComposerToPreview" class="btn-action btn-secondary" style="background:#27272a; color:#fff; border-color:#27272a;">
+                Load Into Preview
+              </button>
+
+              <button type="submit" formaction="{{ url_for('send_followup', fid=followup.id) }}" class="btn-action btn-send">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+                Send Now
+              </button>
+            </div>
           </div>
         </div>
 
         <div class="viewport-container">
           <div class="viewport-header">
-            <div style="font-size:11px; font-weight:800; color:var(--ui-text-muted); text-transform:uppercase;">Live Preview</div>
-            <div id="previewStatus" style="font-size:11px; font-weight:700; color:var(--accent); display:flex; align-items:center;">
-              <span class="status-dot"></span> <span id="statusText">SYNCED</span>
+            <div style="font-size:11px; font-weight:800; color:var(--ui-text-muted); text-transform:uppercase;">
+              Preview Lab
+            </div>
+
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+              <div class="segmented-control" role="radiogroup" aria-label="Preview format">
+                <div class="segment">
+                  <input class="sr-only" type="radio" name="preview_format" id="preview_text" value="text" checked>
+                  <label for="preview_text">Text</label>
+                </div>
+                <div class="segment">
+                  <input class="sr-only" type="radio" name="preview_format" id="preview_html" value="html">
+                  <label for="preview_html">Branded</label>
+                </div>
+                <div class="segment">
+                  <input class="sr-only" type="radio" name="preview_format" id="preview_raw" value="raw">
+                  <label for="preview_raw">Raw</label>
+                </div>
+              </div>
+
+              <div id="previewStatus" style="font-size:11px; font-weight:700; color:var(--accent); display:flex; align-items:center;">
+                <span class="status-dot"></span>
+                <span id="statusText">READY</span>
+              </div>
             </div>
           </div>
 
-          <div id="previewTextBox" class="preview-text" style="padding: 24px; font-family: 'JetBrains Mono'; font-size: 14px; white-space: pre-wrap;" hidden></div>
+          <div class="preview-actions">
+            <button type="button" id="copyPreviewToComposer" class="btn-action btn-secondary">
+              Use Preview In Composer
+            </button>
+            <button type="button" id="resetPreviewLab" class="btn-action btn-secondary">
+              Reset Preview Lab
+            </button>
+          </div>
 
-          <iframe id="livePreviewFrame" class="preview-frame" style="width:100%; height:500px; border:none;" srcdoc="<p>Initializing...</p>"></iframe>
+          <div class="preview-editor-wrap">
+            <label class="form-label" for="preview_source">Editable Preview Source</label>
+            <textarea
+              id="preview_source"
+              class="input-field"
+              rows="10"
+              spellcheck="false"
+              style="font-family:'JetBrains Mono', monospace; font-size:13px; resize:vertical; min-height:220px;"
+              placeholder="Experiment here. Changes here do not affect Send Now unless you click 'Use Preview In Composer'."
+            ></textarea>
+          </div>
+
+          <div id="previewTextBox" class="preview-text" hidden></div>
+
+          <iframe
+            id="livePreviewFrame"
+            class="preview-frame"
+            sandbox=""
+            srcdoc="<p style='padding:20px;font-family:sans-serif;'>Initializing preview…</p>"
+            title="Live preview lab"
+          ></iframe>
         </div>
       </div>
     </div>
@@ -383,10 +595,228 @@
 </div>
 
 <script>
-  // ... (Keep your existing JS logic, it is robust)
-  // Just updated one line for visual status feedback:
-  function setStatus(text) {
-    document.getElementById("statusText").textContent = text;
+(() => {
+  const composerMessageEl = document.getElementById("composer_message");
+  const previewSourceEl = document.getElementById("preview_source");
+
+  const clientNameEl = document.getElementById("client_name");
+  const emailEl = document.getElementById("email");
+  const followupTypeEl = document.getElementById("followup_type");
+  const descriptionEl = document.getElementById("description");
+
+  const previewTextBox = document.getElementById("previewTextBox");
+  const frame = document.getElementById("livePreviewFrame");
+  const statusTextEl = document.getElementById("statusText");
+
+  const copyComposerToPreviewBtn = document.getElementById("copyComposerToPreview");
+  const copyPreviewToComposerBtn = document.getElementById("copyPreviewToComposer");
+  const resetPreviewLabBtn = document.getElementById("resetPreviewLab");
+
+  let previewTimer = null;
+  let previewController = null;
+  let previewRequestId = 0;
+
+  function asText(value) {
+    return typeof value === "string" ? value : "";
   }
+
+  function getComposerFormat() {
+    const el = document.querySelector('input[name="email_format"]:checked');
+    return el ? el.value : "html";
+  }
+
+  function getPreviewFormat() {
+    const el = document.querySelector('input[name="preview_format"]:checked');
+    return el ? el.value : "text";
+  }
+
+  function setPreviewFormat(value) {
+    const radio = document.querySelector(`input[name="preview_format"][value="${value}"]`);
+    if (radio) radio.checked = true;
+  }
+
+  function setComposerFormat(value) {
+    const radio = document.querySelector(`input[name="email_format"][value="${value}"]`);
+    if (radio) radio.checked = true;
+  }
+
+  function setStatus(text) {
+    statusTextEl.textContent = text;
+  }
+
+  function insertAtCursor(textarea, token) {
+    const start = textarea.selectionStart ?? textarea.value.length;
+    const end = textarea.selectionEnd ?? textarea.value.length;
+    const before = textarea.value.slice(0, start);
+    const after = textarea.value.slice(end);
+
+    textarea.value = before + token + after;
+    textarea.focus();
+
+    const pos = start + token.length;
+    textarea.setSelectionRange(pos, pos);
+  }
+
+  function normalizePlainText(raw) {
+    if (!raw) return "";
+    const lines = String(raw).replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+    const out = [];
+
+    for (const line of lines) {
+      const rightTrimmed = line.replace(/\s+$/, "");
+      const stripped = rightTrimmed.trim();
+
+      if (!stripped) {
+        out.push("");
+      } else if (stripped.startsWith("-") || stripped.startsWith("*")) {
+        out.push("• " + stripped.slice(1).trim());
+      } else {
+        out.push(rightTrimmed);
+      }
+    }
+
+    return out.join("\n");
+  }
+
+  function resolveVars(text) {
+    const vars = {
+      name: clientNameEl.value.trim() || "there",
+      company_name: {{ (branding.company_name or "")|tojson }},
+      type: followupTypeEl.value.trim() || "follow-up",
+      sender: {{ (branding.company_name or "")|tojson }},
+      support_email: {{ (branding.support_email or "")|tojson }},
+      due_date: {{ (followup.next_send_at or "")|tojson }}
+    };
+
+    return String(text).replace(/\{\{\s*(name|company_name|type|sender|support_email|due_date)\s*\}\}/g, (_, key) => {
+      return vars[key] ?? "";
+    });
+  }
+
+  function getBasePayload() {
+    return {
+      client_name: clientNameEl.value,
+      email: emailEl.value,
+      followup_type: followupTypeEl.value,
+      description: descriptionEl.value,
+      preferred_channel: "email"
+    };
+  }
+
+  function showTextPreview(text) {
+    frame.hidden = true;
+    previewTextBox.hidden = false;
+    previewTextBox.textContent = text;
+  }
+
+  function showHtmlPreview(html) {
+    previewTextBox.hidden = true;
+    frame.hidden = false;
+    frame.srcdoc = html;
+  }
+
+  function loadComposerIntoPreview() {
+    setPreviewFormat(getComposerFormat());
+    previewSourceEl.value = composerMessageEl.value;
+    schedulePreviewRefresh();
+  }
+
+  function usePreviewInComposer() {
+    setComposerFormat(getPreviewFormat());
+    composerMessageEl.value = previewSourceEl.value;
+  }
+
+  function resetPreviewLab() {
+    setPreviewFormat(getComposerFormat());
+    previewSourceEl.value = composerMessageEl.value;
+    schedulePreviewRefresh();
+  }
+
+  async function refreshPreview() {
+    const requestId = ++previewRequestId;
+
+    if (previewController) {
+      previewController.abort();
+    }
+
+    previewController = new AbortController();
+    const format = getPreviewFormat();
+    const source = previewSourceEl.value;
+
+    setStatus("SYNCING");
+
+    try {
+      if (format === "text") {
+        const raw = asText(source).trim() || asText(descriptionEl.value).trim();
+        const rendered = normalizePlainText(resolveVars(raw));
+
+        if (requestId !== previewRequestId) return;
+        showTextPreview(rendered);
+        setStatus("LIVE");
+        return;
+      }
+
+      const payload = {
+        ...getBasePayload(),
+        email_format: format,
+        message_override: source
+      };
+
+      const response = await fetch("{{ url_for('preview_render_email', fid=followup.id) }}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest"
+        },
+        body: JSON.stringify(payload),
+        signal: previewController.signal
+      });
+
+      if (!response.ok) {
+        throw new Error(`Preview failed with status ${response.status}`);
+      }
+
+      const html = await response.text();
+
+      if (requestId !== previewRequestId) return;
+      showHtmlPreview(html);
+      setStatus("LIVE");
+    } catch (error) {
+      if (error.name === "AbortError") return;
+      if (requestId !== previewRequestId) return;
+
+      showTextPreview("Preview could not be loaded right now.");
+      setStatus("ERROR");
+      console.error("Preview refresh failed:", error);
+    }
+  }
+
+  function schedulePreviewRefresh() {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(refreshPreview, 250);
+  }
+
+  document.querySelectorAll(".composer-var").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      insertAtCursor(composerMessageEl, chip.dataset.var || "");
+    });
+  });
+
+  clientNameEl.addEventListener("input", schedulePreviewRefresh);
+  emailEl.addEventListener("input", schedulePreviewRefresh);
+  followupTypeEl.addEventListener("input", schedulePreviewRefresh);
+  descriptionEl.addEventListener("input", schedulePreviewRefresh);
+
+  previewSourceEl.addEventListener("input", schedulePreviewRefresh);
+  document.querySelectorAll('input[name="preview_format"]').forEach((el) => {
+    el.addEventListener("change", schedulePreviewRefresh);
+  });
+
+  copyComposerToPreviewBtn.addEventListener("click", loadComposerIntoPreview);
+  copyPreviewToComposerBtn.addEventListener("click", usePreviewInComposer);
+  resetPreviewLabBtn.addEventListener("click", resetPreviewLab);
+
+  loadComposerIntoPreview();
+})();
 </script>
 {% endblock %}
