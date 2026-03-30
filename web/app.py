@@ -1153,6 +1153,104 @@ def preview_edit_all(fid):
     return redirect(url_for("preview", fid=fid))
 
 
+# @app.route("/preview/<int:fid>/send-now", methods=["POST"])
+# def preview_send_now(fid):
+#     user, block = require_user()
+#     if block:
+#         return block
+
+#     f = get_followup(fid, user["id"])
+#     if not f:
+#         flash("Follow-up not found.", "danger")
+#         return redirect(url_for("dashboard"))
+
+#     if f.get("status") in ("done", "replied"):
+#         flash(f"Not sent. This follow-up is already {f['status']}.", "warning")
+#         return redirect(url_for("dashboard"))
+
+#     if int(f.get("schedule_enabled") or 0) == 1 and (f.get("next_send_at") or "").strip():
+#         flash(
+#             "This follow-up is scheduled. Clear the schedule before sending manually.",
+#             "warning",
+#         )
+#         return redirect(url_for("schedule"))
+
+#     def _clean_text(value, default=""):
+#         return value.strip() if isinstance(value, str) else default
+
+#     client_name = _clean_text(request.form.get("client_name"))
+#     email = _clean_text(request.form.get("email"))
+#     followup_type = _clean_text(request.form.get("followup_type"), "other")
+#     description = _clean_text(request.form.get("description"))
+#     message_override = _clean_text(request.form.get("message_override"))
+
+#     email_format = _clean_text(
+#         request.form.get("email_format"),
+#         _clean_text(f.get("email_format"), "html")
+#     ).lower()
+#     if email_format not in {"text", "html", "raw"}:
+#         email_format = "html"
+
+#     if not client_name:
+#         flash("Client name is required.", "danger")
+#         return redirect(url_for("preview", fid=fid))
+
+#     if not email:
+#         flash("Email is required.", "danger")
+#         return redirect(url_for("preview", fid=fid))
+
+#     ok = update_followup(
+#         fid=fid,
+#         user_id=user["id"],
+#         client_name=client_name,
+#         email=email,
+#         followup_type=followup_type,
+#         description=description,
+#         preferred_channel="email",
+#         email_format=email_format,
+#     )
+#     if not ok:
+#         flash("Could not save latest edits before sending.", "danger")
+#         return redirect(url_for("preview", fid=fid))
+
+#     update_followup_message_override(
+#         fid,
+#         user["id"],
+#         message_override if message_override else None
+#     )
+
+#     fresh = get_followup(fid, user["id"])
+#     if not fresh:
+#         flash("Follow-up not found after update.", "danger")
+#         return redirect(url_for("dashboard"))
+
+#     try:
+#         mark_send_attempt(fid, user["id"])
+
+#         channel_used, error = send_via_preference(user, fresh, "email")
+
+#         current_app.logger.info(
+#             f"[SEND] followup={fid} channel={channel_used} error={error}"
+#         )
+
+#         if error:
+#             raise RuntimeError(error)
+
+#         mark_send_success(fid, user["id"])
+#         add_notification(
+#             user["id"],
+#             f"Sent {channel_used} to {fresh.get('client_name', '')}"
+#         )
+#         flash(f"Message sent via {channel_used} ✅", "success")
+
+#     except Exception:
+#         current_app.logger.exception("Send failed")
+#         mark_send_failed(fid, user["id"], "Send failed")
+#         flash("Send failed. Please try again.", "danger")
+
+#     return redirect(url_for("dashboard"))
+
+
 @app.route("/preview/<int:fid>/send-now", methods=["POST"])
 def preview_send_now(fid):
     user, block = require_user()
@@ -1164,16 +1262,11 @@ def preview_send_now(fid):
         flash("Follow-up not found.", "danger")
         return redirect(url_for("dashboard"))
 
+    # Optional: keep these protections if you still want them on preview send
     if f.get("status") in ("done", "replied"):
         flash(f"Not sent. This follow-up is already {f['status']}.", "warning")
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("preview", fid=fid))
 
-    if int(f.get("schedule_enabled") or 0) == 1 and (f.get("next_send_at") or "").strip():
-        flash(
-            "This follow-up is scheduled. Clear the schedule before sending manually.",
-            "warning",
-        )
-        return redirect(url_for("schedule"))
 
     def _clean_text(value, default=""):
         return value.strip() if isinstance(value, str) else default
@@ -1199,57 +1292,41 @@ def preview_send_now(fid):
         flash("Email is required.", "danger")
         return redirect(url_for("preview", fid=fid))
 
-    ok = update_followup(
-        fid=fid,
-        user_id=user["id"],
-        client_name=client_name,
-        email=email,
-        followup_type=followup_type,
-        description=description,
-        preferred_channel="email",
-        email_format=email_format,
-    )
-    if not ok:
-        flash("Could not save latest edits before sending.", "danger")
-        return redirect(url_for("preview", fid=fid))
-
-    update_followup_message_override(
-        fid,
-        user["id"],
-        message_override if message_override else None
-    )
-
-    fresh = get_followup(fid, user["id"])
-    if not fresh:
-        flash("Follow-up not found after update.", "danger")
-        return redirect(url_for("dashboard"))
+    # Build a temporary one-off send payload.
+    # Do not save this back to the DB.
+    temp_followup = dict(f)
+    temp_followup["client_name"] = client_name
+    temp_followup["email"] = email
+    temp_followup["followup_type"] = followup_type
+    temp_followup["description"] = description
+    temp_followup["message_override"] = message_override
+    temp_followup["email_format"] = email_format
+    temp_followup["preferred_channel"] = "email"
 
     try:
-        mark_send_attempt(fid, user["id"])
-
-        channel_used, error = send_via_preference(user, fresh, "email")
+        channel_used, error = send_via_preference(user, temp_followup, None)
 
         current_app.logger.info(
-            f"[SEND] followup={fid} channel={channel_used} error={error}"
+            "[PREVIEW SEND] followup=%s channel=%s error=%s",
+            fid,
+            channel_used,
+            error,
         )
 
         if error:
             raise RuntimeError(error)
 
-        mark_send_success(fid, user["id"])
         add_notification(
             user["id"],
-            f"Sent {channel_used} to {fresh.get('client_name', '')}"
+            f"Preview send via {channel_used} to {temp_followup.get('client_name', '')}"
         )
-        flash(f"Message sent via {channel_used} ✅", "success")
+        flash(f"Preview message sent via {channel_used} ✅", "success")
 
-    except Exception:
-        current_app.logger.exception("Send failed")
-        mark_send_failed(fid, user["id"], "Send failed")
-        flash("Send failed. Please try again.", "danger")
+    except Exception as e:
+        current_app.logger.exception("Preview send failed")
+        flash("Preview send failed. Please try again.", "danger")
 
-    return redirect(url_for("dashboard"))
-
+    return redirect(url_for("preview", fid=fid))
     
 @app.post("/bulk-action")
 def bulk_action():
