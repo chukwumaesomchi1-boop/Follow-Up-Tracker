@@ -90,37 +90,9 @@ def _require_channel_fields(preferred_channel: str, email: str, phone: str) -> N
         return
 
 
-def update_followup_email_format(fid: int, user_id: int, email_format: str) -> bool:
-    email_format = (email_format or "html").strip().lower()
-    if email_format not in {"text", "html", "raw"}:
-        email_format = "html"
-
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute("""
-        UPDATE followups
-        SET email_format = ?
-        WHERE id = ? AND user_id = ?
-    """, (email_format, int(fid), int(user_id)))
-    conn.commit()
-    ok = c.rowcount > 0
-    conn.close()
-    return ok
 
 
 
-def update_followup_email_format(fid, user_id, email_format):
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute("""
-        UPDATE followups
-        SET email_format = ?
-        WHERE id = ? AND user_id = ?
-    """, (email_format, fid, user_id))
-    conn.commit()
-    ok = c.rowcount > 0
-    conn.close()
-    return ok
 
 
 def resolve_channel(preferred_channel: str, email: str, phone: str) -> str:
@@ -471,58 +443,6 @@ def stats_overview() -> dict[str, int]:
 # FOLLOW-UP FUNCTIONS
 # =========================
 
-def add_followup(
-    user_id: int,
-    client_name: str,
-    email: str,
-    followup_type: str,
-    description: str,
-    due_date: str,
-    phone: str = "",
-    preferred_channel: str = "email",
-    recurring_interval: int = 0,
-) -> int:
-    email_clean = _clean_email(email)
-    phone_clean = _clean_phone(phone) if phone else ""
-
-    # pick channel with fallback logic
-    channel = resolve_channel(preferred_channel, email_clean, phone_clean)
-    _require_channel_fields(channel, email_clean, phone_clean)
-
-    if not due_date:
-        raise ValueError("due_date is required (YYYY-MM-DD)")
-
-    conn = get_connection()
-    c = conn.cursor()
-
-    c.execute(
-        """
-        INSERT INTO followups (
-            user_id, client_name, email, phone,
-            followup_type, description, due_date,
-            created_at, recurring_interval,
-            preferred_channel, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
-        """,
-        (
-            int(user_id),
-            _clean_text(client_name),
-            email_clean,
-            phone_clean,
-            _clean_text(followup_type) or "other",
-            _clean_text(description),
-            due_date,
-            _utc_iso(),
-            int(recurring_interval or 0),
-            channel,
-        ),
-    )
-
-    fid = c.lastrowid
-    conn.commit()
-    conn.close()
-    return int(fid)
-
 
 def promote_draft_to_pending(fid: int, user_id: int) -> bool:
     conn = get_connection()
@@ -538,75 +458,14 @@ def promote_draft_to_pending(fid: int, user_id: int) -> bool:
     return ok
 
 
-def add_followup_draft(
-    user_id: int,
-    client_name: str,
-    email: str,
-    followup_type: str,
-    description: str,
-    message_override: str = "",
-    email_format: str = "html",
-    preferred_channel: str = "email",
-) -> int:
-    """
-    Create a draft followup without due_date and without scheduling.
-    """
-    email_clean = _clean_email(email)
-    channel = resolve_channel(preferred_channel, email_clean, "")
-    _require_channel_fields(channel, email_clean, "")
-
-    conn = get_connection()
-    c = conn.cursor()
-
-    c.execute(
-        """
-        INSERT INTO followups (
-            user_id,
-            client_name,
-            email,
-            phone,
-            preferred_channel,
-            followup_type,
-            description,
-            status,
-            last_error,
-            schedule_enabled,
-            next_send_at,
-            sent_count,
-            last_sent_at,
-            due_date,
-            created_at,
-            recurring_interval,
-            scheduled_for
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, 0, NULL, 0, NULL, ?, ?, ?, NULL)
-        """,
-        (
-            int(user_id),
-            _clean_text(client_name),
-            email_clean,
-            "",  # phone empty
-            channel,
-            _clean_text(followup_type) or "other",
-            _clean_text(description),
-            "draft",
-            "",          # due_date empty
-            _utc_iso(),  # created_at
-            0,           # recurring_interval
-        ),
-    )
-
-    fid = c.lastrowid
-    conn.commit()
-    conn.close()
-    return int(fid)
-
 # def add_followup_draft(
 #     user_id: int,
 #     client_name: str,
 #     email: str,
 #     followup_type: str,
 #     description: str,
+#     message_override: str = "",
+#     email_format: str = "html",
 #     preferred_channel: str = "email",
 # ) -> int:
 #     """
@@ -622,25 +481,38 @@ def add_followup_draft(
 #     c.execute(
 #         """
 #         INSERT INTO followups (
-#             user_id, client_name, email, phone,
-#             followup_type, description, due_date,
-#             created_at, recurring_interval,
-#             preferred_channel, status,
-#             schedule_enabled, next_send_at, scheduled_for
-#         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, NULL)
+#             user_id,
+#             client_name,
+#             email,
+#             phone,
+#             preferred_channel,
+#             followup_type,
+#             description,
+#             status,
+#             last_error,
+#             schedule_enabled,
+#             next_send_at,
+#             sent_count,
+#             last_sent_at,
+#             due_date,
+#             created_at,
+#             recurring_interval,
+#             scheduled_for
+#         )
+#         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, 0, NULL, 0, NULL, ?, ?, ?, NULL)
 #         """,
 #         (
 #             int(user_id),
 #             _clean_text(client_name),
 #             email_clean,
-#             "",  # phone empty (email-only)
+#             "",  # phone empty
+#             channel,
 #             _clean_text(followup_type) or "other",
 #             _clean_text(description),
-#             "",  # ✅ due_date empty for draft
-#             _utc_iso(),
-#             0,
-#             channel,
 #             "draft",
+#             "",          # due_date empty
+#             _utc_iso(),  # created_at
+#             0,           # recurring_interval
 #         ),
 #     )
 
@@ -648,9 +520,6 @@ def add_followup_draft(
 #     conn.commit()
 #     conn.close()
 #     return int(fid)
-
-
-
 def update_followup(
     fid: int,
     user_id: int,
@@ -668,6 +537,9 @@ def update_followup(
     channel = resolve_channel(preferred_channel, email_clean, phone_clean)
     _require_channel_fields(channel, email_clean, phone_clean)
 
+    email_format = (email_format or "html").strip().lower()
+    if email_format not in {"text", "html", "raw"}:
+        email_format = "html"
 
     conn = get_connection()
     c = conn.cursor()
@@ -675,15 +547,14 @@ def update_followup(
     c.execute(
         """
         UPDATE followups
-        SET client_name=?,
-            email=?,
-            phone=?,
-            followup_type=?,
-            description=?,
-            preferred_channel=?
+        SET client_name = ?,
+            email = ?,
+            phone = ?,
+            followup_type = ?,
+            description = ?,
+            preferred_channel = ?,
             email_format = ?
-
-        WHERE id=? AND user_id=?
+        WHERE id = ? AND user_id = ?
         """,
         (
             _clean_text(client_name),
@@ -702,6 +573,118 @@ def update_followup(
     conn.commit()
     conn.close()
     return ok
+
+
+def update_followup_message_override(fid: int, user_id: int, message_override: str | None) -> bool:
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute(
+        """
+        UPDATE followups
+        SET message_override = ?
+        WHERE id = ? AND user_id = ?
+        """,
+        (message_override, int(fid), int(user_id)),
+    )
+    conn.commit()
+    ok = (c.rowcount or 0) > 0
+    conn.close()
+    return ok
+
+
+def update_followup_email_format(fid: int, user_id: int, email_format: str) -> bool:
+    email_format = (email_format or "html").strip().lower()
+    if email_format not in {"text", "html", "raw"}:
+        email_format = "html"
+
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute(
+        """
+        UPDATE followups
+        SET email_format = ?
+        WHERE id = ? AND user_id = ?
+        """,
+        (email_format, int(fid), int(user_id)),
+    )
+    conn.commit()
+    ok = (c.rowcount or 0) > 0
+    conn.close()
+    return ok
+
+
+
+def add_followup_draft(
+    user_id: int,
+    client_name: str,
+    email: str,
+    followup_type: str,
+    description: str,
+    message_override: str = "",
+    email_format: str = "html",
+    preferred_channel: str = "email",
+) -> int:
+    """
+    Create a draft followup with no scheduling yet.
+    This should be the only followup creation path.
+    """
+    email_clean = _clean_email(email)
+    channel = resolve_channel(preferred_channel, email_clean, "")
+    _require_channel_fields(channel, email_clean, "")
+
+    email_format = (email_format or "html").strip().lower()
+    if email_format not in {"text", "html", "raw"}:
+        email_format = "html"
+
+    conn = get_connection()
+    c = conn.cursor()
+
+    c.execute(
+        """
+        INSERT INTO followups (
+            user_id,
+            client_name,
+            email,
+            phone,
+            preferred_channel,
+            followup_type,
+            description,
+            message_override,
+            email_format,
+            status,
+            last_error,
+            schedule_enabled,
+            next_send_at,
+            sent_count,
+            last_sent_at,
+            due_date,
+            created_at,
+            recurring_interval,
+            scheduled_for
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 0, NULL, 0, NULL, ?, ?, ?, NULL)
+        """,
+        (
+            int(user_id),
+            _clean_text(client_name),
+            email_clean,
+            "",  # phone empty
+            channel,
+            _clean_text(followup_type) or "other",
+            _clean_text(description),
+            _clean_text(message_override),
+            email_format,
+            "draft",
+            "",          # due_date empty
+            _utc_iso(),  # created_at
+            0,           # recurring_interval
+        ),
+    )
+
+    fid = c.lastrowid
+    conn.commit()
+    conn.close()
+    return int(fid)
 
 
 def get_followup(fid: int, user_id: int) -> dict | None:
@@ -988,36 +971,20 @@ def mark_followup_done_by_id(fid: int, user_id: int) -> bool:
     return ok
 
 
-def mark_followup_replied(fid: int, user_id: int) -> bool:
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute("""
-        UPDATE followups
-        SET status='replied', replied_at=?
-        WHERE id=? AND user_id=? AND status IN ('pending','failed','sent')
-    """, (_utc_iso(), int(fid), int(user_id)))
-    conn.commit()
-    ok = (c.rowcount or 0) > 0
-    conn.close()
-    return ok
-
-
-# def mark_followup_replied_by_email(user_id: int, email: str) -> int:
-#     email_clean = _clean_email(email)
-#     if not email_clean:
-#         return 0
-
+# def mark_followup_replied(fid: int, user_id: int) -> bool:
 #     conn = get_connection()
 #     c = conn.cursor()
 #     c.execute("""
-#       UPDATE followups
-#       SET status='replied', replied_at=?
-#       WHERE user_id=? AND lower(email)=? AND status='sent'
-#     """, (_utc_iso(), int(user_id), email_clean))
-#     n = c.rowcount
+#         UPDATE followups
+#         SET status='replied', replied_at=?
+#         WHERE id=? AND user_id=? AND status IN ('pending','failed','sent')
+#     """, (_utc_iso(), int(fid), int(user_id)))
 #     conn.commit()
+#     ok = (c.rowcount or 0) > 0
 #     conn.close()
-#     return n
+#     return ok
+
+
 
 
 def mark_send_attempt(fid: int, user_id: int) -> None:
@@ -1042,13 +1009,13 @@ def set_status_running(fid: int, user_id: int) -> None:
     conn = get_connection()
     c = conn.cursor()
     c.execute("""
-      UPDATE followups
-      SET status='running'
-      WHERE id=? AND user_id=?
+        UPDATE followups
+        SET status='running'
+        WHERE id=? AND user_id=?
+          AND COALESCE(status,'') IN ('scheduled', 'pending')
     """, (int(fid), int(user_id)))
     conn.commit()
     conn.close()
-
 
 # =========================
 # SCHEDULING (ONE SYSTEM)
@@ -1163,7 +1130,7 @@ def set_followup_schedule_rule(fid: int, user_id: int, rule: dict) -> bool:
         return False
 
     status, sent_count, last_sent_at = row
-    if (status or "").strip().lower() == "sent" or int(sent_count) > 0 or (last_sent_at or "").strip():
+    if (status or "").strip().lower() == ("sent","replied","done","deleted") or int(sent_count) > 0 or (last_sent_at or "").strip():
         conn.close()
         raise ValueError("This follow-up was already sent. Duplicate it if you want to schedule it again.")
 
@@ -1208,7 +1175,7 @@ def set_followup_schedule_rule(fid: int, user_id: int, rule: dict) -> bool:
 
             -- ✅ when user schedules, it becomes schedulable again
             status = CASE
-                WHEN COALESCE(status,'') IN ('deleted','done','sent') THEN status
+                WHEN COALESCE(status,'') IN ('deleted','done','sent','replied') THEN status
                 ELSE 'scheduled'
             END,
             last_error = NULL,
@@ -1242,47 +1209,112 @@ def set_followup_schedule_rule(fid: int, user_id: int, rule: dict) -> bool:
 
 
 
+def save_outbound_gmail_metadata(fid: int, user_id: int, gmail_message_id: str, gmail_thread_id: str) -> bool:
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("""
+        UPDATE followups
+        SET
+            last_sent_message_id = ?,
+            gmail_thread_id = ?,
+            last_reply_check_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND user_id = ?
+    """, (
+        gmail_message_id or "",
+        gmail_thread_id or "",
+        int(fid),
+        int(user_id),
+    ))
+    conn.commit()
+    ok = c.rowcount > 0
+    conn.close()
+    return ok
+
+
+def get_reply_tracked_followups(user_id: int):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("""
+        SELECT
+            id,
+            email,
+            status,
+            gmail_thread_id,
+            last_sent_message_id,
+            auto_stop_on_reply,
+            reply_detected_at
+        FROM followups
+        WHERE user_id = ?
+          AND COALESCE(email, '') <> ''
+          AND COALESCE(gmail_thread_id, '') <> ''
+          AND COALESCE(reply_detected_at, '') = ''
+          AND COALESCE(auto_stop_on_reply, 1) = 1
+    """, (int(user_id),))
+    rows = c.fetchall()
+    cols = [col[0] for col in c.description]
+    conn.close()
+    return [dict(zip(cols, row)) for row in rows]
+
+
+
+
+
+def disable_followup_schedule(fid: int, user_id: int) -> bool:
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("""
+        UPDATE followups
+        SET
+            schedule_enabled = 0,
+            auto_stopped_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND user_id = ?
+    """, (int(fid), int(user_id)))
+    conn.commit()
+    ok = c.rowcount > 0
+    conn.close()
+    return ok
+
+
+
+
 
 def bulk_set_followup_schedule_rule(user_id: int, ids: list[int], rule: dict) -> int:
     if not ids:
-        print("[BULK_SCHED] no ids")
         return 0
 
     ids = [int(x) for x in ids if str(x).isdigit() or isinstance(x, int)]
     if not ids:
-        print("[BULK_SCHED] ids not valid after cleaning")
         return 0
+
+    repeat = (rule.get("schedule_repeat") or "once").strip().lower()
+    send_time = (rule.get("schedule_send_time") or "09:00").strip()
+    start_date = (rule.get("schedule_start_date") or "").strip() or None
+
+    next_send_at = compute_next_send_at(
+        start_date=start_date or datetime.utcnow().date().isoformat(),
+        send_time=send_time,
+        repeat=repeat,
+        rel_value=rule.get("schedule_rel_value"),
+        rel_unit=rule.get("schedule_rel_unit"),
+        input_tz="Africa/Lagos",
+        send_time_2=rule.get("schedule_send_time_2"),
+        interval=rule.get("schedule_interval"),
+        byweekday=rule.get("schedule_byweekday"),
+    )
+    next_send_at = (next_send_at or "").strip() or None
+
+    derived_due = start_date or (next_send_at[:10] if next_send_at and len(next_send_at) >= 10 else None)
 
     conn = get_connection()
     c = conn.cursor()
-
-    next_send_at = (rule.get("next_send_at") or "").strip() or None
-    start_date = (rule.get("schedule_start_date") or "").strip() or None
-
-    derived_due = None
-    if start_date:
-        derived_due = start_date
-    elif next_send_at and len(next_send_at) >= 10:
-        derived_due = next_send_at[:10]
-
     placeholders = ",".join(["?"] * len(ids))
-
-    # 🔎 DEBUG: see what we're about to touch
-    c.execute(f"""
-        SELECT id, status, sent_count, last_sent_at
-        FROM followups
-        WHERE user_id=?
-          AND id IN ({placeholders})
-    """, [int(user_id), *ids])
-    before = [dict(zip([d[0] for d in c.description], r)) for r in c.fetchall()]
-    print("[BULK_SCHED][BEFORE]", before)
 
     params = [
         int(rule.get("schedule_enabled", 1)),
-        (rule.get("schedule_repeat") or "once"),
+        repeat,
         start_date,
         rule.get("schedule_end_date"),
-        (rule.get("schedule_send_time") or "09:00"),
+        send_time,
         rule.get("schedule_send_time_2"),
         int(rule.get("schedule_interval") or 1),
         rule.get("schedule_byweekday"),
@@ -1291,7 +1323,7 @@ def bulk_set_followup_schedule_rule(user_id: int, ids: list[int], rule: dict) ->
         next_send_at,
         rule.get("scheduled_for"),
         rule.get("scheduled_at"),
-        derived_due,        # used only when due_date is empty
+        derived_due,
         int(user_id),
         *ids,
     ]
@@ -1312,38 +1344,20 @@ def bulk_set_followup_schedule_rule(user_id: int, ids: list[int], rule: dict) ->
           next_send_at=?,
           scheduled_for=?,
           scheduled_at=?,
-
           status='scheduled',
           last_error=NULL,
-
           due_date = COALESCE(NULLIF(TRIM(due_date), ''), ?)
-
         WHERE user_id=?
           AND id IN ({placeholders})
-          AND COALESCE(status,'') NOT IN ('sent','done','deleted')
+          AND COALESCE(status,'') NOT IN ('sent','done','deleted','replied')
           AND COALESCE(sent_count,0) = 0
           AND COALESCE(last_sent_at,'') = ''
     """, params)
 
     n = c.rowcount or 0
     conn.commit()
-
-    # 🔎 DEBUG: confirm what changed
-    c.execute(f"""
-        SELECT id, status, schedule_enabled, next_send_at, due_date, last_error
-        FROM followups
-        WHERE user_id=?
-          AND id IN ({placeholders})
-    """, [int(user_id), *ids])
-    after = [dict(zip([d[0] for d in c.description], r)) for r in c.fetchall()]
-    print("[BULK_SCHED][AFTER]", after)
-    print("[BULK_SCHED] updated rows:", n)
-
     conn.close()
     return n
-
-
-
 def save_gmail_token(user_id: int, token_json: str) -> None:
     """
     Stores Gmail OAuth token (JSON string) for the user.
@@ -1651,55 +1665,6 @@ def get_due_scheduled(user_id: int, now_iso: str):
     conn.close()
     return rows
 
-from web.compute_next import compute_next_send_at
-
-# def mark_send_success(fid: int, user_id: int, now_iso: str, f: dict) -> int:
-#     """
-#     Marks a followup as successfully sent and updates scheduling state.
-
-#     - If schedule_repeat is "once": disables scheduling and clears next_send_at.
-#     - Otherwise: computes next_send_at and keeps schedule_enabled as-is.
-#     """
-#     conn = get_connection()
-#     c = conn.cursor()
-
-#     tick = now_iso
-
-#     repeat = (f.get("schedule_repeat") or "once").strip().lower()
-
-#     if repeat == "once":
-#         disable = 1
-#         next_at = None
-#     else:
-#         disable = 0
-#         next_at = compute_next_send_at(
-#             start_date=f.get("schedule_start_date") or f.get("due_date"),
-#             send_time=f.get("schedule_send_time") or "09:00",
-#             repeat=repeat,
-#             rel_value=f.get("schedule_rel_value"),
-#             rel_unit=f.get("schedule_rel_unit"),
-#             input_tz="Africa/Lagos",
-#         )
-
-#     c.execute("""
-#         UPDATE followups
-#         SET
-#             status='sent',
-#             sent_count = COALESCE(sent_count, 0) + 1,
-#             last_sent_at = ?,
-#             last_attempt_at = ?,
-#             last_error = NULL,
-
-#             -- scheduling state
-#             schedule_enabled = CASE WHEN ?=1 THEN 0 ELSE schedule_enabled END,
-#             next_send_at = CASE WHEN ?=1 THEN NULL ELSE ? END
-#         WHERE id=? AND user_id=?
-#     """, (tick, tick, disable, disable, next_at, int(fid), int(user_id)))
-    
-#     n = c.rowcount
-#     conn.commit()
-#     conn.close()
-#     return n
 
 from datetime import datetime
 from web.compute_next import compute_next_send_at
@@ -1766,26 +1731,6 @@ def mark_send_success(fid: int, user_id: int, f: dict[str, Any] | None = None) -
     conn.commit()
     conn.close()
 
-def mark_send_success_repeating(fid: int, user_id: int) -> None:
-    conn = get_connection()
-    c = conn.cursor()
-    now_iso = datetime.now().isoformat(timespec="seconds")
-
-    c.execute("""
-        UPDATE followups
-        SET
-            sent_count = COALESCE(sent_count, 0) + 1,
-            last_sent_at = ?,
-            last_attempt_at = ?,
-            last_error = NULL,
-            status = 'running'
-        WHERE id = ? AND user_id = ?
-    """, (now_iso, now_iso, int(fid), int(user_id)))
-
-    conn.commit()
-    conn.close()
-
-
 
 from datetime import datetime
 
@@ -1844,15 +1789,18 @@ def mark_send_failed(fid: int, user_id: int, reason: str) -> None:
     c.execute("""
         UPDATE followups
         SET
-            status = 'failed',
+            status = CASE
+                WHEN COALESCE(schedule_enabled, 0) = 1 THEN 'scheduled'
+                ELSE 'failed'
+            END,
             last_error = ?,
             last_attempt_at = ?
         WHERE id = ? AND user_id = ?
+          AND COALESCE(status, '') NOT IN ('done', 'replied', 'deleted')
     """, (reason, now_iso, int(fid), int(user_id)))
 
     conn.commit()
     conn.close()
-
 
 
 
@@ -2155,25 +2103,25 @@ def upsert_scheduler_template(user_id: int, html_content: str) -> None:
 
 
 
-def get_scheduler_template(user_id: int) -> str:
-    """
-    Store scheduler template in email_templates with name='scheduler'.
-    """
-    conn = get_connection()
-    conn.row_factory = sqlite3.Row
-    c = conn.cursor()
+# def get_scheduler_template(user_id: int) -> str:
+#     """
+#     Store scheduler template in email_templates with name='scheduler'.
+#     """
+#     conn = get_connection()
+#     conn.row_factory = sqlite3.Row
+#     c = conn.cursor()
 
-    c.execute("""
-        SELECT html_content
-        FROM email_templates
-        WHERE user_id=? AND lower(name)='scheduler'
-        ORDER BY id DESC
-        LIMIT 1
-    """, (int(user_id),))
+#     c.execute("""
+#         SELECT html_content
+#         FROM email_templates
+#         WHERE user_id=? AND lower(name)='scheduler'
+#         ORDER BY id DESC
+#         LIMIT 1
+#     """, (int(user_id),))
 
-    row = c.fetchone()
-    conn.close()
-    return (row["html_content"] or "").strip() if row else ""
+#     row = c.fetchone()
+#     conn.close()
+#     return (row["html_content"] or "").strip() if row else ""
 
 
 def save_scheduler_template(user_id: int, html_content: str) -> None:
@@ -2274,18 +2222,6 @@ def count_sent_today(user_id: int) -> int:
 # MESSAGE OVERRIDE
 # =========================
 
-def update_followup_message_override(fid: int, user_id: int, message_override: str | None) -> bool:
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute("""
-        UPDATE followups
-        SET message_override = ?
-        WHERE id = ? AND user_id = ?
-    """, (message_override, int(fid), int(user_id)))
-    conn.commit()
-    ok = (c.rowcount or 0) > 0
-    conn.close()
-    return ok
 
 
 # =========================
@@ -2350,31 +2286,6 @@ def generate_recurring_followups() -> None:
     conn.close()
 
 
-# =========================
-# ANALYTICS
-# =========================
-
-# def get_analytics_data() -> dict[str, Any]:
-#     conn = get_connection()
-#     c = conn.cursor()
-
-#     c.execute("""
-#         SELECT DATE(created_at), COUNT(*)
-#         FROM followups
-#         WHERE last_sent_at IS NOT NULL AND last_sent_at != ''
-#         GROUP BY DATE(created_at)
-#         ORDER BY DATE(created_at) ASC
-#     """)
-#     sent_per_day = c.fetchall()
-
-#     c.execute("SELECT COUNT(*) FROM users WHERE is_subscribed=1")
-#     paid = int(c.fetchone()[0] or 0)
-
-#     c.execute("SELECT COUNT(*) FROM users WHERE is_subscribed=0")
-#     trial = int(c.fetchone()[0] or 0)
-
-#     conn.close()
-#     return {"sent_per_day": sent_per_day, "paid": paid, "trial": trial}
 
 
 # =========================
@@ -2415,7 +2326,102 @@ def ensure_templates_table() -> None:
     conn.commit()
     conn.close()
 
+def save_outbound_gmail_metadata(fid: int, user_id: int, gmail_message_id: str, gmail_thread_id: str) -> bool:
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("""
+        UPDATE followups
+        SET
+            last_sent_message_id = ?,
+            gmail_thread_id = ?,
+            last_reply_check_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND user_id = ?
+    """, (
+        gmail_message_id or "",
+        gmail_thread_id or "",
+        int(fid),
+        int(user_id),
+    ))
+    conn.commit()
+    ok = c.rowcount > 0
+    conn.close()
+    return ok
 
+
+def get_reply_tracked_followups(user_id: int):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("""
+        SELECT
+            id,
+            email,
+            status,
+            gmail_thread_id,
+            last_sent_message_id,
+            auto_stop_on_reply,
+            reply_detected_at
+        FROM followups
+        WHERE user_id = ?
+          AND COALESCE(email, '') <> ''
+          AND COALESCE(gmail_thread_id, '') <> ''
+          AND COALESCE(reply_detected_at, '') = ''
+          AND COALESCE(auto_stop_on_reply, 1) = 1
+    """, (int(user_id),))
+    rows = c.fetchall()
+    cols = [col[0] for col in c.description]
+    conn.close()
+    return [dict(zip(cols, row)) for row in rows]
+
+
+def mark_followup_replied(
+    fid: int,
+    user_id: int,
+    reply_message_id: str,
+    reply_from: str,
+    reply_subject: str,
+    reply_date: str,
+):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("""
+        UPDATE followups
+        SET
+            status = 'replied',
+            reply_detected_at = CURRENT_TIMESTAMP,
+            reply_message_id = ?,
+            reply_from = ?,
+            reply_subject = ?,
+            reply_date = ?,
+            stop_reason = 'reply_detected'
+        WHERE id = ? AND user_id = ?
+    """, (
+        reply_message_id or "",
+        reply_from or "",
+        reply_subject or "",
+        reply_date or "",
+        int(fid),
+        int(user_id),
+    ))
+    conn.commit()
+    ok = c.rowcount > 0
+    conn.close()
+    return ok
+
+
+def disable_followup_schedule(fid: int, user_id: int):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("""
+        UPDATE followups
+        SET
+            schedule_enabled = 0,
+            auto_stopped_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND user_id = ?
+    """, (int(fid), int(user_id)))
+    conn.commit()
+    ok = c.rowcount > 0
+    conn.close()
+    return ok
 
 
 

@@ -105,61 +105,11 @@ from typing import Dict, Optional
 import html
 from flask import current_app
 
-# def plain_text_to_email_html_body(text: str) -> str:
-#     text = (text or "").replace("\r\n", "\n").replace("\r", "\n").strip()
-
-#     if not text:
-#         html_body = "<p style='margin:0; color:#334155; font-size:15px; line-height:1.7;'>&nbsp;</p>"
-#         current_app.logger.warning("FULL TEXT HTML BODY: %r", html_body[:1200])
-#         return html_body
-
-#     paragraphs = text.split("\n\n")
-#     parts = []
-
-#     for p in paragraphs:
-#         safe = html.escape(p).replace("\n", "<br>")
-#         parts.append(
-#             f"<p style='margin:0 0 16px 0; color:#334155; font-size:15px; line-height:1.7;'>{safe}</p>"
-#         )
-
-#     html_body = "".join(parts)
-
-#     current_app.logger.warning("FULL TEXT HTML BODY: %r", html_body[:1200])
-
-#     return html_body
-
-import html
 
 
 import html
 from flask import current_app
 
-# def render_text_email_html(user: dict, followup: dict, raw_text: str, branding: dict) -> str:
-#     current_app.logger.warning("USING render_text_email_html v2")
-
-#     safe = html.escape(raw_text or "").replace("\r\n", "\n").replace("\r", "\n")
-#     safe = safe.replace("\n\n", "</p><p>").replace("\n", "<br>")
-
-#     return f"""
-#     <html>
-#       <body style="background:#ffefef; margin:0; padding:40px;">
-#         <table width="100%" cellpadding="0" cellspacing="0" border="0">
-#           <tr>
-#             <td align="center">
-#               <table width="600" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff; border:4px solid red;">
-#                 <tr>
-#                   <td style="padding:40px;">
-#                     <h1 style="color:blue; margin-top:0;">HTML TEST SHELL</h1>
-#                     <p>{safe}</p>
-#                   </td>
-#                 </tr>
-#               </table>
-#             </td>
-#           </tr>
-#         </table>
-#       </body>
-#     </html>
-#     """
 
 
 import html
@@ -342,65 +292,11 @@ def plain_to_html(text: str) -> str:
     return "".join(html_parts)
 
 
-# -----------------------------
-# Email sender wrapper
-# -----------------------------
-# def send_email(user: dict, to_email: str, subject: str, body_html: str) -> None:
-#     msg_id = send_email_gmail(user=user, to_email=to_email, subject=subject, html_body=body_html)
-#     try:
-#         current_app.logger.warning(f"[GMAIL] sent message id={msg_id}")
-#     except Exception:
-#         # allow usage outside request/app context
-#         pass
-
 
 from email.mime.text import MIMEText
 import base64
 from googleapiclient.discovery import build
 from flask import render_template_string
-
-# def send_email(user: dict, to_email: str, subject: str, body: str, *, is_html=False):
-#     """
-#     Sends an email via Gmail API. Handles plain text, branded HTML, or raw HTML.
-#     """
-#     to_email = (to_email or "").strip()
-#     if not to_email:
-#         raise ValueError("Missing recipient email")
-
-#     # Decide MIME type
-#     mime_type = "html" if is_html else "plain"
-
-#     # If HTML, render any template variables
-#     if is_html:
-#         body = render_template_string(body, user=user)
-
-#     # Normalize line endings for plain text only
-#     if not is_html:
-#         body = body.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\r\n")
-
-#     # Debug logging for body inspection
-#     logger.debug("HTML startswith: %r", body[:120])
-#     logger.debug("Contains &lt; ? %s", "&lt;" in body)
-#     logger.debug("Contains real < ? %s", "<" in body)
-
-#     msg = MIMEText(body or "", mime_type, "utf-8")
-#     msg["to"] = to_email
-#     msg["subject"] = subject or "(no subject)"
-#     msg["from"] = user.get("email") or "me"
-
-#     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode("utf-8")
-
-#     creds = _creds_from_user(user)
-#     service = build("gmail", "v1", credentials=creds)
-
-#     sent = service.users().messages().send(
-#         userId="me",
-#         body={"raw": raw}
-#     ).execute()
-
-#     _save_refreshed_token(user["id"], creds)
-
-#     return sent.get("id")
 
 
 from email.mime.multipart import MIMEMultipart
@@ -506,57 +402,62 @@ def _extract_html_body(html_doc: str) -> str:
 
 import html as _html
 import time
-# def send_via_preference(user: dict, f: dict, message: str):
+
+# def send_via_preference(user: dict, f: dict, message: str | None):
 #     """
 #     Sends a message via the user's preferred channel.
 
 #     Email supports:
-#       1) Plain text  (email_format='text')  -> true text email
-#       2) Branded HTML (email_format='html') -> branded shell + scheduler/override
-#       3) Raw override (email_format='raw')  -> branded shell + message_override treated as HTML
-#          NOTE: raw does NOT change global template. It only affects this followup.
+#       1) text -> text-style message for this follow-up
+#       2) html -> branded template
+#       3) raw  -> one-off sanitized HTML for this follow-up
 #     """
 #     logger.debug("MESSAGE BEFORE DISPATCH: %r", message)
 
-#     channel = (f.get("preferred_channel") or "email").strip().lower()
+#     def as_text(value, default=""):
+#         return value.strip() if isinstance(value, str) else default
+
+#     channel = as_text(f.get("preferred_channel"), "email").lower()
 #     logger.debug("Resolved channel: %s", channel)
 
-#     # -------- Email --------
 #     if channel == "email":
-#         email = (f.get("email") or "").strip()
+#         email = as_text(f.get("email"))
 #         if not email:
 #             logger.warning("Preferred channel is Email but email is missing.")
-#             return None, "Preferred channel is Email but email is missing."
+#             return None, "Recipient email is missing."
 
-#         subject =  f"{followup_type.title()} for {client_name}"
-#         format_type = (f.get("email_format") or "html").strip().lower()
+#         followup_type = as_text(f.get("followup_type"), "Follow-Up")
+#         client_name = as_text(f.get("client_name"), "Client")
+#         subject = as_text(f.get("subject")) or f"{followup_type.title()} for {client_name}"
 
-#         # -------- PLAIN TEXT --------
+#         format_type = as_text(f.get("email_format"), "html").lower()
+#         if format_type not in {"text", "html", "raw"}:
+#             format_type = "html"
+
+#         raw_message = (
+#             message
+#             if isinstance(message, str) and message.strip()
+#             else as_text(f.get("message_override")) or as_text(f.get("description"))
+#         )
+
 #         if format_type == "text":
-#             logger.debug("[EMAIL] Sending text-preserved email inside branded HTML shell to %s", email)
+#             logger.debug("[EMAIL] Sending text-style email to %s", email)
 
-#             formatted = format_plain_text_message(message or "")
+#             formatted = format_plain_text_message(raw_message)
 #             branding = get_branding(user.get("id")) or {}
 #             html_body = render_text_email_html(user, f, formatted, branding)
 
 #             logger.debug("[EMAIL] Text Body first 120 chars: %r", formatted[:120])
 #             logger.debug("[EMAIL] Text HTML first 120 chars: %r", (html_body or "")[:120])
-            
+
 #             send_branded_email_gmail(user, email, subject, html_body)
 #             return "Email", None
 
-#         # -------- BRANDED HTML (html + raw) --------
-#         # raw just means: message_override is expected to contain HTML (override per-followup)
 #         logger.debug("[EMAIL] Sending as BRANDED HTML (%s) to %s", format_type, email)
 
-#         # IMPORTANT:
-#         # build_branded_email_html() must read followup["message_override"] from DB.
-#         # So f should already contain message_override.
-#         # If your "message" param is the override, ensure f["message_override"] = message before calling build.
-#         if message and not (f.get("message_override") or "").strip():
-#             # make sure builder sees the override (in case caller didn't store it yet)
+#         if raw_message and not as_text(f.get("message_override")):
 #             f = dict(f)
-#             f["message_override"] = message
+#             f["message_override"] = raw_message
 
 #         html_body = build_branded_email_html(user, f)
 
@@ -565,7 +466,6 @@ import time
 #         send_branded_email_gmail(user, email, subject, html_body)
 #         return "Email", None
 
-#     # -------- WhatsApp / SMS fallback --------
 #     if channel in ("whatsapp", "sms"):
 #         logger.debug("Sending via %s", channel.upper())
 #         return channel.capitalize(), None
@@ -574,14 +474,6 @@ import time
 #     return None, f"Unknown preferred channel: {channel}"
 
 def send_via_preference(user: dict, f: dict, message: str | None):
-    """
-    Sends a message via the user's preferred channel.
-
-    Email supports:
-      1) text -> text-style message for this follow-up
-      2) html -> branded template
-      3) raw  -> one-off sanitized HTML for this follow-up
-    """
     logger.debug("MESSAGE BEFORE DISPATCH: %r", message)
 
     def as_text(value, default=""):
@@ -594,7 +486,7 @@ def send_via_preference(user: dict, f: dict, message: str | None):
         email = as_text(f.get("email"))
         if not email:
             logger.warning("Preferred channel is Email but email is missing.")
-            return None, "Recipient email is missing."
+            return None, "Recipient email is missing.", None
 
         followup_type = as_text(f.get("followup_type"), "Follow-Up")
         client_name = as_text(f.get("client_name"), "Client")
@@ -617,11 +509,14 @@ def send_via_preference(user: dict, f: dict, message: str | None):
             branding = get_branding(user.get("id")) or {}
             html_body = render_text_email_html(user, f, formatted, branding)
 
-            logger.debug("[EMAIL] Text Body first 120 chars: %r", formatted[:120])
-            logger.debug("[EMAIL] Text HTML first 120 chars: %r", (html_body or "")[:120])
-
-            send_branded_email_gmail(user, email, subject, html_body)
-            return "Email", None
+            send_meta = send_email_gmail(
+                user,
+                email,
+                subject,
+                html_body,
+                is_html=True,
+            )
+            return "Email", None, send_meta
 
         logger.debug("[EMAIL] Sending as BRANDED HTML (%s) to %s", format_type, email)
 
@@ -631,14 +526,18 @@ def send_via_preference(user: dict, f: dict, message: str | None):
 
         html_body = build_branded_email_html(user, f)
 
-        logger.debug("[EMAIL] HTML first 120 chars: %r", (html_body or "")[:120])
-
-        send_branded_email_gmail(user, email, subject, html_body)
-        return "Email", None
+        send_meta = send_email_gmail(
+            user,
+            email,
+            subject,
+            html_body,
+            is_html=True,
+        )
+        return "Email", None, send_meta
 
     if channel in ("whatsapp", "sms"):
         logger.debug("Sending via %s", channel.upper())
-        return channel.capitalize(), None
+        return channel.capitalize(), None, None
 
     logger.error("Unknown preferred channel: %s", channel)
-    return None, f"Unknown preferred channel: {channel}"
+    return None, f"Unknown preferred channel: {channel}", None

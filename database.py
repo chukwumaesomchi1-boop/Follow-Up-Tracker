@@ -503,5 +503,79 @@ def get_recent_sent_followups(limit: int = 20) -> list[dict]:
     return [dict(r) for r in rows]
 
 
+def ensure_followup_reply_columns():
+    conn = get_connection()
+    c = conn.cursor()
+
+    c.execute("PRAGMA table_info(followups)")
+    cols = {row[1] for row in c.fetchall()}
+
+    def add_col(sql):
+        try:
+            c.execute(sql)
+        except Exception:
+            pass
+
+    # Existing columns
+    if "gmail_thread_id" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN gmail_thread_id TEXT")
+
+    if "last_sent_message_id" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN last_sent_message_id TEXT")
+
+    if "reply_detected_at" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN reply_detected_at TEXT")
+
+    if "reply_message_id" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN reply_message_id TEXT")
+
+    if "reply_from" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN reply_from TEXT")
+
+    if "reply_subject" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN reply_subject TEXT")
+
+    if "reply_date" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN reply_date TEXT")
+
+    if "auto_stop_on_reply" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN auto_stop_on_reply INTEGER DEFAULT 1")
+
+    if "auto_stopped_at" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN auto_stopped_at TEXT")
+
+    if "stop_reason" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN stop_reason TEXT")
+
+    if "last_reply_check_at" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN last_reply_check_at TEXT")
+
+    # ✅ New Smart Follow-up Columns
+    if "smart_enabled" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN smart_enabled INTEGER DEFAULT 0")
+
+    if "smart_stage" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN smart_stage TEXT DEFAULT 'nudge_1'")
+
+    if "smart_goal" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN smart_goal TEXT DEFAULT ''")
+
+    if "smart_last_decision" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN smart_last_decision TEXT DEFAULT ''")
+
+    if "smart_next_template_key" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN smart_next_template_key TEXT DEFAULT ''")
+
+    if "smart_stop_reason" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN smart_stop_reason TEXT DEFAULT ''")
+
+    if "max_sends" not in cols:
+        add_col("ALTER TABLE followups ADD COLUMN max_sends INTEGER DEFAULT 4")
+
+    conn.commit()
+    conn.close()
+
+
 if __name__ == "__main__":
     init_db()
+    ensure_followup_reply_columns()

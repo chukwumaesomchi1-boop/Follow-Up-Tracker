@@ -333,28 +333,6 @@ def require_user():
     return user, None
 
 
-# @app.get("/verify-email/resend")
-# def resend_verification():
-#     uid = session.get("pending_verify_user_id")
-#     if not uid:
-#         flash("No verification in progress.", "danger")
-#         return redirect(url_for("login"))
-
-#     user = get_user_by_id(int(uid))
-#     if not user:
-#         flash("User not found.", "danger")
-#         return redirect(url_for("login"))
-
-#     try:
-#         start_email_verification(int(uid), user["email"])
-#     except Exception:
-#         current_app.logger.exception("Resend verification failed")
-#         flash("Could not resend code.", "danger")
-#         return redirect(url_for("verify_email"))
-
-#     flash("New code sent ✅", "success")
-#     return redirect(url_for("verify_email"))
-
 
 def _endpoint_exists(name: str) -> bool:
     try:
@@ -380,57 +358,24 @@ def _get_user_id():
 
 import csv
 
-# @app.route("/import-csv", methods=["GET", "POST"])
-# def import_csv():
-#     user_id = _get_user_id()
+@app.route("/smart/<int:fid>", methods=["POST"])
+def update_smart_settings(fid):
+    user, _ = require_user()
 
-#     if request.method == "GET":
-#         return render_template("import.html")  # simple upload page
+    data = {
+        "smart_enabled": int(request.form.get("smart_enabled") or 0),
+        "smart_template_1": request.form.get("smart_template_1"),
+        "smart_template_2": request.form.get("smart_template_2"),
+        "smart_template_3": request.form.get("smart_template_3"),
+        "smart_delay_1": int(request.form.get("smart_delay_1") or 1),
+        "smart_delay_2": int(request.form.get("smart_delay_2") or 3),
+        "smart_delay_3": int(request.form.get("smart_delay_3") or 7),
+    }
 
-#     # POST: upload -> read headers -> show mapping page
-#     up = request.files.get("file")
+    save_smart_settings(fid, user["id"], data)
 
-#     if not up or up.filename == "":
-#         flash("Pick a CSV file first.", "danger")
-#         return redirect(url_for("import_csv"))
-
-#     if not allowed_file(up.filename):
-#         flash(
-#             "Only CSV files are supported. Export your Excel file as CSV and try again.",
-#             "danger",
-#         )
-#         return redirect(url_for("import_csv"))
-#     from werkzeug.utils import secure_filename
-#     import uuid
-#     tmpdir = tempfile.gettempdir()
-#     safe = secure_filename(up.filename)
-#     tmp_path = os.path.join(tmpdir, f"fu_{uuid.uuid4().hex}_{safe}")
-#     up.save(tmp_path)
-    
-#     if not looks_like_text_file(tmp_path):
-#         flash("That file doesn’t look like a CSV. If it’s an Excel file (.xlsx), please export it as CSV and upload again.", "danger")
-#         try:
-#             os.remove(tmp_path)
-#         except Exception:
-#             pass
-#         return redirect(url_for("import_csv"))
-
-#     # read headers
-#     with open(tmp_path, "r", newline="", encoding="utf-8-sig") as f:
-#         reader = csv.reader(f)
-#         headers = next(reader, [])
-
-#     if not headers:
-#         flash("CSV file has no header row.", "danger")
-#         return redirect(url_for("import_csv"))
-
-#     return render_template(
-#         "import_map.html",
-#         tmp_path=tmp_path,
-#         headers=headers,
-#     )
-
-
+    flash("Smart follow-up updated", "success")
+    return redirect(url_for("preview", fid=fid))
 
 @app.route("/import-csv", methods=["GET", "POST"])
 def import_csv():
@@ -1263,7 +1208,7 @@ def preview_send_now(fid):
         return redirect(url_for("dashboard"))
 
     # Optional: keep these protections if you still want them on preview send
-    if f.get("status") in ("done", "replied"):
+    if f.get("status") in ("done", "replied","deleted"):
         flash(f"Not sent. This follow-up is already {f['status']}.", "warning")
         return redirect(url_for("preview", fid=fid))
 
@@ -1374,7 +1319,7 @@ def bulk_action():
                 current_app.logger.warning("[BULK SEND] followup not found fid=%s user_id=%s", fid, user_id)
                 continue
 
-            if f.get("status") in ("done", "replied"):
+            if f.get("status") in ("done", "replied","deleted"):
                 current_app.logger.info(
                     "[BULK SEND] skipping followup=%s status=%s",
                     fid,
@@ -2188,7 +2133,7 @@ def preview_send_followup(fid):
         return redirect(url_for("dashboard"))
 
     # Prevent sending completed items
-    if f.get("status") in ("done", "replied"):
+    if f.get("status") in ("done", "replied","deleted"):
         flash(f"Not sent. This follow-up is already {f['status']}.", "warning")
         return redirect(url_for("preview", fid=fid))
 
@@ -2254,6 +2199,117 @@ def preview_send_followup(fid):
 
 
 
+# @app.route("/send/<int:fid>", methods=["POST"])
+# def send_followup(fid):
+#     user, block = require_user()
+#     if block:
+#         return block
+
+#     f = get_followup(fid, user["id"])
+#     if not f:
+#         flash("Follow-up not found.", "danger")
+#         return redirect(url_for("dashboard"))
+
+#     if int(f.get("schedule_enabled") or 0) == 1 and (f.get("next_send_at") or "").strip():
+#         flash(
+#             "This follow-up is scheduled. Clear the schedule before sending manually.",
+#             "warning",
+#         )
+#         return redirect(url_for("schedule"))
+
+#     if f.get("status") in ("done", "replied"):
+#         flash(f"Not sent. This follow-up is already {f['status']}.", "warning")
+#         return redirect(url_for("dashboard"))
+
+#     def as_text(value, default=""):
+#         return value.strip() if isinstance(value, str) else default
+
+#     merged = dict(f)
+#     merged["client_name"] = as_text(request.form.get("client_name"), as_text(f.get("client_name"), ""))
+#     merged["email"] = as_text(request.form.get("email"), as_text(f.get("email"), ""))
+#     merged["followup_type"] = as_text(request.form.get("followup_type"), as_text(f.get("followup_type"), "other"))
+#     merged["description"] = as_text(request.form.get("description"), as_text(f.get("description"), ""))
+#     merged["message_override"] = as_text(request.form.get("message_override"), as_text(f.get("message_override"), ""))
+
+#     email_format = as_text(request.form.get("email_format"), as_text(f.get("email_format"), "html")).lower()
+#     if email_format not in {"text", "html", "raw"}:
+#         email_format = "html"
+#     merged["email_format"] = email_format
+
+#     # This page is explicitly an email sender
+#     merged["preferred_channel"] = "email"
+
+#     if not merged["client_name"]:
+#         flash("Client name is required before sending.", "danger")
+#         return redirect(url_for("preview", fid=fid))
+
+#     if not merged["email"]:
+#         flash("Email is required before sending.", "danger")
+#         return redirect(url_for("preview", fid=fid))
+
+#     try:
+#         mark_send_attempt(fid, user["id"])
+
+#         channel_used, error = send_via_preference(user, merged, None)
+
+#         current_app.logger.info(
+#             "[SEND] followup=%s channel=%s error=%s",
+#             fid,
+#             channel_used,
+#             error,
+#         )
+
+#         if error:
+#             raise RuntimeError(error)
+
+#         mark_send_success(fid, user["id"])
+
+#         add_notification(
+#             user["id"],
+#             f"Sent {channel_used} to {merged.get('client_name', '')}"
+#         )
+
+#         flash(f"Message sent via {channel_used} ✅", "success")
+
+#     except Exception as e:
+#         mark_send_failed(fid, user["id"], str(e))
+#         current_app.logger.exception("Send failed")
+#         flash(map_send_error(e), "danger")
+
+#     return redirect(url_for("dashboard"))
+@app.route("/followup/<int:fid>/mark-replied", methods=["POST"])
+def mark_replied_manual(fid):
+    user, block = require_user()
+    if block:
+        return block
+
+    f = get_followup(fid, user["id"])
+    if not f:
+        flash("Follow-up not found.", "danger")
+        return redirect(url_for("dashboard"))
+
+    if (f.get("status") or "").strip().lower() in ("replied", "done", "deleted"):
+        flash("This follow-up is already closed.", "info")
+        return redirect(url_for("dashboard"))
+
+    ok = mark_followup_replied(
+        fid=fid,
+        user_id=user["id"],
+        reply_message_id="manual",
+        reply_from="manual",
+        reply_subject="Marked replied manually",
+        reply_date=datetime.now().isoformat(timespec="seconds"),
+    )
+
+    if ok:
+        add_notification(user["id"], f"Marked {f.get('client_name', '')} as replied.")
+        flash("Marked as replied and auto-stopped ✅", "success")
+    else:
+        flash("Could not mark follow-up as replied.", "danger")
+
+    return redirect(url_for("dashboard"))
+
+
 @app.route("/send/<int:fid>", methods=["POST"])
 def send_followup(fid):
     user, block = require_user()
@@ -2272,7 +2328,7 @@ def send_followup(fid):
         )
         return redirect(url_for("schedule"))
 
-    if f.get("status") in ("done", "replied"):
+    if f.get("status") in ("done", "replied","deleted"):
         flash(f"Not sent. This follow-up is already {f['status']}.", "warning")
         return redirect(url_for("dashboard"))
 
@@ -2291,7 +2347,6 @@ def send_followup(fid):
         email_format = "html"
     merged["email_format"] = email_format
 
-    # This page is explicitly an email sender
     merged["preferred_channel"] = "email"
 
     if not merged["client_name"]:
@@ -2305,17 +2360,26 @@ def send_followup(fid):
     try:
         mark_send_attempt(fid, user["id"])
 
-        channel_used, error = send_via_preference(user, merged, None)
+        channel_used, error, send_meta = send_via_preference(user, merged, None)
 
         current_app.logger.info(
-            "[SEND] followup=%s channel=%s error=%s",
+            "[SEND] followup=%s channel=%s error=%s send_meta=%s",
             fid,
             channel_used,
             error,
+            send_meta,
         )
 
         if error:
             raise RuntimeError(error)
+
+        if send_meta:
+            save_outbound_gmail_metadata(
+                fid=fid,
+                user_id=user["id"],
+                gmail_message_id=send_meta.get("message_id") or "",
+                gmail_thread_id=send_meta.get("thread_id") or "",
+            )
 
         mark_send_success(fid, user["id"])
 
@@ -2332,6 +2396,60 @@ def send_followup(fid):
         flash(map_send_error(e), "danger")
 
     return redirect(url_for("dashboard"))
+
+# in web/app.py
+
+from web.reply_detector import run_reply_detection_for_user
+from web.reply_detector_db import (
+    get_reply_tracked_followups,
+    mark_followup_replied as db_mark_followup_replied,
+    disable_followup_schedule as db_disable_followup_schedule,
+)
+
+@app.route("/reply-detection/run", methods=["POST"])
+def run_reply_detection():
+    user, block = require_user()
+    if block:
+        return block
+
+    conn = get_connection()
+
+    try:
+        followups = get_reply_tracked_followups(conn, int(user["id"]))
+
+        # You should replace this with your actual user email source
+        user_email = (user.get("email") or "").strip().lower()
+        if not user_email:
+            flash("No connected sender email found for reply detection.", "danger")
+            return redirect(url_for("dashboard"))
+
+        def _mark_followup_replied(**kwargs):
+            return db_mark_followup_replied(conn, **kwargs)
+
+        def _disable_followup_schedule(fid, user_id):
+            return db_disable_followup_schedule(conn, fid, user_id)
+
+        results = run_reply_detection_for_user(
+            user=user,
+            user_email=user_email,
+            followups=followups,
+            creds_from_user=_creds_from_user,
+            save_refreshed_token=_save_refreshed_token,
+            mark_followup_replied=_mark_followup_replied,
+            disable_followup_schedule=_disable_followup_schedule,
+            add_notification=add_notification,
+        )
+
+        if results:
+            flash(f"Reply detector found {len(results)} reply/replies and auto-stopped them.", "success")
+        else:
+            flash("No replies detected.", "info")
+
+    finally:
+        conn.close()
+
+    return redirect(url_for("dashboard"))
+
 
 
 
